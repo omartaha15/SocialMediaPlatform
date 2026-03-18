@@ -6,11 +6,11 @@ namespace SocialMedia.Application.Interfaces;
 /// Generic repository interface for CRUD operations.
 /// </summary>
 /// <typeparam name="T">The entity type that extends BaseEntity.</typeparam>
-public interface IRepository<T> where T : BaseEntity
+public interface IGenericRepository<T> where T : BaseEntity
 {
-    Task<T?> GetByIdAsync(Guid id);
+    Task<T> GetByIdAsync(int id);
     Task<IEnumerable<T>> GetAllAsync();
     Task AddAsync(T entity);
-    Task UpdateAsync(T entity);
-    Task DeleteAsync(Guid id);
+    void Update(T entity);
+    void Delete(T entity);
 }

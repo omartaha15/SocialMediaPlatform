@@ -1,66 +1,52 @@
-﻿@model SocialMedia.Web.ViewModels.LoginViewModel
+@model SocialMedia.Web.ViewModels.LoginViewModel
 
 @{
     ViewData["Title"] = "Login";
 }
 
-<h2 class="mb-4">Welcome Back</h2>
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="fas fa-user-lock" style="color:white;"></i>
+            </div>
+            <h2>Welcome Back</h2>
+            <p>Sign in to continue to SocialConnect</p>
+        </div>
 
-<form asp-action="Login" method="post" id="loginForm">
+        <form asp-action="Login" method="post" id="loginForm">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
+            }
 
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div asp-validation-summary="All" class="alert alert-danger"></div>
-    }
-    <div class="form-group">
-        <label asp-for="Email"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger small"></span>
+            <div class="form-group">
+                <label asp-for="Email"><i class="fas fa-envelope me-1"></i> Email</label>
+                <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Password"><i class="fas fa-lock me-1"></i> Password</label>
+                <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="form-group form-check d-flex align-items-center mt-2">
+                <input asp-for="RememberMe" class="form-check-input me-2" />
+                <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" id="loginBtn">
+                <i class="fas fa-sign-in-alt me-2"></i> Sign In
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Don't have an account? <a asp-action="Register" asp-controller="Account" class="btn-link">Create one</a></p>
+        </div>
     </div>
-
-    <div class="form-group">
-        <label asp-for="Password"></label>
-        <input asp-for="Password" class="form-control" type="password" />
-        <span asp-validation-for="Password" class="text-danger small"></span>
-    </div>
-
-    <div class="form-group form-check">
-        <input asp-for="RememberMe" class="form-check-input" />
-        <label asp-for="RememberMe" class="form-check-label"></label>
-    </div>
-
-    <button type="submit" class="btn btn-primary btn-lg mt-3 w-100">Login</button>
-</form>
-
-<div class="mt-3 text-center">
-    <p>Don't have an account? <a asp-action="Register" asp-controller="Account" class="btn btn-link">Register</a></p>
 </div>
-
-<style>
-    input.input-validation-error, select.input-validation-error, textarea.input-validation-error {
-        border: 2px solid #dc3545;
-        background-color: #f8d7da;
-    }
-
-    input.valid, select.valid, textarea.valid {
-        border: 2px solid #28a745;
-        background-color: #d4edda;
-    }
-
-    .text-danger {
-        font-size: 0.85rem;
-        margin-top: 2px;
-    }
-
-    .btn-lg {
-        font-size: 1.1rem;
-        padding: 0.75rem;
-    }
-
-    .form-group {
-        margin-bottom: 1rem;
-    }
-</style>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

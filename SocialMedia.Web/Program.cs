@@ -28,6 +28,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true; 
 });
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 

@@ -18,6 +18,20 @@ namespace SocialMedia.Domain.Entities
         public DateTime? DateOfBirth { get; set; }
         public Gender? Gender { get; set; }
         public string? Location { get; set; }
+        public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
+        public virtual ICollection<GroupMember> GroupMembers { get; set; } = new List<GroupMember>();
+        public virtual ICollection<GroupMessages> GroupMessages { get; set; } = new List<GroupMessages>();
+        public virtual ICollection<FriendShip> SentFriendRequests { get; set; } = new List<FriendShip>();
+        public virtual ICollection<FriendShip> ReceivedFriendRequests { get; set; } = new List<FriendShip>();
+        public virtual ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
+        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public virtual ICollection<Notification> SentNotifications { get; set; } = new List<Notification>();
+        public virtual ICollection<Message> MessagesSent { get; set; } = new List<Message>();
+        public virtual ICollection<Message> MessagesReceived { get; set; } = new List<Message>();
+
+
+
 
 
     }

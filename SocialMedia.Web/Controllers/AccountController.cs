@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SocialMedia.Application.DTOs;
+using SocialMedia.Application.DTOs.AuthenticationDTOs;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Web.ViewModels;
 

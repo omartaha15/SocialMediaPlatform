@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SocialMedia.Application.DTOs
+namespace SocialMedia.Application.DTOs.AuthenticationDTOs
 {
     internal class UserDto
     {

@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Domain.Entities;
-using SocialMedia.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SocialMedia.Application.DTOs.AuthenticationDTOs;
 
 
 namespace SocialMedia.Application.Services

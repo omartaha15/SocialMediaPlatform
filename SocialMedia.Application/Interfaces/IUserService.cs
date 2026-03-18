@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using SocialMedia.Application.DTOs;
+using SocialMedia.Application.DTOs.AuthenticationDTOs;
 using SocialMedia.Domain.Entities;
 using System;
 using System.Collections.Generic;

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SocialMedia.Application.DTOs
+namespace SocialMedia.Application.DTOs.AuthenticationDTOs
 {
     public class LoginDto
     {

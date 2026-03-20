@@ -1,43 +1,115 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using System.Collections.Concurrent;
 
 namespace SocialMedia.Web.Hubs;
 
 /// <summary>
-/// SignalR hub for real-time chat messaging.
+/// Real-time chat hub.
+/// Tracks UserId <-> ConnectionId so we can send to specific users.
 /// </summary>
+[Authorize]
 public class ChatHub : Hub
 {
-    /// <summary>
-    /// Sends a message to all connected clients.
-    /// </summary>
-    public async Task SendMessage(string user, string message)
+    // Thread-safe map: UserId -> list of ConnectionIds (user may have multiple tabs)
+    private static readonly ConcurrentDictionary<string, HashSet<string>> _userConnections = new();
+
+    // ── Lifecycle ───────────────────────────────────────────────────────────
+    public override async Task OnConnectedAsync()
     {
-        await Clients.All.SendAsync("ReceiveMessage", user, message);
+        var userId = Context.UserIdentifier;
+        if (userId != null)
+        {
+            _userConnections.AddOrUpdate(
+                userId,
+                _ => [Context.ConnectionId],
+                (_, set) => { lock (set) { set.Add(Context.ConnectionId); } return set; });
+
+            // Join a personal group named after the userId for easy targeting
+            await Groups.AddToGroupAsync(Context.ConnectionId, userId);
+        }
+
+        await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var userId = Context.UserIdentifier;
+        if (userId != null && _userConnections.TryGetValue(userId, out var set))
+        {
+            lock (set) { set.Remove(Context.ConnectionId); }
+            if (set.Count == 0)
+                _userConnections.TryRemove(userId, out _);
+        }
+
+        await base.OnDisconnectedAsync(exception);
+    }
+
+    // ── Direct Message ──────────────────────────────────────────────────────
+    /// <summary>
+    /// Sends a real-time message to a specific user by their userId.
+    /// The caller should also persist the message via the MessagingController.
+    /// </summary>
+    public async Task SendDirectMessage(string receiverId, string senderName, string content)
+    {
+        var senderId = Context.UserIdentifier ?? "unknown";
+
+        // Push to receiver (personal group = their userId)
+        await Clients.Group(receiverId).SendAsync("ReceiveDirectMessage", new
+        {
+            senderId,
+            senderName,
+            content,
+            sentAt = DateTime.UtcNow
+        });
+
+        // Echo back to all sender tabs so they see their own message
+        await Clients.Group(senderId).SendAsync("ReceiveDirectMessage", new
+        {
+            senderId,
+            senderName,
+            content,
+            sentAt = DateTime.UtcNow
+        });
+    }
+
+    // ── Group Chat ──────────────────────────────────────────────────────────
+    /// <summary>
+    /// Joins a SignalR group for real-time group chat.
+    /// Call this after the page loads for every group the user belongs to.
+    /// </summary>
+    public async Task JoinGroupRoom(string groupId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"group_{groupId}");
+        await Clients.Group($"group_{groupId}")
+            .SendAsync("UserJoinedGroup", Context.UserIdentifier, groupId);
+    }
+
+    public async Task LeaveGroupRoom(string groupId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"group_{groupId}");
+        await Clients.Group($"group_{groupId}")
+            .SendAsync("UserLeftGroup", Context.UserIdentifier, groupId);
     }
 
     /// <summary>
-    /// Sends a message to a specific group (chat room).
+    /// Broadcasts a group message to all members in the SignalR group.
     /// </summary>
-    public async Task SendMessageToGroup(string groupName, string user, string message)
+    public async Task SendGroupMessage(string groupId, string senderName, string content)
     {
-        await Clients.Group(groupName).SendAsync("ReceiveMessage", user, message);
+        var senderId = Context.UserIdentifier ?? "unknown";
+
+        await Clients.Group($"group_{groupId}").SendAsync("ReceiveGroupMessage", new
+        {
+            groupId,
+            senderId,
+            senderName,
+            content,
+            sentAt = DateTime.UtcNow
+        });
     }
 
-    /// <summary>
-    /// Adds the current connection to a chat group.
-    /// </summary>
-    public async Task JoinGroup(string groupName)
-    {
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-        await Clients.Group(groupName).SendAsync("UserJoined", Context.ConnectionId, groupName);
-    }
-
-    /// <summary>
-    /// Removes the current connection from a chat group.
-    /// </summary>
-    public async Task LeaveGroup(string groupName)
-    {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
-        await Clients.Group(groupName).SendAsync("UserLeft", Context.ConnectionId, groupName);
-    }
+    // ── Utility ─────────────────────────────────────────────────────────────
+    public static bool IsUserOnline(string userId)
+        => _userConnections.ContainsKey(userId) && _userConnections[userId].Count > 0;
 }

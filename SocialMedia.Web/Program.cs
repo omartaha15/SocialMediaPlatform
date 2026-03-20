@@ -4,44 +4,43 @@ using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Services;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Infrastructure.Data;
+using SocialMedia.Infrastructure.Repositories;
 using SocialMedia.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(
-    )
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders();
+    .AddDefaultTokenProviders();
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login"; 
-    options.LogoutPath = "/Account/Logout"; 
-    //options.AccessDeniedPath = "/Account/AccessDenied"; 
-    options.ExpireTimeSpan = TimeSpan.FromDays(7); 
-    options.SlidingExpiration = true; 
+    options.LoginPath         = "/Account/Login";
+    options.LogoutPath        = "/Account/Logout";
+    options.ExpireTimeSpan    = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
 });
 
+// ── Infrastructure Repositories (implement Application interfaces) ───────────
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IGroupChatRepository, GroupChatRepository>();
+
+// ── Application Services (depend only on Application interfaces) ─────────────
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IGroupChatService, GroupChatService>();
 
-//builder.Services.AddAntiforgery(options =>
-//{
-
-//    options.Cookie.Name = ".SocialMedia.Antiforgery";
-//});
 builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -50,7 +49,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -59,7 +57,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Map SignalR hubs
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<NotificationHub>("/notificationhub");
 

@@ -4,6 +4,7 @@ using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Services;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Infrastructure.Data;
+using SocialMedia.Infrastructure.Repositories;
 using SocialMedia.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);

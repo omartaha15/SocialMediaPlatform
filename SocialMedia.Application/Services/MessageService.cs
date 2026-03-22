@@ -24,11 +24,11 @@ namespace SocialMedia.Application.Services
         {
             var message = new Message
             {
-                SenderId   = senderId,
+                SenderId = senderId,
                 ReceiverId = dto.ReceiverId,
-                Content    = dto.Content,
-                IsRead     = false,
-                CreatedAt  = DateTime.UtcNow
+                Content = dto.Content,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
             };
 
             // AddMessageAsync returns the message with Sender already loaded via Include
@@ -57,14 +57,14 @@ namespace SocialMedia.Application.Services
                 var otherUser = m.SenderId == userId ? m.Receiver : m.Sender;
                 return new ConversationSummaryDto
                 {
-                    OtherUserId             = otherUser?.Id ?? string.Empty,
-                    OtherUserName           = otherUser?.UserName ?? "Unknown",
+                    OtherUserId = otherUser?.Id ?? string.Empty,
+                    OtherUserName = otherUser?.UserName ?? "Unknown",
                     OtherUserProfilePicture = otherUser?.ProfilePictureUrl,
-                    LastMessage             = m.Content,
-                    LastMessageTime         = m.CreatedAt,
+                    LastMessage = m.Content,
+                    LastMessageTime = m.CreatedAt,
                     // Unread count per-conversation requires a separate query;
                     // for now we show total badge — can be refined in Phase 5
-                    UnreadCount             = 0
+                    UnreadCount = 0
                 };
             });
         }
@@ -86,14 +86,14 @@ namespace SocialMedia.Application.Services
         // ── Private Mapper ────────────────────────────────────────────────────
         private static MessageDto MapToDto(Message m, ApplicationUser? sender) => new()
         {
-            Id                   = m.Id,
-            Content              = m.Content,
-            IsRead               = m.IsRead,
-            CreatedAt            = m.CreatedAt,
-            SenderId             = m.SenderId,
-            SenderName           = sender?.UserName ?? "Unknown",
+            Id = m.Id,
+            Content = m.Content,
+            IsRead = m.IsRead,
+            CreatedAt = m.CreatedAt,
+            SenderId = m.SenderId,
+            SenderName = sender?.UserName ?? "Unknown",
             SenderProfilePicture = sender?.ProfilePictureUrl,
-            ReceiverId           = m.ReceiverId
+            ReceiverId = m.ReceiverId
         };
     }
 }

@@ -3,14 +3,11 @@ using SocialMedia.Domain.Entities;
 namespace SocialMedia.Application.Interfaces
 {
     /// <summary>
-    /// Custom repository for direct message queries.
-    /// Defined in Application, implemented in Infrastructure.
+    /// Custom query methods for direct messages.
+    /// Extends the generic repository — SaveChanges is handled by IUnitOfWork.CompleteAsync().
     /// </summary>
-    public interface IMessageRepository
+    public interface IMessageRepository : IGenericRepository<Message>
     {
-        /// <summary>Persist a new message and return it with Sender navigation loaded.</summary>
-        Task<Message> AddMessageAsync(Message message);
-
         /// <summary>Paginated chat history between two users, ordered oldest→newest.</summary>
         Task<IEnumerable<Message>> GetChatHistoryAsync(string userId1, string userId2, int page, int pageSize);
 
@@ -20,13 +17,10 @@ namespace SocialMedia.Application.Interfaces
         /// </summary>
         Task<IEnumerable<Message>> GetLatestMessagePerConversationAsync(string userId);
 
-        /// <summary>Returns all unread messages sent by otherUserId to currentUserId.</summary>
+        /// <summary>Bulk-marks messages from otherUserId to currentUserId as read.</summary>
         Task MarkAsReadAsync(string currentUserId, string otherUserId);
 
-        /// <summary>Total count of unread messages for a user.</summary>
+        /// <summary>Total count of unread messages received by userId.</summary>
         Task<int> GetUnreadCountAsync(string userId);
-
-        /// <summary>Look up a user by their Id (GUID string) — avoids depending on IUserService.</summary>
-        Task<ApplicationUser?> FindUserByIdAsync(string userId);
     }
 }

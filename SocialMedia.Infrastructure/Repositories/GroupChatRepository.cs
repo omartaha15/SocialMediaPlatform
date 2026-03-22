@@ -5,29 +5,25 @@ using SocialMedia.Infrastructure.Data;
 
 namespace SocialMedia.Infrastructure.Repositories
 {
-    public class GroupChatRepository : IGroupChatRepository
+    /// <summary>
+    /// Extends the shared Repository&lt;Group&gt; with group-chat-specific query methods.
+    /// Never calls SaveChanges — that belongs to UnitOfWork.CompleteAsync().
+    /// </summary>
+    public class GroupChatRepository : Repository<Group>, IGroupChatRepository
     {
-        private readonly AppDbContext _context;
+        // Repository<Group> already exposes _context and _dbSet (protected)
+        public GroupChatRepository(AppDbContext context) : base(context) { }
 
-        public GroupChatRepository(AppDbContext context)
+        /// <inheritdoc/>
+        public async Task<Group?> GetGroupWithMembersAsync(Guid groupId)
         {
-            _context = context;
-        }
-
-        public async Task<Group> AddGroupAsync(Group group)
-        {
-            await _context.Groups.AddAsync(group);
-            await _context.SaveChangesAsync();
-            return group;
-        }
-
-        public async Task<Group?> GetGroupByIdAsync(Guid groupId)
-        {
-            return await _context.Groups
+            return await _dbSet
                 .Include(g => g.GroupMembers)
+                    .ThenInclude(gm => gm.User)
                 .FirstOrDefaultAsync(g => g.Id == groupId);
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<Group>> GetGroupsByUserIdAsync(string userId)
         {
             return await _context.GroupMembers
@@ -37,18 +33,21 @@ namespace SocialMedia.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        /// <inheritdoc/>
         public async Task<GroupMember?> GetMemberAsync(Guid groupId, string userId)
         {
             return await _context.GroupMembers
                 .FirstOrDefaultAsync(gm => gm.GroupId == groupId && gm.UserId == userId);
         }
 
+        /// <inheritdoc/>
         public async Task<bool> IsMemberAsync(Guid groupId, string userId)
         {
             return await _context.GroupMembers
                 .AnyAsync(gm => gm.GroupId == groupId && gm.UserId == userId);
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<GroupMember>> GetAllMembersAsync(Guid groupId)
         {
             return await _context.GroupMembers
@@ -57,25 +56,28 @@ namespace SocialMedia.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        /// <inheritdoc/>
         public async Task AddMemberAsync(GroupMember member)
         {
+            // No SaveChanges — caller must call UnitOfWork.CompleteAsync()
             await _context.GroupMembers.AddAsync(member);
-            await _context.SaveChangesAsync();
         }
 
-        public async Task RemoveMemberAsync(GroupMember member)
+        /// <inheritdoc/>
+        public void RemoveMember(GroupMember member)
         {
+            // Synchronous — EF just marks it for deletion, UoW commits
             _context.GroupMembers.Remove(member);
-            await _context.SaveChangesAsync();
         }
 
-        public async Task<GroupMessages> AddGroupMessageAsync(GroupMessages message)
+        /// <inheritdoc/>
+        public async Task AddGroupMessageAsync(GroupMessages message)
         {
+            // No SaveChanges — caller must call UnitOfWork.CompleteAsync()
             await _context.GroupMessages.AddAsync(message);
-            await _context.SaveChangesAsync();
-            return message;
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<GroupMessages>> GetGroupHistoryAsync(
             Guid groupId, int page, int pageSize)
         {
@@ -87,11 +89,6 @@ namespace SocialMedia.Infrastructure.Repositories
                 .Take(pageSize)
                 .OrderBy(m => m.CreatedAt)
                 .ToListAsync();
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
         }
     }
 }

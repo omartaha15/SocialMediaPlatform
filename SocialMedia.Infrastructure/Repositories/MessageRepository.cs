@@ -5,34 +5,20 @@ using SocialMedia.Infrastructure.Data;
 
 namespace SocialMedia.Infrastructure.Repositories
 {
-    public class MessageRepository : IMessageRepository
+    /// <summary>
+    /// Extends the shared Repository&lt;Message&gt; with chat-specific query methods.
+    /// Never calls SaveChanges — that belongs to UnitOfWork.CompleteAsync().
+    /// </summary>
+    public class MessageRepository : Repository<Message>, IMessageRepository
     {
-        private readonly AppDbContext _context;
-
-        public MessageRepository(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        /// <inheritdoc/>
-        public async Task<Message> AddMessageAsync(Message message)
-        {
-            await _context.Messages.AddAsync(message);
-            await _context.SaveChangesAsync();
-
-            // Reload with Sender so the caller gets a fully-populated entity
-            await _context.Entry(message)
-                .Reference(m => m.Sender)
-                .LoadAsync();
-
-            return message;
-        }
+        // Repository<Message> already exposes _context and _dbSet (protected)
+        public MessageRepository(AppDbContext context) : base(context) { }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<Message>> GetChatHistoryAsync(
             string userId1, string userId2, int page, int pageSize)
         {
-            return await _context.Messages
+            return await _dbSet
                 .Where(m =>
                     (m.SenderId == userId1 && m.ReceiverId == userId2) ||
                     (m.SenderId == userId2 && m.ReceiverId == userId1))
@@ -41,24 +27,22 @@ namespace SocialMedia.Infrastructure.Repositories
                 .OrderByDescending(m => m.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .OrderBy(m => m.CreatedAt)   // re-order chunk oldest→newest for display
+                .OrderBy(m => m.CreatedAt)  // re-sort chunk oldest→newest for display
                 .ToListAsync();
         }
 
         /// <inheritdoc/>
-        /// Uses a GROUP BY in SQL to fetch only one row per conversation partner —
-        /// avoids loading all messages into memory.
         public async Task<IEnumerable<Message>> GetLatestMessagePerConversationAsync(string userId)
         {
-            // Get the Id of the latest message per (userId, partner) pair
-            var latestIds = await _context.Messages
+            // Step 1 — get the Id of the latest message per conversation partner (done in SQL)
+            var latestIds = await _dbSet
                 .Where(m => m.SenderId == userId || m.ReceiverId == userId)
                 .GroupBy(m => m.SenderId == userId ? m.ReceiverId : m.SenderId)
                 .Select(g => g.OrderByDescending(m => m.CreatedAt).First().Id)
                 .ToListAsync();
 
-            // Fetch those specific messages with their navigation properties
-            return await _context.Messages
+            // Step 2 — fetch those rows with navigations loaded
+            return await _dbSet
                 .Where(m => latestIds.Contains(m.Id))
                 .Include(m => m.Sender)
                 .Include(m => m.Receiver)
@@ -67,10 +51,10 @@ namespace SocialMedia.Infrastructure.Repositories
         }
 
         /// <inheritdoc/>
-        /// Mutation stays in the repo — service never touches EF-tracked state directly.
         public async Task MarkAsReadAsync(string currentUserId, string otherUserId)
         {
-            await _context.Messages
+            // Bulk UPDATE in one SQL statement — no entity loading, no SaveChanges needed
+            await _dbSet
                 .Where(m => m.SenderId == otherUserId
                          && m.ReceiverId == currentUserId
                          && !m.IsRead)
@@ -80,14 +64,8 @@ namespace SocialMedia.Infrastructure.Repositories
         /// <inheritdoc/>
         public async Task<int> GetUnreadCountAsync(string userId)
         {
-            return await _context.Messages
+            return await _dbSet
                 .CountAsync(m => m.ReceiverId == userId && !m.IsRead);
-        }
-
-        /// <inheritdoc/>
-        public async Task<ApplicationUser?> FindUserByIdAsync(string userId)
-        {
-            return await _context.Users.FindAsync(userId);
         }
     }
 }

@@ -6,94 +6,92 @@ namespace SocialMedia.Application.Services
 {
     /// <summary>
     /// Direct-message business logic.
-    /// Depends only on Application interfaces — zero Infrastructure / EF references.
+    /// Uses IUnitOfWork as the single entry point — no direct repo or EF references.
     /// </summary>
     public class MessageService : IMessageService
     {
-        private readonly IMessageRepository _messageRepo;
+        private readonly IUnitOfWork _uow;
 
-        // IUserService removed — user lookup now done through IMessageRepository.FindUserByIdAsync
-        // so we don't misuse FindByUserName/FindByEmail with a GUID-based senderId.
-        public MessageService(IMessageRepository messageRepo)
+        public MessageService(IUnitOfWork uow)
         {
-            _messageRepo = messageRepo;
+            _uow = uow;
         }
 
-        // ── Send ─────────────────────────────────────────────────────────────
+        // ── Send ──────────────────────────────────────────────────────────────
         public async Task<MessageDto> SendMessageAsync(string senderId, SendMessageDto dto)
         {
             var message = new Message
             {
-                SenderId = senderId,
+                SenderId   = senderId,
                 ReceiverId = dto.ReceiverId,
-                Content = dto.Content,
-                IsRead = false,
-                CreatedAt = DateTime.UtcNow
+                Content    = dto.Content,
+                IsRead     = false,
+                CreatedAt  = DateTime.UtcNow
             };
 
-            // AddMessageAsync returns the message with Sender already loaded via Include
-            var saved = await _messageRepo.AddMessageAsync(message);
-            return MapToDto(saved, saved.Sender);
+            await _uow.Messages.AddAsync(message);
+            await _uow.CompleteAsync();
+
+            // ApplicationUser is not a BaseEntity so we use FindUserByIdAsync, not Repository<T>
+            var sender = await _uow.FindUserByIdAsync(senderId);
+
+            return MapToDto(message, sender);
         }
 
         // ── Chat History ──────────────────────────────────────────────────────
         public async Task<IEnumerable<MessageDto>> GetChatHistoryAsync(
             string userId1, string userId2, int page = 1, int pageSize = 20)
         {
-            var messages = await _messageRepo.GetChatHistoryAsync(userId1, userId2, page, pageSize);
+            var messages = await _uow.Messages
+                .GetChatHistoryAsync(userId1, userId2, page, pageSize);
+
             return messages.Select(m => MapToDto(m, m.Sender));
         }
 
         // ── Conversations List ────────────────────────────────────────────────
-        // Uses GetLatestMessagePerConversationAsync which does the grouping in SQL,
-        // not in memory — avoids loading every message the user ever sent/received.
         public async Task<IEnumerable<ConversationSummaryDto>> GetConversationsAsync(string userId)
         {
-            var latest = await _messageRepo.GetLatestMessagePerConversationAsync(userId);
-            var unreadCount = await _messageRepo.GetUnreadCountAsync(userId);
+            var latest = await _uow.Messages
+                .GetLatestMessagePerConversationAsync(userId);
 
             return latest.Select(m =>
             {
                 var otherUser = m.SenderId == userId ? m.Receiver : m.Sender;
                 return new ConversationSummaryDto
                 {
-                    OtherUserId = otherUser?.Id ?? string.Empty,
-                    OtherUserName = otherUser?.UserName ?? "Unknown",
+                    OtherUserId             = otherUser?.Id ?? string.Empty,
+                    OtherUserName           = otherUser?.UserName ?? "Unknown",
                     OtherUserProfilePicture = otherUser?.ProfilePictureUrl,
-                    LastMessage = m.Content,
-                    LastMessageTime = m.CreatedAt,
-                    // Unread count per-conversation requires a separate query;
-                    // for now we show total badge — can be refined in Phase 5
-                    UnreadCount = 0
+                    LastMessage             = m.Content,
+                    LastMessageTime         = m.CreatedAt,
+                    UnreadCount             = 0   // refined in Phase 5
                 };
             });
         }
 
         // ── Mark as Read ──────────────────────────────────────────────────────
-        // Mutation is fully inside the repository via ExecuteUpdateAsync —
-        // the service never directly touches EF-tracked entity state.
         public async Task MarkAsReadAsync(string currentUserId, string otherUserId)
         {
-            await _messageRepo.MarkAsReadAsync(currentUserId, otherUserId);
+            await _uow.Messages.MarkAsReadAsync(currentUserId, otherUserId);
         }
 
         // ── Unread Count ──────────────────────────────────────────────────────
         public async Task<int> GetUnreadCountAsync(string userId)
         {
-            return await _messageRepo.GetUnreadCountAsync(userId);
+            return await _uow.Messages.GetUnreadCountAsync(userId);
         }
 
-        // ── Private Mapper ────────────────────────────────────────────────────
+        // ── Mapper ────────────────────────────────────────────────────────────
         private static MessageDto MapToDto(Message m, ApplicationUser? sender) => new()
         {
-            Id = m.Id,
-            Content = m.Content,
-            IsRead = m.IsRead,
-            CreatedAt = m.CreatedAt,
-            SenderId = m.SenderId,
-            SenderName = sender?.UserName ?? "Unknown",
+            Id                   = m.Id,
+            Content              = m.Content,
+            IsRead               = m.IsRead,
+            CreatedAt            = m.CreatedAt,
+            SenderId             = m.SenderId,
+            SenderName           = sender?.UserName ?? "Unknown",
             SenderProfilePicture = sender?.ProfilePictureUrl,
-            ReceiverId = m.ReceiverId
+            ReceiverId           = m.ReceiverId
         };
     }
 }

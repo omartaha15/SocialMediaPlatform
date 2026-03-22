@@ -29,6 +29,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // ── Infrastructure Repositories (implement Application interfaces) ───────────
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IGroupChatRepository, GroupChatRepository>();
+builder.Services.AddScoped<IFriendshipRepository, FriendshipRepository>();
 
 // ── Application Services (depend only on Application interfaces) ─────────────
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -36,6 +37,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IGroupChatService, GroupChatService>();
+builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 
 builder.Services.AddSignalR();
 

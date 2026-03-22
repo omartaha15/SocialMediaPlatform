@@ -28,6 +28,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 // ── Infrastructure ────────────────────────────────────────────────────────────
 // UnitOfWork is the single entry point — it owns and creates all repositories internally.
 // No need to register IMessageRepository or IGroupChatRepository separately.
+// ── Infrastructure Repositories (implement Application interfaces) ───────────
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IGroupChatRepository, GroupChatRepository>();
+builder.Services.AddScoped<IFriendshipRepository, FriendshipRepository>();
+
+// ── Application Services (depend only on Application interfaces) ─────────────
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // ── Application Services ──────────────────────────────────────────────────────
@@ -35,6 +41,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IGroupChatService, GroupChatService>();
+builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 
 builder.Services.AddSignalR();
 

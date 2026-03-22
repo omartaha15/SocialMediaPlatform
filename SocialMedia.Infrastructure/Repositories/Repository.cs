@@ -5,7 +5,7 @@ using SocialMedia.Infrastructure.Data;
 
 namespace SocialMedia.Infrastructure.Repositories
 {
-    public class Repository<T> : IRepository<T> where T : BaseEntity
+    public class Repository<T> : IGenericRepository<T> where T : BaseEntity
     {
         protected readonly AppDbContext _context;
         protected readonly DbSet<T> _dbSet;
@@ -25,17 +25,14 @@ namespace SocialMedia.Infrastructure.Repositories
         public async Task AddAsync(T entity)
             => await _dbSet.AddAsync(entity);
 
-        public Task UpdateAsync(T entity)
+        public void Update(T entity)
         {
             _dbSet.Update(entity);
-            return Task.CompletedTask;
         }
 
-        public async Task DeleteAsync(Guid id)
+        public void Delete(T entity)
         {
-            var entity = await GetByIdAsync(id);
-            if (entity != null)
-                _dbSet.Remove(entity);
+            _dbSet.Remove(entity);
         }
     }
 }

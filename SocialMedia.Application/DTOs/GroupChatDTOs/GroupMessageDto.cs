@@ -1,15 +1,13 @@
-namespace SocialMedia.Application.DTOs.ChatDTOs
+namespace SocialMedia.Application.DTOs.GroupChatDTOs
 {
-
-    public class MessageDto
+    public class GroupMessageDto
     {
         public Guid Id { get; set; }
         public string Content { get; set; } = string.Empty;
-        public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
         public string SenderId { get; set; } = string.Empty;
         public string SenderName { get; set; } = string.Empty;
         public string? SenderProfilePicture { get; set; }
-        public string ReceiverId { get; set; } = string.Empty;
+        public Guid GroupId { get; set; }
     }
 }

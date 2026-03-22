@@ -24,7 +24,7 @@ namespace SocialMedia.Infrastructure.Data
             return await _context.SaveChangesAsync();
         }
 
-        public IRepository<T> Repository<T>() where T : BaseEntity
+        public IGenericRepository<T> Repository<T>() where T : BaseEntity
         {
             Type type = typeof(T);
 
@@ -35,7 +35,7 @@ namespace SocialMedia.Infrastructure.Data
                 _repos[type] = repo;
             }
 
-            return (IRepository<T>)repo;
+            return ( IGenericRepository<T>)repo;
         }
     }
 }

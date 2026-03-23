@@ -15,6 +15,7 @@ namespace SocialMedia.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? Bio { get; set; }
         public string? ProfilePictureUrl { get; set; } = "/images/user.jpg";
+        public string ? CoverPhotoUrl { get; set; } = "/images/coverImage.png";
         public DateTime? DateOfBirth { get; set; }
         public Gender? Gender { get; set; }
         public string? Location { get; set; }

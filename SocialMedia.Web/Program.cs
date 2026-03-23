@@ -43,6 +43,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IGroupChatService, GroupChatService>();
 builder.Services.AddScoped<IFriendshipService, FriendshipService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 builder.Services.AddSignalR();
 

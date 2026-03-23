@@ -10,5 +10,6 @@ namespace SocialMedia.Application.Interfaces
     public interface IImageService
     {
         Task<string> UploadImageAsync(IFormFile file);
+       void DeleteImageAsync(string imagePath);
     }
 }

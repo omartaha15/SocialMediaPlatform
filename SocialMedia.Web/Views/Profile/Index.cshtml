@@ -1,0 +1,363 @@
+﻿@model SocialMedia.Application.DTOs.ProfileDTOs.ProfileDto
+
+@{
+    ViewData["Title"] = Model.UserName + " - Profile";
+    var coverImg = string.IsNullOrEmpty(Model.CoverPhotoUrl) ? "/images/coverImage.png" : Model.CoverPhotoUrl;
+    var profileImg = string.IsNullOrEmpty(Model.ProfilePictureUrl) ? "/images/user.jpg" : Model.ProfilePictureUrl;
+
+    var genderStr = Model.Gender?.ToString();
+}
+
+
+
+<style>
+    body {
+        background-color: #f0f2f5;
+    }
+
+    .profile-header-container {
+        background: #fff;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        padding-bottom: 20px;
+    }
+
+    .cover-photo-container {
+        height: 350px;
+        position: relative;
+        background-color: #cbced5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .cover-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .edit-cover-btn {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        background-color: rgba(255,255,255,0.9);
+        font-weight: 600;
+        z-index: 2;
+    }
+
+  
+    .profile-meta-container {
+        display: flex;
+        align-items: flex-end; 
+        padding-left: 30px;
+        padding-right: 30px;
+        margin-top: -40px; 
+    }
+
+    .profile-photo-wrapper {
+        position: relative;
+        z-index: 3;
+        margin-right: 20px; 
+    }
+
+    .profile-photo {
+        width: 168px;
+        height: 168px;
+        border: 4px solid #fff;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: #fff;
+        cursor: pointer;
+    }
+
+    .profile-camera-icon {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: #e4e6eb;
+        border-radius: 50%;
+        padding: 8px;
+        cursor: pointer;
+        border: 1px solid #ced0d4;
+    }
+
+    .info-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 15px;
+        color: #050505;
+    }
+
+    .info-icon {
+        font-size: 20px;
+        color: #8c939d;
+        margin-right: 12px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .details-title {
+        color: #1877f2; 
+    }
+
+
+    .modal-content input.form-control,
+    .modal-content select.form-select {
+        color: #050505 !important;
+        background-color: #f0f2f5 !important;
+        border: 1px solid #ccd0d5;
+        font-weight: 500;
+    }
+
+        .modal-content input.form-control:focus,
+        .modal-content select.form-select:focus {
+            background-color: #ffffff !important;
+            border-color: #1877f2;
+            box-shadow: 0 0 0 0.2rem rgba(24, 119, 242, 0.25);
+            color: #050505 !important;
+        }
+
+    ::-webkit-calendar-picker-indicator {
+        filter: invert(0);
+        cursor: pointer;
+    }
+   
+</style>
+
+<div class="container mt-4 mb-5">
+
+    <div class="profile-header-container mx-auto" style="max-width: 900px;">
+
+        <!-- COVER -->
+        <div class="cover-photo-container">
+            <img src="@coverImg" alt="Cover" class="cover-photo" />
+            <button class="btn btn-light edit-cover-btn shadow-sm" data-bs-toggle="modal" data-bs-target="#coverModal">
+                <i class="bi bi-camera-fill me-1"></i> Edit Cover Photo
+            </button>
+        </div>
+
+        <!-- PROFILE META (Image + Name + Bio) -->
+        <div class="profile-meta-container d-flex justify-content-between">
+            <div class="d-flex align-items-end mb-3">
+                <!-- PROFILE IMAGE -->
+                <div class="profile-photo-wrapper" data-bs-toggle="modal" data-bs-target="#profileImageModal">
+                    <img src="@profileImg" alt="Profile" class="profile-photo shadow-sm" />
+                    <div class="profile-camera-icon shadow-sm">
+                        <i class="bi bi-camera-fill fs-5"></i>
+                    </div>
+                </div>
+
+                <!-- NAME & BIO -->
+                <div class="pb-2">
+                    <h1 class="fw-bold mb-0 text-dark">@Model.UserName</h1>
+                    @if (!string.IsNullOrEmpty(Model.Bio))
+                    {
+                        <p class="text-secondary mt-1 mb-0 fs-5">@Model.Bio</p>
+                    }
+                </div>
+            </div>
+
+            <!-- EDIT ACTION -->
+            <div class="pb-4">
+                <button class="btn btn-light fw-bold shadow-sm" style="background-color:#e4e6eb;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <i class="bi bi-pencil-fill me-1"></i> Edit Profile
+                </button>
+            </div>
+        </div>
+
+        <hr class="mt-2 mx-4">
+    </div>
+
+    <!-- MAIN CONTENT (INFO & POSTS) -->
+    <div class="row mx-auto mt-3" style="max-width: 900px;">
+
+        <!-- LEFT COLUMN (INFO) -->
+        <div class="col-md-5 ps-0 pr-md-2 mb-3">
+            <div class="info-card p-3">
+                <h4 class="fw-bold mb-3 details-title">Personal Details</h4>
+
+                @if (!string.IsNullOrEmpty(Model.Location))
+                {
+                    <div class="info-item">
+                        <i class="bi bi-house-door-fill info-icon"></i>
+                        <span>Lives in <strong>@Model.Location</strong></span>
+                    </div>
+                }
+
+                @if (Model.DateOfBirth.HasValue)
+                {
+                    <div class="info-item">
+                        <i class="bi bi-gift-fill info-icon"></i>
+                        <span>Born on <strong>@Model.DateOfBirth.Value.ToString("MMMM dd, yyyy")</strong></span>
+                    </div>
+                }
+
+                @if (Model.Gender != null)
+                {
+                    <div class="info-item">
+                        <i class="bi bi-person-fill info-icon"></i>
+                        <span>Gender: <strong>@Model.Gender</strong></span>
+                    </div>
+                }
+
+                @if (string.IsNullOrEmpty(Model.Location) && !Model.DateOfBirth.HasValue && Model.Gender == null)
+                {
+                    <p class="text-muted text-center mt-2">No personal details provided yet.</p>
+                }
+
+                <!--  Info -->
+                <button class="btn w-100 fw-bold mt-2" style="background-color:#e4e6eb; color: #050505;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    Edit Details
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN (POSTS AREA) -->
+        <div class="col-md-7 pe-0">
+            <div class="info-card p-4 text-center text-muted border border-light">
+                <i class="bi bi-card-text fs-1 mb-2 text-secondary"></i>
+                <h5 class="fw-bold text-dark">Posts</h5>
+                <p>You haven't posted anything yet.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+<!-- EDIT PROFILE MODAL -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog border-0 shadow-lg">
+        <!--  asp-controller="Profile"  -->
+        <form asp-action="Update" asp-controller="Profile" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark">Edit Personal Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+               
+                <label class="form-label text-muted small fw-bold">Name</label>
+                <input name="UserName" value="@Model.UserName" class="form-control mb-1" placeholder="Your Name" required />
+  
+                @Html.ValidationMessage("UserName", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
+
+                <label class="form-label text-muted small fw-bold">Bio</label>
+                <input name="Bio" value="@Model.Bio" class="form-control mb-3" placeholder="Describe yourself..." />
+
+                <label class="form-label text-muted small fw-bold">Location</label>
+                <input name="Location" value="@Model.Location" class="form-control mb-3" placeholder="Your City" />
+
+                <label class="form-label text-muted small fw-bold">Birthday</label>
+                <!-- yyyy-MM-dd -->
+                <input name="DateOfBirth" value="@(Model.DateOfBirth?.ToString("yyyy-MM-dd"))" type="date" class="form-control mb-3" />
+
+                <label class="form-label text-muted small fw-bold">Gender</label>
+                <select name="Gender" class="form-select mb-2">
+                    <option value="">Select Gender</option>
+                    @if (Model.Gender == SocialMedia.Domain.Enums.Gender.Male)
+                    {
+                        <option value="1" selected>Male</option>
+                        <option value="2">Female</option>
+                    }
+                    else if (Model.Gender == SocialMedia.Domain.Enums.Gender.Female)
+                    {
+                        <option value="1">Male</option>
+                        <option value="2" selected>Female</option>
+                    }
+                    else
+                    {
+                        <option value="1">Male</option>
+                        <option value="2">Female</option>
+                    }
+                </select>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- PROFILE IMAGE MODAL -->
+<div class="modal fade" id="profileImageModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content p-3 text-center">
+            <h5 class="fw-bold mb-3 text-dark">Profile Picture</h5>
+            <form asp-action="UploadProfileImage" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="file" name="image" class="form-control mb-2" required />
+                @Html.ValidationMessage("ProfileImage", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
+
+                <button type="submit" class="btn btn-primary w-100 fw-bold mb-2">Upload New Picture</button>
+            </form>
+            <form asp-action="RemoveProfileImage" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-light text-danger fw-bold w-100 border">Remove Picture</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- COVER IMAGE MODAL -->
+<div class="modal fade" id="coverModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content p-3 text-center">
+            <h5 class="fw-bold mb-3 text-dark">Cover Photo</h5>
+            <form asp-action="UploadCover" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="file" name="image" class="form-control mb-2" required />
+                @Html.ValidationMessage("CoverImage", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
+
+                <button type="submit" class="btn btn-primary w-100 fw-bold mb-2">Upload New Cover</button>
+            </form>
+            <form asp-action="RemoveCover" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-light text-danger fw-bold w-100 border">Remove Cover</button>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+   
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            @if (ViewBag.ShowEditModal == true)
+            {
+                <text>
+                var editModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+                editModal.show();
+                </text>
+            }
+
+            @if (ViewBag.ShowProfileImageModal == true)
+            {
+                <text>
+                var profileImgModal = new bootstrap.Modal(document.getElementById('profileImageModal'));
+                profileImgModal.show();
+                </text>
+            }
+
+            @if (ViewBag.ShowCoverModal == true)
+            {
+                    <text>
+                    var coverModal = new bootstrap.Modal(document.getElementById('coverModal'));
+                    coverModal.show();
+                    </text>
+            }
+
+        });
+    </script>
+}

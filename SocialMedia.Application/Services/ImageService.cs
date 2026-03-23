@@ -42,5 +42,20 @@ namespace SocialMedia.Application.Services
 
             return "/images/" + fileName;
         }
+        public void DeleteImageAsync(string imagePath)
+        {
+            if (string.IsNullOrEmpty(imagePath) || imagePath == "/images/user.jpg" || imagePath == "/images/coverImage.png")
+            {
+                return; 
+            }
+
+            var pathWithoutSlash = imagePath.TrimStart('/');
+            var fullPath = Path.Combine(_env.WebRootPath, pathWithoutSlash);
+
+            if (System.IO.File.Exists(fullPath))
+            {
+                System.IO.File.Delete(fullPath);
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -86,10 +86,11 @@ namespace SocialMedia.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Suggestions()
+        [HttpGet]
+        public async Task<IActionResult> Suggestions(int pageNumber = 1)
         {
             var userId = GetUserId();
-            var suggestions = await _friendshipService.GetFriendSuggestionsAsync(userId);
+            var suggestions = await _friendshipService.GetFriendSuggestionsAsync(userId, pageNumber);
             return View(suggestions);
         }
     }

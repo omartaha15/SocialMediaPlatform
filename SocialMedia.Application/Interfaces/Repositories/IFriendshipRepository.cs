@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SocialMedia.Application.Interfaces
+namespace SocialMedia.Application.Interfaces.Repositories
 {
     public interface IFriendshipRepository : IGenericRepository<FriendShip>
     {

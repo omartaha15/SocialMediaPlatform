@@ -1,6 +1,6 @@
 using SocialMedia.Domain.Entities;
 
-namespace SocialMedia.Application.Interfaces
+namespace SocialMedia.Application.Interfaces.Repositories
 {
     /// <summary>
     /// Custom query methods for direct messages.

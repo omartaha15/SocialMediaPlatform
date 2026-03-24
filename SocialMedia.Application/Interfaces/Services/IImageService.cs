@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-namespace SocialMedia.Application.Interfaces
+namespace SocialMedia.Application.Interfaces.Services
 {
     public interface IImageService
     {

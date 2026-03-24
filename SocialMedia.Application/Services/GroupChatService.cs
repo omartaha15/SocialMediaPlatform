@@ -1,5 +1,6 @@
 using SocialMedia.Application.DTOs.GroupChatDTOs;
 using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Domain.Enums;
 

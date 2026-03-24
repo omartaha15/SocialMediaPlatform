@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Repositories;
+using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Application.Services;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Infrastructure.Data;

@@ -1,5 +1,6 @@
 using SocialMedia.Application.DTOs.ChatDTOs;
 using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
 
 namespace SocialMedia.Application.Services

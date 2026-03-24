@@ -2,11 +2,15 @@ using Microsoft.AspNetCore.Identity;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Domain.Enums;
+using SocialMedia.Application.DTOs.Pagination;
+using SocialMedia.Application.DTOs.ProfileDTOs;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SocialMedia.Application.Interfaces.Services;
+using SocialMedia.Application.Interfaces.Repositories;
 
 namespace SocialMedia.Application.Services
 {
@@ -89,24 +93,58 @@ namespace SocialMedia.Application.Services
             return senders!;
         }
 
-        public async Task<IEnumerable<ApplicationUser>> GetFriendSuggestionsAsync(string userId, int limit = 10)
+        public async Task<IEnumerable<ApplicationUser>> GetSentRequestsListAsync(string userId)
         {
-            // Get all friendships (both accepted and pending)
-            var allFriendships = await _friendshipRepository.GetAllAsync();
-            var userFriendships = allFriendships.Where(f => f.SenderId == userId || f.ReceiverId == userId);
-            
-            // Extract the IDs of the people involved
-            var friendIds = userFriendships
-                .Select(f => f.SenderId == userId ? f.ReceiverId : f.SenderId)
-                .ToHashSet();
-            
-            // Query for users that aren't the current user and aren't in the friendIds hashset
-            var suggestions = await _userManager.Users
-                .Where(u => u.Id != userId && !friendIds.Contains(u.Id))
-                .Take(limit)
-                .ToListAsync();
+            var friendships = await _friendshipRepository.GetSentRequestsForUserAsync(userId);
 
-            return suggestions;
+            var receivers = friendships.Select(f => f.Receiver)
+                .Where(u => u != null)
+                .ToList();
+
+            return receivers!;
+        }
+
+        public async Task<PaginatedList<UserSuggestionDto>> GetFriendSuggestionsAsync(string userId, int pageNumber = 1, int pageSize = 10)
+        {
+            // Get current friends (Accepted)
+            var currentFriends = await _friendshipRepository.GetFriendsForUserAsync(userId);
+            var currentFriendsIds = currentFriends
+                .Select(f => f.SenderId == userId ? f.ReceiverId : f.SenderId)
+                .ToList();
+
+            // Get pending requests
+            var pendingRequests = await _friendshipRepository.GetPendingRequestsForUserAsync(userId);
+            var pendingIds = pendingRequests
+                .Select(f => f.SenderId == userId ? f.ReceiverId : f.SenderId)
+                .ToList();
+
+            // Build the excluded list
+            var excludedIds = new HashSet<string>(currentFriendsIds.Concat(pendingIds));
+            excludedIds.Add(userId); // exclude self
+            
+            // Query for suggestions (mutual friends prioritization handled in DB)
+            var query = _userManager.Users
+                .Where(u => !excludedIds.Contains(u.Id) && 
+                            !u.ReceivedFriendRequests.Any(f => f.SenderId == userId) && 
+                            !u.SentFriendRequests.Any(f => f.ReceiverId == userId))
+                .Select(u => new UserSuggestionDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    ProfilePictureUrl = u.ProfilePictureUrl,
+                    Location = u.Location,
+                    MutualFriendsCount = u.SentFriendRequests
+                        .Count(f => f.Status == FriendShipStatus.Accepted && currentFriendsIds.Contains(f.ReceiverId))
+                        + u.ReceivedFriendRequests
+                        .Count(f => f.Status == FriendShipStatus.Accepted && currentFriendsIds.Contains(f.SenderId))
+                })
+                .OrderByDescending(u => u.MutualFriendsCount)
+                .ThenBy(u => u.Id);
+
+            var count = await query.CountAsync();
+            var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return new PaginatedList<UserSuggestionDto>(items, count, pageNumber, pageSize);
         }
 
         public async Task<int> GetFriendsCountAsync(string userId)

@@ -1,5 +1,6 @@
 using SocialMedia.Application.DTOs.GroupChatDTOs;
 using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Domain.Enums;
 
@@ -23,18 +24,18 @@ namespace SocialMedia.Application.Services
         {
             var group = new Group
             {
-                Name        = dto.Name,
+                Name = dto.Name,
                 Description = dto.Description,
-                CreatedAt   = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
 
             await _uow.GroupChats.AddAsync(group);
 
             await _uow.GroupChats.AddMemberAsync(new GroupMember
             {
-                GroupId   = group.Id,
-                UserId    = creatorId,
-                Role      = GroupRole.Admin,
+                GroupId = group.Id,
+                UserId = creatorId,
+                Role = GroupRole.Admin,
                 CreatedAt = DateTime.UtcNow
             });
 
@@ -70,9 +71,9 @@ namespace SocialMedia.Application.Services
 
             await _uow.GroupChats.AddMemberAsync(new GroupMember
             {
-                GroupId   = groupId,
-                UserId    = targetUserId,
-                Role      = GroupRole.Member,
+                GroupId = groupId,
+                UserId = targetUserId,
+                Role = GroupRole.Member,
                 CreatedAt = DateTime.UtcNow
             });
 
@@ -109,10 +110,10 @@ namespace SocialMedia.Application.Services
             var members = await _uow.GroupChats.GetAllMembersAsync(groupId);
             return members.Select(gm => new GroupMemberDto
             {
-                UserId         = gm.UserId,
-                UserName       = gm.User?.UserName ?? "Unknown",
+                UserId = gm.UserId,
+                UserName = gm.User?.UserName ?? "Unknown",
                 ProfilePicture = gm.User?.ProfilePictureUrl,
-                Role           = gm.Role.ToString()
+                Role = gm.Role.ToString()
             });
         }
 
@@ -124,9 +125,9 @@ namespace SocialMedia.Application.Services
 
             var msg = new GroupMessages
             {
-                GroupId   = dto.GroupId,
-                SenderId  = senderId,
-                Content   = dto.Content,
+                GroupId = dto.GroupId,
+                SenderId = senderId,
+                Content = dto.Content,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -138,13 +139,13 @@ namespace SocialMedia.Application.Services
 
             return new GroupMessageDto
             {
-                Id                   = msg.Id,
-                Content              = msg.Content,
-                CreatedAt            = msg.CreatedAt,
-                SenderId             = msg.SenderId,
-                SenderName           = sender?.UserName ?? "Unknown",
+                Id = msg.Id,
+                Content = msg.Content,
+                CreatedAt = msg.CreatedAt,
+                SenderId = msg.SenderId,
+                SenderName = sender?.UserName ?? "Unknown",
                 SenderProfilePicture = sender?.ProfilePictureUrl,
-                GroupId              = msg.GroupId
+                GroupId = msg.GroupId
             };
         }
 
@@ -157,13 +158,13 @@ namespace SocialMedia.Application.Services
 
             return messages.Select(m => new GroupMessageDto
             {
-                Id                   = m.Id,
-                Content              = m.Content,
-                CreatedAt            = m.CreatedAt,
-                SenderId             = m.SenderId,
-                SenderName           = m.Sender?.UserName ?? "Unknown",
+                Id = m.Id,
+                Content = m.Content,
+                CreatedAt = m.CreatedAt,
+                SenderId = m.SenderId,
+                SenderName = m.Sender?.UserName ?? "Unknown",
                 SenderProfilePicture = m.Sender?.ProfilePictureUrl,
-                GroupId              = m.GroupId
+                GroupId = m.GroupId
             });
         }
 
@@ -174,12 +175,12 @@ namespace SocialMedia.Application.Services
         // ── Mapper ────────────────────────────────────────────────────────────
         private static GroupDto MapToGroupDto(Group g, int memberCount) => new()
         {
-            Id          = g.Id,
-            Name        = g.Name,
+            Id = g.Id,
+            Name = g.Name,
             Description = g.Description,
-            ImageUrl    = g.ImageUrl,
+            ImageUrl = g.ImageUrl,
             MemberCount = memberCount,
-            CreatedAt   = g.CreatedAt
+            CreatedAt = g.CreatedAt
         };
     }
 }

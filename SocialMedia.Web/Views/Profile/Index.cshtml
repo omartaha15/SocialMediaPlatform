@@ -1,4 +1,4 @@
-﻿@model SocialMedia.Application.DTOs.ProfileDTOs.ProfileDto
+@model SocialMedia.Application.DTOs.ProfileDTOs.ProfileDto
 
 @{
     ViewData["Title"] = Model.UserName + " - Profile";
@@ -141,25 +141,34 @@
         <!-- COVER -->
         <div class="cover-photo-container">
             <img src="@coverImg" alt="Cover" class="cover-photo" />
-            <button class="btn btn-light edit-cover-btn shadow-sm" data-bs-toggle="modal" data-bs-target="#coverModal">
-                <i class="bi bi-camera-fill me-1"></i> Edit Cover Photo
-            </button>
+            @if (ViewBag.IsOwner == true)
+            {
+                <button class="btn btn-light edit-cover-btn shadow-sm" data-bs-toggle="modal" data-bs-target="#coverModal">
+                    <i class="bi bi-camera-fill me-1"></i> Edit Cover Photo
+                </button>
+            }
         </div>
 
         <!-- PROFILE META (Image + Name + Bio) -->
         <div class="profile-meta-container d-flex justify-content-between">
             <div class="d-flex align-items-end mb-3">
                 <!-- PROFILE IMAGE -->
-                <div class="profile-photo-wrapper" data-bs-toggle="modal" data-bs-target="#profileImageModal">
+                <div class="profile-photo-wrapper" @if(ViewBag.IsOwner == true) { <text>data-bs-toggle="modal" data-bs-target="#profileImageModal"</text> }>
                     <img src="@profileImg" alt="Profile" class="profile-photo shadow-sm" />
-                    <div class="profile-camera-icon shadow-sm">
-                        <i class="bi bi-camera-fill fs-5"></i>
-                    </div>
+                    @if (ViewBag.IsOwner == true)
+                    {
+                        <div class="profile-camera-icon shadow-sm">
+                            <i class="bi bi-camera-fill fs-5"></i>
+                        </div>
+                    }
                 </div>
 
                 <!-- NAME & BIO -->
                 <div class="pb-2">
                     <h1 class="fw-bold mb-0 text-dark">@Model.UserName</h1>
+                    <a asp-controller="Friendship" asp-action="Index" class="text-decoration-none text-muted fw-bold mt-1 mb-2 d-inline-block">
+                        @ViewBag.FriendsCount Friends
+                    </a>
                     @if (!string.IsNullOrEmpty(Model.Bio))
                     {
                         <p class="text-secondary mt-1 mb-0 fs-5">@Model.Bio</p>
@@ -169,9 +178,12 @@
 
             <!-- EDIT ACTION -->
             <div class="pb-4">
-                <button class="btn btn-light fw-bold shadow-sm" style="background-color:#e4e6eb;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                    <i class="bi bi-pencil-fill me-1"></i> Edit Profile
-                </button>
+                @if (ViewBag.IsOwner == true)
+                {
+                    <button class="btn btn-light fw-bold shadow-sm" style="background-color:#e4e6eb;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="bi bi-pencil-fill me-1"></i> Edit Profile
+                    </button>
+                }
             </div>
         </div>
 
@@ -215,10 +227,13 @@
                     <p class="text-muted text-center mt-2">No personal details provided yet.</p>
                 }
 
-                <!--  Info -->
-                <button class="btn w-100 fw-bold mt-2" style="background-color:#e4e6eb; color: #050505;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                    Edit Details
-                </button>
+                @if (ViewBag.IsOwner == true)
+                {
+                    <!--  Info -->
+                    <button class="btn w-100 fw-bold mt-2" style="background-color:#e4e6eb; color: #050505;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        Edit Details
+                    </button>
+                }
             </div>
         </div>
 

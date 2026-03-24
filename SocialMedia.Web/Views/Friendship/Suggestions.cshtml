@@ -1,44 +1,91 @@
-@using SocialMedia.Domain.Entities
-@model IEnumerable<ApplicationUser>
+@using SocialMedia.Application.DTOs.Pagination
+@using SocialMedia.Application.DTOs.ProfileDTOs
+@model PaginatedList<UserSuggestionDto>
 
 @{
-    ViewData["Title"] = "Friend Suggestions";
+    ViewData["Title"] = "Discover Friends";
 }
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5" style="max-width: 1000px;">
+    <!-- Main Content -->
     <div class="row">
-        <div class="col-md-8 mx-auto">
-            <h2>Suggest Friends</h2>
-            <hr />
-
-            @if (!Model.Any())
+        <div class="col-12">
+            <h4 class="mb-4 fw-bold text-fb-primary border-bottom pb-3">People You May Know</h4>
+            
+            @if (!Model.Items.Any())
             {
-                <div class="alert alert-info">No new friend suggestions at this time.</div>
+                <div class="fb-card text-center p-5">
+                    <i class="fas fa-search-minus fa-4x text-fb-muted mb-4 opacity-50"></i>
+                    <h5 class="fw-bold mb-3 text-fb-primary">No Suggestions Available</h5>
+                    <p class="text-fb-muted mb-0">Check back later when you've expanded your network!</p>
+                </div>
             }
             else
             {
-                <div class="list-group">
-                    @foreach (var suggestion in Model)
+                <div class="row g-3">
+                    @foreach (var suggestion in Model.Items)
                     {
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <img src="@suggestion.ProfilePictureUrl" alt="@suggestion.UserName" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" />
-                                <div>
-                                    <h5 class="mb-0">@suggestion.UserName</h5>
-                                    <small class="text-muted">@suggestion.Location</small>
+                        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                            <div class="fb-card h-100 d-flex flex-column align-items-center text-center overflow-hidden">
+                                <a asp-controller="Profile" asp-action="Index" asp-route-id="@suggestion.Id" class="text-decoration-none w-100 d-flex flex-column align-items-center">
+                                    <img src="@suggestion.ProfilePictureUrl" alt="@suggestion.UserName" style="width: 100%; height: 160px; object-fit: cover;" />
+                                    <div class="p-3 w-100 d-flex flex-column flex-grow-1">
+                                        <h6 class="fw-bold text-fb-primary mb-1 text-truncate w-100">@suggestion.UserName</h6>
+                                        
+                                        <div style="min-height: 20px;" class="mb-3 w-100">
+                                            @if(suggestion.MutualFriendsCount > 0)
+                                            {
+                                                <small class="text-fb-muted d-block fw-semibold text-truncate">@suggestion.MutualFriendsCount mutual friends</small>
+                                            }
+                                            else if (!string.IsNullOrEmpty(suggestion.Location))
+                                            {
+                                                <small class="text-fb-muted d-block text-truncate">@suggestion.Location</small>
+                                            }
+                                        </div>
+                                    </div>
+                                </a>
+                                
+                                <div class="px-3 pb-3 mt-auto w-100">
+                                    <form asp-controller="Friendship" asp-action="SendRequest" method="post" class="w-100">
+                                        <input type="hidden" name="receiverId" value="@suggestion.Id" />
+                                        <button type="submit" class="btn btn-fb-secondary w-100 fw-bold">
+                                            <i class="fas fa-user-plus me-1"></i> Add Friend
+                                        </button>
+                                    </form>
                                 </div>
-                            </div>
-                            <!-- Actions -->
-                            <div class="d-flex gx-2">
-                                <form asp-controller="Friendship" asp-action="SendRequest" method="post" class="d-inline ms-2">
-                                    <input type="hidden" name="receiverId" value="@suggestion.Id" />
-                                    <button type="submit" class="btn btn-primary btn-sm px-3">Add Friend</button>
-                                </form>
                             </div>
                         </div>
                     }
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="d-flex justify-content-between align-items-center mt-4 fb-card p-3">
+                    <div class="text-fb-muted fw-bold">
+                        Page <span class="text-fb-primary">@Model.PageIndex</span> of @Model.TotalPages
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if (Model.HasPreviousPage)
+                        {
+                            <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex - 1)" class="btn btn-fb-secondary btn-sm px-3 fw-bold">&laquo; Previous</a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-fb-secondary btn-sm px-3 opacity-50 fw-bold" disabled>&laquo; Previous</button>
+                        }
+
+                        @if (Model.HasNextPage)
+                        {
+                            <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex + 1)" class="btn btn-fb-secondary btn-sm px-3 fw-bold">Next &raquo;</a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-fb-secondary btn-sm px-3 opacity-50 fw-bold" disabled>Next &raquo;</button>
+                        }
+                    </div>
                 </div>
             }
         </div>
     </div>
 </div>
+
+

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Repositories;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Domain.Enums;
 using SocialMedia.Infrastructure.Data;
@@ -38,6 +38,14 @@ namespace SocialMedia.Infrastructure.Repositories
             return await _context.Set<FriendShip>()
                 .Include(f => f.Sender)
                 .Where(f => f.ReceiverId == userId && f.Status == FriendShipStatus.pending)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<FriendShip>> GetSentRequestsForUserAsync(string userId)
+        {
+            return await _context.Set<FriendShip>()
+                .Include(f => f.Receiver)
+                .Where(f => f.SenderId == userId && f.Status == FriendShipStatus.pending)
                 .ToListAsync();
         }
 

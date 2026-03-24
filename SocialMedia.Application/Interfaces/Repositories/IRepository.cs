@@ -1,6 +1,6 @@
 using SocialMedia.Domain.Common;
 
-namespace SocialMedia.Application.Interfaces;
+namespace SocialMedia.Application.Interfaces.Repositories;
 
 /// <summary>
 /// Generic repository interface for CRUD operations.

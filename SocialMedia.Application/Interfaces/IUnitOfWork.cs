@@ -1,3 +1,4 @@
+using SocialMedia.Application.Interfaces.Repositories;
 using SocialMedia.Domain.Common;
 using SocialMedia.Domain.Entities;
 

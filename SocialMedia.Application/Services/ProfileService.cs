@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using SocialMedia.Application.DTOs.ProfileDTOs;
-using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
 using System;
 using System.Collections.Generic;

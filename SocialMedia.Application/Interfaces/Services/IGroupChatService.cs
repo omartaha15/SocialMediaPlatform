@@ -1,6 +1,6 @@
 using SocialMedia.Application.DTOs.GroupChatDTOs;
 
-namespace SocialMedia.Application.Interfaces
+namespace SocialMedia.Application.Interfaces.Services
 {
     public interface IGroupChatService
     {

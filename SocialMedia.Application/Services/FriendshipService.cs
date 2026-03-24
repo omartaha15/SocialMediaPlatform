@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SocialMedia.Application.Interfaces.Services;
+using SocialMedia.Application.Interfaces.Repositories;
 
 namespace SocialMedia.Application.Services
 {

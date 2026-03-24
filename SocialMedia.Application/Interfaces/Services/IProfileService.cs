@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SocialMedia.Application.Interfaces
+namespace SocialMedia.Application.Interfaces.Services
 {
     public interface IProfileService
     {

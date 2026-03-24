@@ -2,7 +2,7 @@ using SocialMedia.Domain.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SocialMedia.Application.Interfaces
+namespace SocialMedia.Application.Interfaces.Services
 {
     public interface IFriendshipService
     {

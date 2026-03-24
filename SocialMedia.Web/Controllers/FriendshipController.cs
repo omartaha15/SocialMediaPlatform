@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
 using System.Security.Claims;
 using System.Threading.Tasks;

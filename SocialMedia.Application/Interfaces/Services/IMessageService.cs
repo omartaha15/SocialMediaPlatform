@@ -1,6 +1,6 @@
 using SocialMedia.Application.DTOs.ChatDTOs;
 
-namespace SocialMedia.Application.Interfaces
+namespace SocialMedia.Application.Interfaces.Services
 {
     public interface IMessageService
     {

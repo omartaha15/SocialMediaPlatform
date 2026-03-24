@@ -15,10 +15,54 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SocialMedia.Web.styles.css" asp-append-version="true" />
+    <style>
+        body {
+            background-color: #18191a;
+            color: #e4e6eb;
+            font-family: inherit;
+        }
+        .navbar-fb {
+            background-color: #242526 !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid #393a3b;
+        }
+        .navbar-fb .nav-link { color: #b0b3b8 !important; font-weight: 600; padding: 0.5rem 1rem; margin: 0 0.2rem; }
+        .navbar-fb .nav-link:hover, .navbar-fb .nav-link.active { color: #2d88ff !important; background-color: #3a3b3c; border-radius: 8px; }
+        .navbar-fb .navbar-brand { color: #2d88ff !important; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.5px; }
+
+        .fb-card {
+            background: #242526;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            border: 1px solid #393a3b;
+        }
+        .btn-fb-primary {
+            background-color: #2d88ff;
+            color: white !important;
+            border: none;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .btn-fb-primary:hover { background-color: #1475eb; }
+        .btn-fb-secondary {
+            background-color: #3a3b3c;
+            color: #e4e6eb !important;
+            border: none;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .btn-fb-secondary:hover { background-color: #4e4f50; }
+        .text-fb-muted { color: #b0b3b8 !important; }
+        .text-fb-primary { color: #e4e6eb !important; }
+        .border, .border-bottom { border-color: #393a3b !important; }
+        .list-group-item { background-color: transparent !important; border-color: #393a3b !important; color: inherit; }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-md navbar-dark fixed-top">
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-fb py-2">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
                     <i class="fas fa-comments me-2"></i>SocialConnect
@@ -52,6 +96,16 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
                                     <i class="fas fa-home me-1"></i> Home
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Friendship" asp-action="Index">
+                                    <i class="fas fa-user-friends me-1"></i> Friends
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Friendship" asp-action="Suggestions">
+                                    <i class="fas fa-compass me-1"></i> Discover
                                 </a>
                             </li>
                             <li class="nav-item">

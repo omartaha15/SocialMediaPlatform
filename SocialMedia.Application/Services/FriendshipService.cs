@@ -93,6 +93,17 @@ namespace SocialMedia.Application.Services
             return senders!;
         }
 
+        public async Task<IEnumerable<ApplicationUser>> GetSentRequestsListAsync(string userId)
+        {
+            var friendships = await _friendshipRepository.GetSentRequestsForUserAsync(userId);
+
+            var receivers = friendships.Select(f => f.Receiver)
+                .Where(u => u != null)
+                .ToList();
+
+            return receivers!;
+        }
+
         public async Task<PaginatedList<UserSuggestionDto>> GetFriendSuggestionsAsync(string userId, int pageNumber = 1, int pageSize = 10)
         {
             // Get current friends (Accepted)
@@ -113,7 +124,9 @@ namespace SocialMedia.Application.Services
             
             // Query for suggestions (mutual friends prioritization handled in DB)
             var query = _userManager.Users
-                .Where(u => !excludedIds.Contains(u.Id))
+                .Where(u => !excludedIds.Contains(u.Id) && 
+                            !u.ReceivedFriendRequests.Any(f => f.SenderId == userId) && 
+                            !u.SentFriendRequests.Any(f => f.ReceiverId == userId))
                 .Select(u => new UserSuggestionDto
                 {
                     Id = u.Id,

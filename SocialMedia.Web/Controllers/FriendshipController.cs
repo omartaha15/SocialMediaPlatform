@@ -86,10 +86,11 @@ namespace SocialMedia.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Suggestions()
+        [HttpGet]
+        public async Task<IActionResult> Suggestions(int pageNumber = 1)
         {
             var userId = GetUserId();
-            var suggestions = await _friendshipService.GetFriendSuggestionsAsync(userId);
+            var suggestions = await _friendshipService.GetFriendSuggestionsAsync(userId, pageNumber);
             return View(suggestions);
         }
     }

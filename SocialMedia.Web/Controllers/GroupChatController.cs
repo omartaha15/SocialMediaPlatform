@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.SignalR;
 using SocialMedia.Application.DTOs.GroupChatDTOs;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Web.Hubs;
+using SocialMedia.Web.ViewModels;
+using SocialMedia.Web.ViewModels.GroupChat;
 using System.Security.Claims;
 
 namespace SocialMedia.Web.Controllers
@@ -41,21 +43,19 @@ namespace SocialMedia.Web.Controllers
 
         // ── Create group — GET ────────────────────────────────────────────────
         [HttpGet]
-        public IActionResult Create()
-        {
-            return View(new CreateGroupDto());
-        }
+        public IActionResult Create() => View(new CreateGroupViewModel());
 
         // ── Create group — POST ───────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateGroupDto dto)
+        public async Task<IActionResult> Create(CreateGroupViewModel vm)
         {
-            if (!ModelState.IsValid) return View(dto);
+            if (!ModelState.IsValid) return View(vm);
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
+            var dto = new CreateGroupDto { Name = vm.Name, Description = vm.Description };
             var group = await _groupChatService.CreateGroupAsync(userId, dto);
             return RedirectToAction(nameof(Room), new { groupId = group.Id });
         }
@@ -75,16 +75,19 @@ namespace SocialMedia.Web.Controllers
 
             var history = await _groupChatService.GetGroupHistoryAsync(groupId);
             var members = await _groupChatService.GetMembersAsync(groupId);
-            var isAdmin = members.Any(m => m.UserId == userId && m.Role == "Admin");
             var unreadDMs = await _messageService.GetUnreadCountAsync(userId);
 
-            ViewBag.GroupId = groupId;
-            ViewBag.CurrentUserId = userId;
-            ViewBag.IsAdmin = isAdmin;
-            ViewBag.Members = members;
-            ViewBag.TotalUnread = unreadDMs;
+            var vm = new GroupRoomViewModel
+            {
+                Group = group,
+                History = history.ToList(),
+                Members = members.ToList(),
+                IsAdmin = members.Any(m => m.UserId == userId && m.Role == "Admin"),
+                CurrentUserId = userId
+            };
 
-            return View(history);
+            ViewBag.TotalUnread = unreadDMs;
+            return View(vm);
         }
 
         // ── Send a group message ──────────────────────────────────────────────

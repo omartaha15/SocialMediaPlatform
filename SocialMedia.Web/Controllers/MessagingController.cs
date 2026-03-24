@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.SignalR;
 using SocialMedia.Application.DTOs.ChatDTOs;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Web.Hubs;
+using SocialMedia.Web.ViewModels;
+using SocialMedia.Web.ViewModels.Chat;
 using System.Security.Claims;
 
 namespace SocialMedia.Web.Controllers
@@ -12,7 +14,7 @@ namespace SocialMedia.Web.Controllers
     public class MessagingController : Controller
     {
         private readonly IMessageService _messageService;
-        private readonly IHubContext<ChatHub> _hubContext;   
+        private readonly IHubContext<ChatHub> _hubContext;
 
         public MessagingController(
             IMessageService messageService,
@@ -32,24 +34,34 @@ namespace SocialMedia.Web.Controllers
             var conversations = await _messageService.GetConversationsAsync(userId);
             var unreadCount = await _messageService.GetUnreadCountAsync(userId);
 
-            ViewBag.TotalUnread = unreadCount;
-            return View(conversations);
+            var vm = new ConversationsViewModel
+            {
+                Conversations = conversations.ToList(),
+                TotalUnread = unreadCount
+            };
+
+            return View(vm);
         }
 
         // ── Open chat window with a specific user ─────────────────────────────
         [HttpGet]
-        public async Task<IActionResult> Chat(string otherUserId)
+        public async Task<IActionResult> Chat(string otherUserId, string otherUserName = "", string? otherUserProfilePicture = null)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
             var messages = await _messageService.GetChatHistoryAsync(userId, otherUserId);
-
-            // Mark all messages from the other user as read when the chat is opened
             await _messageService.MarkAsReadAsync(userId, otherUserId);
 
-            ViewBag.OtherUserId = otherUserId;
-            return View(messages);
+            var vm = new ChatViewModel
+            {
+                OtherUserId = otherUserId,
+                OtherUserName = otherUserName,
+                OtherUserProfilePicture = otherUserProfilePicture,
+                History = messages.ToList()
+            };
+
+            return View(vm);
         }
 
         // ── Send a direct message ─────────────────────────────────────────────
@@ -60,12 +72,7 @@ namespace SocialMedia.Web.Controllers
             var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (senderId == null) return Unauthorized();
 
-            var dto = new SendMessageDto
-            {
-                ReceiverId = receiverId,
-                Content = content
-            };
-
+            var dto = new SendMessageDto { ReceiverId = receiverId, Content = content };
             var message = await _messageService.SendMessageAsync(senderId, dto);
 
             await _hubContext.Clients
@@ -81,7 +88,7 @@ namespace SocialMedia.Web.Controllers
             return Json(message);
         }
 
-        // ── Mark all messages from a user as read ─────────────────────────────
+        // ── Mark messages as read ─────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkRead(string otherUserId)
@@ -93,7 +100,7 @@ namespace SocialMedia.Web.Controllers
             return Ok();
         }
 
-        // ── Unread count for the navbar badge ─────────────────────────────────
+        // ── Unread count for navbar badge ─────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> UnreadCount()
         {

@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using SocialMedia.Application.DTOs.GroupChatDTOs;
-using SocialMedia.Application.Interfaces;
+using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Web.Hubs;
 using System.Security.Claims;
 
@@ -35,18 +35,18 @@ namespace SocialMedia.Web.Controllers
             var groups = await _groupChatService.GetUserGroupsAsync(userId);
             var unreadDMs = await _messageService.GetUnreadCountAsync(userId);
 
-            ViewBag.TotalUnread = unreadDMs;   // keeps the navbar DM badge correct
+            ViewBag.TotalUnread = unreadDMs;
             return View(groups);
         }
 
-        // ── Create group — GET (show form) ────────────────────────────────────
+        // ── Create group — GET ────────────────────────────────────────────────
         [HttpGet]
         public IActionResult Create()
         {
             return View(new CreateGroupDto());
         }
 
-        // ── Create group — POST (save + redirect to room) ─────────────────────
+        // ── Create group — POST ───────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateGroupDto dto)
@@ -67,7 +67,6 @@ namespace SocialMedia.Web.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            // Guard — only members can enter the room
             if (!await _groupChatService.IsGroupMemberAsync(groupId, userId))
                 return Forbid();
 
@@ -76,10 +75,7 @@ namespace SocialMedia.Web.Controllers
 
             var history = await _groupChatService.GetGroupHistoryAsync(groupId);
             var members = await _groupChatService.GetMembersAsync(groupId);
-
-            // Check if current user is an admin so the view can show Add/Remove buttons
             var isAdmin = members.Any(m => m.UserId == userId && m.Role == "Admin");
-
             var unreadDMs = await _messageService.GetUnreadCountAsync(userId);
 
             ViewBag.GroupId = groupId;
@@ -88,7 +84,7 @@ namespace SocialMedia.Web.Controllers
             ViewBag.Members = members;
             ViewBag.TotalUnread = unreadDMs;
 
-            return View(history);   // IEnumerable<GroupMessageDto>
+            return View(history);
         }
 
         // ── Send a group message ──────────────────────────────────────────────
@@ -99,15 +95,9 @@ namespace SocialMedia.Web.Controllers
             var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (senderId == null) return Unauthorized();
 
-            var dto = new SendGroupMessageDto
-            {
-                GroupId = groupId,
-                Content = content
-            };
-
+            var dto = new SendGroupMessageDto { GroupId = groupId, Content = content };
             var message = await _groupChatService.SendGroupMessageAsync(senderId, dto);
 
-            // Push real-time to every member currently in the SignalR group room
             await _hubContext.Clients
                 .Group($"group_{groupId}")
                 .SendAsync("ReceiveGroupMessage", new
@@ -135,14 +125,8 @@ namespace SocialMedia.Web.Controllers
                 await _groupChatService.AddMemberAsync(groupId, requesterId, targetUserId);
                 return Ok();
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Forbid();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            catch (UnauthorizedAccessException) { return Forbid(); }
+            catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
         }
 
         // ── Remove a member (admin only) ──────────────────────────────────────
@@ -158,14 +142,8 @@ namespace SocialMedia.Web.Controllers
                 await _groupChatService.RemoveMemberAsync(groupId, requesterId, targetUserId);
                 return Ok();
             }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            catch (UnauthorizedAccessException) { return Forbid(); }
+            catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
         }
 
         // ── Leave a group ─────────────────────────────────────────────────────
@@ -181,10 +159,7 @@ namespace SocialMedia.Web.Controllers
                 await _groupChatService.LeaveGroupAsync(groupId, userId);
                 return RedirectToAction(nameof(Index));
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
         }
     }
 }

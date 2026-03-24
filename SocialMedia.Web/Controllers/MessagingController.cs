@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace SocialMedia.Web.Controllers
 {
-    [Authorize]  // ← applied once here, covers every action in the controller
+    [Authorize]
     public class MessagingController : Controller
     {
         private readonly IMessageService _messageService;

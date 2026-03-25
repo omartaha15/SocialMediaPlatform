@@ -11,20 +11,38 @@ namespace SocialMedia.Web.Controllers
     public class ProfileController : Controller
     {
         private readonly IProfileService _profileService;
+        private readonly IFriendshipService _friendshipService;
+        private readonly IPostService _postService;
 
-        public ProfileController(IProfileService profileService)
+        public ProfileController(
+            IProfileService profileService,
+            IFriendshipService friendshipService,
+            IPostService postService) // ✅ ADD THIS
         {
             _profileService = profileService;
+            _friendshipService = friendshipService;
+            _postService = postService; // ✅
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        public async Task<IActionResult> Index(string id = null)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
+            var loggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (loggedInUserId == null)
                 return RedirectToAction("Login", "Account");
 
-            var profile = await _profileService.GetProfileAsync(userId);
+            var targetUserId = string.IsNullOrEmpty(id) ? loggedInUserId : id;
+
+            var profile = await _profileService.GetProfileAsync(targetUserId);
+            if (profile == null) return NotFound();
+
+
+            var posts = await _postService.GetPostsByUserIdAsync(Guid.Parse(targetUserId)); ViewBag.UserPosts = posts;
+
+            ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(targetUserId);
+            ViewBag.IsOwner = (loggedInUserId == targetUserId);
+
             return View(profile);
         }
 

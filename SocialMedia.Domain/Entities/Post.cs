@@ -13,8 +13,8 @@ namespace SocialMedia.Domain.Entities
         public string? ImageUrl { get; set; }
 
         public string UserId { get; set; } = string.Empty;
-        public virtual ApplicationUser? Creator { get; set; }
-        public virtual ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
-         public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public virtual ApplicationUser ? Creator { get; set; }
+        public virtual ICollection<Reaction> ? Reactions { get; set; } = new List<Reaction>();
+         public virtual ICollection<Comment> ? Comments { get; set; } = new List<Comment>();
     }
 }

@@ -1,0 +1,395 @@
+@model SocialMedia.Web.ViewModels.GroupChat.GroupRoomViewModel
+
+@{
+    ViewData["Title"] = Model.Group.Name;
+}
+
+<style>
+    .room-wrapper {
+        max-width: 960px;
+        margin: 0 auto;
+        display: flex;
+        gap: 1rem;
+        height: calc(100vh - 130px);
+    }
+
+    /* ── Chat panel ── */
+    .chat-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .chat-header {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .group-avatar {
+        width: 38px; height: 38px;
+        border-radius: var(--radius-sm);
+        background: var(--gradient-primary);
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 1rem; flex-shrink: 0;
+    }
+
+    .chat-header-name { font-weight: 700; color: var(--text-primary); }
+    .chat-header-sub  { font-size: 0.75rem; color: var(--text-muted); }
+
+    .chat-back {
+        margin-left: auto;
+        color: var(--text-muted); font-size: 0.85rem;
+        text-decoration: none; transition: var(--transition);
+    }
+    .chat-back:hover { color: var(--accent); }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.25rem;
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .bubble-row { display: flex; align-items: flex-end; gap: 0.5rem; }
+    .bubble-row.sent { flex-direction: row-reverse; }
+
+    .bubble {
+        max-width: 65%;
+        padding: 0.6rem 0.95rem;
+        border-radius: var(--radius-lg);
+        font-size: 0.9rem;
+        line-height: 1.45;
+        word-break: break-word;
+    }
+    .bubble.sent     { background: var(--gradient-primary); color: white; border-bottom-right-radius: 4px; }
+    .bubble.received { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
+
+    .bubble-sender { font-size: 0.72rem; color: var(--accent); font-weight: 600; margin-bottom: 2px; }
+    .bubble-time   { font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; margin-bottom: 4px; }
+
+    .chat-input-area {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-top: none;
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+        padding: 0.85rem 1rem;
+        display: flex;
+        gap: 0.65rem;
+        align-items: center;
+    }
+
+    #msgInput {
+        flex: 1;
+        background: var(--bg-input);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        color: var(--text-primary);
+        padding: 0.6rem 1.1rem;
+        font-size: 0.9rem;
+        outline: none;
+        transition: var(--transition);
+    }
+    #msgInput:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    #sendBtn {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: var(--gradient-primary);
+        border: none; color: white;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; flex-shrink: 0;
+        transition: var(--transition);
+    }
+    #sendBtn:hover { transform: scale(1.08); box-shadow: var(--shadow-glow); }
+
+    /* ── Members sidebar ── */
+    .members-panel {
+        width: 240px;
+        flex-shrink: 0;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .members-header {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.88rem;
+    }
+
+    .members-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
+
+    .member-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.6rem;
+        border-radius: var(--radius-sm);
+        transition: var(--transition);
+    }
+    .member-item:hover { background: var(--bg-glass); }
+
+    .member-avatar {
+        width: 32px; height: 32px;
+        border-radius: 50%; object-fit: cover;
+        border: 2px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .member-name { font-size: 0.83rem; color: var(--text-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge-admin  { background: var(--gradient-primary); color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 999px; }
+    .badge-member { background: var(--bg-glass); color: var(--text-muted); font-size: 0.65rem; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--border-color); }
+
+    .remove-btn { background: none; border: none; color: var(--danger); font-size: 0.75rem; cursor: pointer; padding: 2px 4px; border-radius: 4px; opacity: 0.7; transition: var(--transition); }
+    .remove-btn:hover { opacity: 1; background: rgba(239,68,68,0.1); }
+
+    .members-footer {
+        padding: 0.75rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .add-member-input {
+        background: var(--bg-input);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        padding: 0.45rem 0.75rem;
+        font-size: 0.8rem;
+        width: 100%;
+        margin-bottom: 0.4rem;
+        outline: none;
+    }
+    .add-member-input:focus { border-color: var(--accent); }
+
+    .leave-btn {
+        width: 100%;
+        background: rgba(239,68,68,0.1);
+        border: 1px solid rgba(239,68,68,0.3);
+        color: var(--danger);
+        border-radius: var(--radius-sm);
+        padding: 0.45rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    .leave-btn:hover { background: rgba(239,68,68,0.2); }
+
+    @@media (max-width: 640px) {
+        .room-wrapper { flex-direction: column; }
+        .members-panel { width: 100%; height: 180px; }
+    }
+</style>
+
+@{
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var groupIdStr    = Model.Group.Id.ToString();
+}
+
+<div class="room-wrapper">
+
+    <!-- ── Chat Panel ── -->
+    <div class="chat-panel">
+        <div class="chat-header">
+            <div class="group-avatar"><i class="fas fa-users"></i></div>
+            <div>
+                <div class="chat-header-name">@Model.Group.Name</div>
+                <div class="chat-header-sub">@Model.Group.MemberCount member@(Model.Group.MemberCount != 1 ? "s" : "")</div>
+            </div>
+            <a class="chat-back" asp-controller="GroupChat" asp-action="Index">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+        </div>
+
+        <div class="chat-messages" id="messagesContainer">
+            @foreach (var msg in Model.History)
+            {
+                var isSent = msg.SenderId == currentUserId;
+                <div class="bubble-row @(isSent ? "sent" : "received")">
+                    <span class="bubble-time">@msg.CreatedAt.ToString("HH:mm")</span>
+                    <div>
+                        @if (!isSent)
+                        {
+                            <div class="bubble-sender">@msg.SenderName</div>
+                        }
+                        <div class="bubble @(isSent ? "sent" : "received")">@msg.Content</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
+            <button id="sendBtn" title="Send"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- ── Members Panel ── -->
+    <div class="members-panel">
+        <div class="members-header">
+            <i class="fas fa-users me-1" style="color:var(--accent);"></i>
+            Members (@Model.Members.Count)
+        </div>
+
+        <div class="members-list">
+            @foreach (var member in Model.Members)
+            {
+                <div class="member-item">
+                    <img class="member-avatar" src="/images/user.jpg" alt="@member.UserName" />
+                    <span class="member-name">@member.UserName</span>
+                    @if (member.Role == "Admin")
+                    {
+                        <span class="badge-admin">Admin</span>
+                    }
+                    else
+                    {
+                        <span class="badge-member">Member</span>
+                    }
+                    @if (Model.IsAdmin && member.UserId != currentUserId)
+                    {
+                        <button class="remove-btn" onclick="removeMember('@member.UserId')" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="members-footer">
+            @if (Model.IsAdmin)
+            {
+                <input type="text" id="addMemberInput" class="add-member-input" placeholder="User ID to add..." />
+                <button class="btn btn-primary w-100 btn-sm mb-2" style="font-size:0.78rem;" onclick="addMember()">
+                    <i class="fas fa-user-plus me-1"></i> Add Member
+                </button>
+            }
+            <form asp-controller="GroupChat" asp-action="Leave" asp-route-groupId="@Model.Group.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="leave-btn">
+                    <i class="fas fa-sign-out-alt me-1"></i> Leave Group
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+    const currentUserId = "@currentUserId";
+    const groupId       = "@groupIdStr";
+    const senderName    = "@User.Identity?.Name";
+
+    const container = document.getElementById("messagesContainer");
+    const input     = document.getElementById("msgInput");
+    const sendBtn   = document.getElementById("sendBtn");
+
+    function scrollToBottom() { container.scrollTop = container.scrollHeight; }
+    scrollToBottom();
+
+    function escapeHtml(t) {
+        return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    function appendBubble(senderId, senderDisplayName, content, sentAt) {
+        const isSent = senderId === currentUserId;
+        const time   = new Date(sentAt).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const row    = document.createElement("div");
+        row.className = `bubble-row ${isSent ? "sent" : "received"}`;
+        row.innerHTML = `
+            <span class="bubble-time">${time}</span>
+            <div>
+                ${!isSent ? `<div class="bubble-sender">${escapeHtml(senderDisplayName)}</div>` : ""}
+                <div class="bubble ${isSent ? "sent" : "received"}">${escapeHtml(content)}</div>
+            </div>`;
+        container.appendChild(row);
+        scrollToBottom();
+    }
+
+    // ── SignalR ───────────────────────────────────────────────────────────────
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/chathub")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on("ReceiveGroupMessage", (data) => {
+        if (data.groupId.toString() === groupId) {
+            appendBubble(data.senderId, data.senderName, data.content, data.sentAt);
+        }
+    });
+
+    connection.start()
+        .then(() => connection.invoke("JoinGroupRoom", groupId))
+        .catch(err => console.error("SignalR error:", err));
+
+    window.addEventListener("beforeunload", () => {
+        connection.invoke("LeaveGroupRoom", groupId).catch(() => {});
+    });
+
+    // ── Send ──────────────────────────────────────────────────────────────────
+    function getToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
+    }
+
+    async function sendMessage() {
+        const content = input.value.trim();
+        if (!content) return;
+        input.value = "";
+
+        const fd = new FormData();
+        fd.append("groupId",  groupId);
+        fd.append("content",  content);
+        fd.append("__RequestVerificationToken", getToken());
+
+        await fetch("/GroupChat/SendMessage", { method: "POST", body: fd });
+        await connection.invoke("SendGroupMessage", groupId, senderName, content)
+            .catch(err => console.error(err));
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    input.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    // ── Admin: Add / Remove member ────────────────────────────────────────────
+    async function addMember() {
+        const targetId = document.getElementById("addMemberInput").value.trim();
+        if (!targetId) return;
+        const fd = new FormData();
+        fd.append("groupId",      groupId);
+        fd.append("targetUserId", targetId);
+        fd.append("__RequestVerificationToken", getToken());
+        const res = await fetch("/GroupChat/AddMember", { method: "POST", body: fd });
+        if (res.ok) { location.reload(); }
+        else        { const d = await res.json(); alert(d.error ?? "Could not add member."); }
+    }
+
+    async function removeMember(targetId) {
+        if (!confirm("Remove this member?")) return;
+        const fd = new FormData();
+        fd.append("groupId",      groupId);
+        fd.append("targetUserId", targetId);
+        fd.append("__RequestVerificationToken", getToken());
+        const res = await fetch("/GroupChat/RemoveMember", { method: "POST", body: fd });
+        if (res.ok) { location.reload(); }
+        else        { const d = await res.json(); alert(d.error ?? "Could not remove member."); }
+    }
+</script>
+@Html.AntiForgeryToken()
+}

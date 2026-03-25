@@ -53,6 +53,29 @@ namespace SocialMedia.Web.Controllers
             var messages = await _messageService.GetChatHistoryAsync(userId, otherUserId);
             await _messageService.MarkAsReadAsync(userId, otherUserId);
 
+            if (string.IsNullOrWhiteSpace(otherUserName) || string.IsNullOrWhiteSpace(otherUserProfilePicture))
+            {
+                var conversation = (await _messageService.GetConversationsAsync(userId))
+                    .FirstOrDefault(c => c.OtherUserId == otherUserId);
+
+                if (string.IsNullOrWhiteSpace(otherUserName))
+                    otherUserName = conversation?.OtherUserName ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(otherUserProfilePicture))
+                    otherUserProfilePicture = conversation?.OtherUserProfilePicture;
+
+                var otherUserLastMessage = messages
+                    .Where(m => m.SenderId == otherUserId)
+                    .OrderByDescending(m => m.CreatedAt)
+                    .FirstOrDefault();
+
+                if (string.IsNullOrWhiteSpace(otherUserName))
+                    otherUserName = otherUserLastMessage?.SenderName ?? "User";
+
+                if (string.IsNullOrWhiteSpace(otherUserProfilePicture))
+                    otherUserProfilePicture = otherUserLastMessage?.SenderProfilePicture;
+            }
+
             var vm = new ChatViewModel
             {
                 OtherUserId = otherUserId,
@@ -75,15 +98,17 @@ namespace SocialMedia.Web.Controllers
             var dto = new SendMessageDto { ReceiverId = receiverId, Content = content };
             var message = await _messageService.SendMessageAsync(senderId, dto);
 
-            await _hubContext.Clients
-                .Group(receiverId)
-                .SendAsync("ReceiveDirectMessage", new
-                {
-                    senderId = message.SenderId,
-                    senderName = message.SenderName,
-                    content = message.Content,
-                    sentAt = message.CreatedAt
-                });
+            var payload = new
+            {
+                senderId = message.SenderId,
+                senderName = message.SenderName,
+                content = message.Content,
+                sentAt = message.CreatedAt
+            };
+
+            await Task.WhenAll(
+                _hubContext.Clients.Group(receiverId).SendAsync("ReceiveDirectMessage", payload),
+                _hubContext.Clients.Group(senderId).SendAsync("ReceiveDirectMessage", payload));
 
             return Json(message);
         }

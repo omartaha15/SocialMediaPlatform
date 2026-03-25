@@ -5,6 +5,7 @@
 @{
     ViewData["Title"] = "Home";
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var currentUserName = User.Identity?.Name ?? "You";
 
     var emojiMap = new Dictionary<string, string>
     {
@@ -15,281 +16,632 @@
         ["Sad"]   = "😢",
         ["Angry"] = "😡"
     };
+
+    // Avatar colour palette — cycles per username
+    var avatarColors = new[] {
+        "linear-gradient(135deg,#6c63ff,#a78bfa)",
+        "linear-gradient(135deg,#2d88ff,#56ccf2)",
+        "linear-gradient(135deg,#f953c6,#b91d73)",
+        "linear-gradient(135deg,#11998e,#38ef7d)",
+        "linear-gradient(135deg,#f7971e,#ffd200)",
+        "linear-gradient(135deg,#e74c3c,#f39c12)"
+    };
+
+    string AvatarColor(string name) =>
+        avatarColors[Math.Abs((name ?? "U").GetHashCode()) % avatarColors.Length];
+
+    string Initials(string name)
+    {
+        name = name?.Trim() ?? "U";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpper()
+            : name.Substring(0, Math.Min(2, name.Length)).ToUpper();
+    }
+
+    string TimeAgo(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt.ToUniversalTime();
+        if (diff.TotalMinutes < 1)  return "just now";
+        if (diff.TotalHours   < 1)  return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalDays    < 1)  return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays    < 7)  return $"{(int)diff.TotalDays}d ago";
+        return dt.ToString("MMM d");
+    }
 }
 
-<div class="feed-wrap">
+<!-- ═══════════════════════  LAYOUT  ═══════════════════════ -->
+<div class="feed-layout">
 
-    <!-- ================= COMPOSE ================= -->
-    <div class="compose-card">
-        <div class="compose-header">
-            <div class="avatar">You</div>
-            <span>What's on your mind?</span>
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar-left d-none d-lg-flex">
+        <div class="sidebar-card">
+            <div class="sb-avatar" style="background:@AvatarColor(currentUserName)">@Initials(currentUserName)</div>
+            <div class="sb-name">@currentUserName</div>
+            <div class="sb-sub">Your profile</div>
+            <hr class="sb-divider" />
+            <a class="sb-link" asp-controller="Profile" asp-action="Index">
+                <i class="fas fa-user"></i> My Profile
+            </a>
+            <a class="sb-link" asp-controller="Friendship" asp-action="Index">
+                <i class="fas fa-user-friends"></i> Friends
+            </a>
+            <a class="sb-link" asp-controller="Friendship" asp-action="Suggestions">
+                <i class="fas fa-compass"></i> Discover
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN FEED -->
+    <main class="feed-main">
+
+        <!-- COMPOSE CARD -->
+        <div class="card-dark compose-card">
+            <div class="compose-top">
+                <div class="mini-avatar" style="background:@AvatarColor(currentUserName)">@Initials(currentUserName)</div>
+                <div class="compose-field-wrap" onclick="expandCompose()">
+                    <span class="compose-placeholder">What's on your mind, @currentUserName.Split(' ')[0]?</span>
+                </div>
+            </div>
+            <div class="compose-form-wrap" id="compose-form-wrap" style="display:none;">
+                <form asp-controller="Post" asp-action="CreatePost" method="post" enctype="multipart/form-data">
+                    <textarea id="compose-textarea" name="Content" placeholder="What's on your mind?" required></textarea>
+                    <div class="compose-actions-row">
+                        <label class="attach-label" for="compose-image">
+                            <i class="fas fa-image"></i> Photo
+                            <input type="file" id="compose-image" name="Image" accept="image/*" style="display:none;" />
+                        </label>
+                        <div id="img-name" class="img-name"></div>
+                        <button type="submit" class="post-btn">
+                            <i class="fas fa-paper-plane me-1"></i> Post
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="compose-shortcuts">
+                <button class="shortcut-btn" onclick="expandCompose()"><i class="fas fa-video text-danger"></i> Live Video</button>
+                <button class="shortcut-btn" onclick="expandCompose()"><i class="fas fa-image text-success"></i> Photo</button>
+                <button class="shortcut-btn" onclick="expandCompose()"><i class="fas fa-smile text-warning"></i> Feeling</button>
+            </div>
         </div>
 
-        <form asp-controller="Post" asp-action="CreatePost" method="post" enctype="multipart/form-data">
-            <textarea name="Content" placeholder="Share something..." required></textarea>
-            <input type="file" name="Image" accept="image/*" />
-            <div class="compose-footer">
-                <button type="submit">Post</button>
-            </div>
-        </form>
-    </div>
+        <!-- FEED HEADER -->
+        <div class="feed-header">
+            <h6 class="feed-title"><i class="fas fa-stream me-2 text-primary"></i>Your Feed</h6>
+            <span class="feed-sort">Most recent</span>
+        </div>
 
-    <h3>Recent Posts</h3>
-
-    @if (Model != null && Model.Any())
-    {
-        @foreach (var post in Model)
+        <!-- POSTS -->
+        @if (Model != null && Model.Any())
         {
-            var userReactionStr = post.CurrentUserReaction?.ToString() ?? "";
-            var userEmoji       = userReactionStr != "" && emojiMap.ContainsKey(userReactionStr) ? emojiMap[userReactionStr] : "👍";
-            var hasReaction     = userReactionStr != "";
+            @foreach (var post in Model)
+            {
+                var reactionStr = post.CurrentUserReaction?.ToString() ?? "";
+                var reactionEmoji = reactionStr != "" && emojiMap.ContainsKey(reactionStr) ? emojiMap[reactionStr] : "👍";
+                var hasReaction   = reactionStr != "";
+                var isOwner       = currentUserId != null && post.userId == currentUserId;
+                var avatarGrad    = AvatarColor(post.UserName ?? "U");
+                var initials      = Initials(post.UserName ?? "U");
 
-            <div class="post-card">
+                <article class="card-dark post-card" id="post-@post.Id">
 
-                <!-- HEADER -->
-                <div class="post-head">
-                    <div class="post-avatar">
-                        @{
-                            var name = post.UserName ?? "U";
-                            var initials = name.Length >= 2
-                                ? $"{name[0]}{name.Split(' ').Last()[0]}"
-                                : name.Substring(0, 1);
+                    <!-- POST HEADER -->
+                    <div class="post-header">
+                        <div class="post-avatar-wrap">
+                            <div class="post-avatar" style="background:@avatarGrad">@initials</div>
+                            <div class="online-dot"></div>
+                        </div>
+                        <div class="post-meta">
+                            <span class="post-author">@post.UserName</span>
+                            <span class="post-time">
+                                <i class="fas fa-clock me-1"></i>@TimeAgo(post.CreatedAt)
+                                <span class="globe-icon" title="Public"><i class="fas fa-globe-americas ms-1"></i></span>
+                            </span>
+                        </div>
+
+                        @if (isOwner)
+                        {
+                            <div class="post-menu-wrap">
+                                <button class="menu-trigger" onclick="toggleMenu('@post.Id')" title="Options">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                                <div id="menu-@post.Id" class="post-dropdown" style="display:none;">
+                                    <a class="dd-item" asp-controller="Post" asp-action="EditPost" asp-route-postId="@post.Id">
+                                        <i class="fas fa-pen me-2"></i> Edit Post
+                                    </a>
+                                    <form asp-controller="Post" asp-action="DeletePost" asp-route-postId="@post.Id"
+                                          method="post" onsubmit="return confirm('Delete this post?')">
+                                        <button type="submit" class="dd-item dd-danger">
+                                            <i class="fas fa-trash-alt me-2"></i> Delete Post
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         }
-                        @initials
                     </div>
 
-                    <div class="post-info">
-                        <div class="post-name">@post.UserName</div>
-                        <div class="post-time">@post.CreatedAt.ToString("MMM dd")</div>
+                    <!-- POST BODY -->
+                    <div class="post-body">
+                        <p class="post-text">@post.Content</p>
+                        @if (!string.IsNullOrEmpty(post.ImageUrl))
+                        {
+                            <div class="post-img-wrap">
+                                <img src="@post.ImageUrl" class="post-img" loading="lazy" alt="Post image" />
+                            </div>
+                        }
                     </div>
 
-                    @if (currentUserId != null && post.userId.ToString() == currentUserId)
-                    {
-                        <div class="settings">
-                            <button type="button" onclick="toggleMenu('@post.Id')">⋮</button>
-                            <div id="menu-@post.Id" class="menu" style="display:none;">
-                                <a asp-controller="Post" asp-action="EditPost" asp-route-postId="@post.Id">✏️ Edit</a>
-                                <form asp-controller="Post" asp-action="DeletePost" asp-route-postId="@post.Id"
-                                      method="post" onsubmit="return confirm('Delete this post?')">
-                                    <button type="submit">🗑 Delete</button>
-                                </form>
+                    <!-- REACTION STATS -->
+                    @{
+                        bool hasStats = post.ReactionCounts.Any();
+                    }
+                    <div class="reaction-stats @(!hasStats ? "hidden" : "")" id="summary-@post.Id">
+                        @if (hasStats)
+                        {
+                            <!-- Top 3 emojis stacked -->
+                            <div class="emoji-stack">
+                                @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value).Take(3))
+                                {
+                                    <span class="stack-emoji">@(emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍")</span>
+                                }
+                            </div>
+                            <span class="stats-label">@post.ReactionCount @(post.ReactionCount == 1 ? "reaction" : "reactions")</span>
+                            <!-- Per-type bubbles -->
+                            <div class="bubble-row">
+                                @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value))
+                                {
+                                    var e = emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍";
+                                    <span class="react-bubble @(kv.Key.ToString() == reactionStr ? "mine" : "")">
+                                        @e <b>@kv.Value</b>
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ACTION BAR -->
+                    <div class="action-bar">
+                        <!-- LIKE / REACT -->
+                        <div class="action-react-wrap">
+                            <button id="react-btn-@post.Id"
+                                    class="action-btn @(hasReaction ? "active-reaction" : "")"
+                                    onmousedown="openReactions(event,'@post.Id')"
+                                    title="React">
+                                <span class="ab-emoji">@(hasReaction ? reactionEmoji : "👍")</span>
+                                <span class="ab-label">@(hasReaction ? reactionStr : "Like")</span>
+                            </button>
+
+                            <!-- PICKER POPUP -->
+                            <div id="reactions-@post.Id" class="emoji-picker" style="display:none;">
+                                @foreach (var kv in emojiMap)
+                                {
+                                    <button type="button"
+                                            class="ep-btn @(kv.Key == reactionStr ? "ep-active" : "")"
+                                            title="@kv.Key"
+                                            onclick="sendReaction('@post.Id','@kv.Key',this)">
+                                        @kv.Value
+                                        <span class="ep-label">@kv.Key</span>
+                                    </button>
+                                }
+                                @if (hasReaction)
+                                {
+                                    <button type="button" class="ep-btn ep-remove" title="Remove"
+                                            onclick="removeReaction('@post.Id',this)">
+                                        <i class="fas fa-times"></i>
+                                        <span class="ep-label">Remove</span>
+                                    </button>
+                                }
                             </div>
                         </div>
-                    }
-                </div>
 
-                <!-- CONTENT -->
-                <div class="post-content">
-                    @post.Content
-                    @if (!string.IsNullOrEmpty(post.ImageUrl))
-                    {
-                        <div class="post-image"><img src="@post.ImageUrl" /></div>
-                    }
-                </div>
-
-                <!-- REACTION SUMMARY BAR -->
-                @if (post.ReactionCounts.Any())
-                {
-                    <div class="reaction-summary" id="summary-@post.Id">
-                        @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value))
-                        {
-                            var e = emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍";
-                            <span class="reaction-bubble @(kv.Key.ToString() == userReactionStr ? "mine" : "")">
-                                @e <span class="rbcount">@kv.Value</span>
-                            </span>
-                        }
-                        <span class="total-count">@post.ReactionCount total</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="reaction-summary" id="summary-@post.Id" style="display:none;"></div>
-                }
-
-                <!-- ACTIONS -->
-                <div class="post-actions">
-
-                    <div class="reaction-wrapper">
-                        <button type="button"
-                                id="react-btn-@post.Id"
-                                class="react-btn @(hasReaction ? "reacted" : "")"
-                                onmousedown="openReactions(event, '@post.Id')"
-                                data-post="@post.Id">
-                            <span class="btn-emoji">@(hasReaction ? userEmoji : "👍")</span>
-                            <span class="btn-label">@(hasReaction ? userReactionStr : "Like")</span>
+                        <!-- COMMENT -->
+                        <button class="action-btn">
+                            <i class="far fa-comment-alt me-1"></i>
+                            <span class="ab-label">Comment</span>
                         </button>
 
-                        <!-- PICKER -->
-                        <div id="reactions-@post.Id" class="reaction-picker" style="display:none;">
-                            @foreach (var kv in emojiMap)
-                            {
-                                <button type="button"
-                                        class="pick-btn @(kv.Key == userReactionStr ? "active-pick" : "")"
-                                        title="@kv.Key"
-                                        onclick="sendReaction('@post.Id', '@kv.Key', this)">
-                                    @kv.Value
-                                </button>
-                            }
-                            @if (hasReaction)
-                            {
-                                <button type="button" class="pick-btn remove-btn" title="Remove"
-                                        onclick="removeReaction('@post.Id', this)">✖</button>
-                            }
-                        </div>
+                        <!-- SHARE -->
+                        <button class="action-btn">
+                            <i class="fas fa-share me-1"></i>
+                            <span class="ab-label">Share</span>
+                        </button>
                     </div>
 
-                    <button type="button" class="comment-btn">💬 Comment</button>
-                </div>
-
+                </article>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-stream"></i></div>
+                <h5>Nothing here yet</h5>
+                <p>Be the first to share something with your network.</p>
             </div>
         }
-    }
-    else
-    {
-        <div class="empty"><p>No posts yet.</p></div>
-    }
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="sidebar-right d-none d-xl-block">
+        <div class="sidebar-card">
+            <div class="sb-section-title">Sponsored</div>
+            <div class="ad-card">
+                <div class="ad-img-placeholder"><i class="fas fa-ad"></i></div>
+                <div class="ad-info">
+                    <div class="ad-name">Zuvo Premium</div>
+                    <div class="ad-desc">Unlock exclusive features &amp; ad-free experience.</div>
+                </div>
+            </div>
+            <hr class="sb-divider mt-3" />
+            <div class="sb-section-title">Birthdays</div>
+            <div class="birthday-item">
+                <i class="fas fa-birthday-cake text-warning me-2"></i>
+                <span>No birthdays today</span>
+            </div>
+        </div>
+    </aside>
 
 </div>
 
-<!-- ======================== CSS ======================== -->
+<!-- ═══════════════════════  STYLES  ═══════════════════════ -->
 <style>
-    .feed-wrap { max-width: 600px; margin: auto; }
-
-    /* Post card */
-    .post-card {
-        background: #fff;
-        margin-bottom: 15px;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+    /* ── Layout ── */
+    .feed-layout {
+        display: grid;
+        grid-template-columns: 240px 1fr 240px;
+        gap: 16px;
+        max-width: 1140px;
+        margin: 0 auto;
+        align-items: start;
     }
+    @@media (max-width: 1199px) { .feed-layout { grid-template-columns: 240px 1fr; } }
+    @@media (max-width: 991px)  { .feed-layout { grid-template-columns: 1fr; } }
 
-    .post-head { display: flex; align-items: flex-start; justify-content: space-between; }
+    .feed-main { min-width: 0; }
 
-    .post-avatar {
-        width: 40px; height: 40px;
-        background: #6c63ff; color: #fff; font-weight: 700;
+    /* ── Dark card base ── */
+    .card-dark {
+        background: #242526;
+        border: 1px solid #3a3b3c;
+        border-radius: 12px;
+        margin-bottom: 14px;
+        transition: box-shadow .2s;
+    }
+    .card-dark:hover { box-shadow: 0 4px 24px rgba(0,0,0,.35); }
+
+    /* ── Sidebar ── */
+    .sidebar-left, .sidebar-right {
+        flex-direction: column;
+        position: sticky;
+        top: 80px;
+    }
+    .sidebar-card {
+        background: #242526;
+        border: 1px solid #3a3b3c;
+        border-radius: 12px;
+        padding: 18px 14px;
+        margin-bottom: 14px;
+    }
+    .sb-avatar {
+        width: 64px; height: 64px;
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0; margin-right: 10px;
+        font-size: 22px; font-weight: 700; color: #fff;
+        margin: 0 auto 10px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.4);
     }
-
-    .post-info { flex: 1; }
-    .post-name { font-weight: 600; }
-    .post-time { font-size: 12px; color: #888; }
-
-    /* Reaction summary */
-    .reaction-summary {
-        display: flex; flex-wrap: wrap; align-items: center;
-        gap: 6px; margin: 8px 0 4px; min-height: 28px;
-    }
-
-    .reaction-bubble {
-        display: inline-flex; align-items: center; gap: 3px;
-        background: #f0f2f5; border-radius: 20px; padding: 3px 10px;
-        font-size: 14px; cursor: default; user-select: none;
-        transition: transform .15s, background .15s;
-    }
-
-    .reaction-bubble.mine {
-        background: #e8e4ff;
-        border: 1.5px solid #6c63ff;
-        color: #6c63ff; font-weight: 600;
-    }
-
-    .rbcount { font-size: 12px; font-weight: 600; }
-    .total-count { font-size: 12px; color: #888; margin-left: 4px; }
-
-    /* Actions */
-    .post-actions {
-        display: flex; gap: 10px; margin-top: 8px;
-        border-top: 1px solid #f0f2f5; padding-top: 8px;
-    }
-
-    .reaction-wrapper { position: relative; }
-
-    .react-btn {
-        display: flex; align-items: center; gap: 5px;
-        border: none; background: none; cursor: pointer;
-        font-size: 14px; color: #555;
-        padding: 5px 10px; border-radius: 6px;
+    .sb-name { text-align: center; font-weight: 700; color: #e4e6eb; font-size: 15px; }
+    .sb-sub  { text-align: center; font-size: 12px; color: #b0b3b8; margin-top: 2px; }
+    .sb-divider { border-color: #3a3b3c; margin: 14px 0; }
+    .sb-section-title { font-size: 12px; font-weight: 700; color: #b0b3b8; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+    .sb-link {
+        display: flex; align-items: center; gap: 10px;
+        padding: 9px 10px; border-radius: 8px;
+        color: #e4e6eb; text-decoration: none; font-size: 14px; font-weight: 500;
         transition: background .15s, color .15s;
+        margin-bottom: 2px;
     }
-    .react-btn:hover { background: #f0f2f5; }
-    .react-btn.reacted { color: #6c63ff; font-weight: 600; }
-    .react-btn.reacted:hover { background: #ede9ff; }
+    .sb-link:hover { background: #3a3b3c; color: #2d88ff; }
+    .sb-link i { width: 18px; text-align: center; color: #2d88ff; }
 
-    .btn-emoji { font-size: 18px; }
-    .btn-label { font-size: 13px; }
+    /* Ad / Birthday widgets */
+    .ad-card { display: flex; gap: 10px; align-items: center; }
+    .ad-img-placeholder {
+        width: 52px; height: 52px; border-radius: 8px;
+        background: #3a3b3c; display: flex; align-items: center; justify-content: center;
+        color: #b0b3b8; font-size: 20px; flex-shrink: 0;
+    }
+    .ad-name { font-size: 13px; font-weight: 600; color: #e4e6eb; }
+    .ad-desc { font-size: 12px; color: #b0b3b8; margin-top: 2px; }
+    .birthday-item { font-size: 13px; color: #e4e6eb; display: flex; align-items: center; }
 
-    .comment-btn {
-        border: none; background: none; cursor: pointer;
-        font-size: 14px; color: #555;
-        padding: 5px 10px; border-radius: 6px;
+    /* ── Compose Card ── */
+    .compose-card { padding: 14px 16px; }
+    .compose-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .mini-avatar {
+        width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .compose-field-wrap {
+        flex: 1; background: #3a3b3c; border-radius: 20px;
+        padding: 10px 16px; cursor: text;
+        border: 1px solid transparent;
+        transition: border-color .2s, background .2s;
+    }
+    .compose-field-wrap:hover { border-color: #2d88ff; background: #3f4041; }
+    .compose-placeholder { color: #b0b3b8; font-size: 14px; user-select: none; }
+
+    #compose-form-wrap { padding-top: 4px; }
+    #compose-form-wrap textarea {
+        width: 100%; background: #3a3b3c; border: 1px solid #4a4b4c;
+        border-radius: 10px; padding: 12px 14px; color: #e4e6eb;
+        font-size: 15px; min-height: 90px; resize: vertical; outline: none;
+        transition: border-color .2s;
+    }
+    #compose-form-wrap textarea:focus { border-color: #2d88ff; }
+
+    .compose-actions-row {
+        display: flex; align-items: center; gap: 10px; margin-top: 10px;
+    }
+    .attach-label {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #3a3b3c; color: #e4e6eb; border-radius: 8px;
+        padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer;
         transition: background .15s;
     }
-    .comment-btn:hover { background: #f0f2f5; }
+    .attach-label:hover { background: #4a4b4c; }
+    .attach-label i { color: #45bd62; font-size: 16px; }
+    .img-name { font-size: 12px; color: #b0b3b8; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .post-btn {
+        margin-left: auto;
+        background: linear-gradient(135deg, #2d88ff, #1475eb);
+        color: #fff; border: none; border-radius: 8px;
+        padding: 8px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+        transition: opacity .15s, transform .1s;
+    }
+    .post-btn:hover  { opacity: .9; }
+    .post-btn:active { transform: scale(.97); }
 
-    /* Picker */
-    .reaction-picker {
-        position: absolute; bottom: 42px; left: 0;
-        background: #fff; border-radius: 30px; padding: 6px 10px;
-        display: flex; gap: 4px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.18);
-        z-index: 100;
-        animation: popIn .18s ease;
+    .compose-shortcuts {
+        display: flex; gap: 4px; border-top: 1px solid #3a3b3c; margin-top: 12px; padding-top: 10px;
+    }
+    .shortcut-btn {
+        flex: 1; background: none; border: none; color: #b0b3b8;
+        font-size: 13px; font-weight: 600; padding: 8px 6px; border-radius: 8px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+        transition: background .15s, color .15s;
+    }
+    .shortcut-btn:hover { background: #3a3b3c; color: #e4e6eb; }
+
+    /* ── Feed header ── */
+    .feed-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 12px; padding: 0 2px;
+    }
+    .feed-title { margin: 0; color: #e4e6eb; font-size: 15px; font-weight: 700; }
+    .feed-sort  { font-size: 12px; color: #6e7073; }
+
+    /* ── Post Card ── */
+    .post-card { padding: 16px; animation: fadeUp .35s ease both; }
+
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 
-    @@keyframes popIn {
-        from { transform: scale(.7); opacity: 0; }
-        to   { transform: scale(1);  opacity: 1; }
+    .post-header {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
     }
-
-    .pick-btn {
-        font-size: 22px; border: none; background: none; cursor: pointer;
-        border-radius: 50%; width: 38px; height: 38px;
+    .post-avatar-wrap { position: relative; flex-shrink: 0; }
+    .post-avatar {
+        width: 44px; height: 44px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        transition: transform .15s, background .15s;
+        font-size: 15px; font-weight: 700; color: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,.35);
     }
-    .pick-btn:hover { transform: scale(1.35); background: #f0f2f5; }
-    .pick-btn.active-pick { background: #e8e4ff; outline: 2px solid #6c63ff; }
+    .online-dot {
+        width: 11px; height: 11px; background: #45bd62;
+        border-radius: 50%; border: 2px solid #242526;
+        position: absolute; bottom: 1px; right: 1px;
+    }
+    .post-meta { flex: 1; min-width: 0; }
+    .post-author { display: block; font-weight: 700; font-size: 14px; color: #e4e6eb; }
+    .post-time   { font-size: 12px; color: #b0b3b8; }
+    .globe-icon  { color: #6e7073; }
 
-    .remove-btn { font-size: 14px; color: #e74c3c; background: #fff0ee; }
-    .remove-btn:hover { background: #fde; transform: scale(1.2); }
+    .post-menu-wrap { position: relative; margin-left: auto; }
+    .menu-trigger {
+        width: 36px; height: 36px; border-radius: 50%; border: none;
+        background: transparent; color: #b0b3b8; font-size: 16px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .15s, color .15s;
+    }
+    .menu-trigger:hover { background: #3a3b3c; color: #e4e6eb; }
+
+    .post-dropdown {
+        position: absolute; right: 0; top: 42px;
+        background: #3a3b3c; border: 1px solid #4a4b4c;
+        border-radius: 10px; min-width: 170px; z-index: 200;
+        box-shadow: 0 8px 28px rgba(0,0,0,.4);
+        overflow: hidden;
+        animation: popDown .15s ease;
+    }
+    @@keyframes popDown {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .dd-item {
+        display: flex; align-items: center;
+        width: 100%; padding: 11px 16px;
+        color: #e4e6eb; font-size: 14px; font-weight: 500;
+        background: none; border: none; text-align: left; cursor: pointer;
+        text-decoration: none;
+        transition: background .12s;
+    }
+    .dd-item:hover   { background: #4a4b4c; color: #fff; }
+    .dd-danger       { color: #f85149; }
+    .dd-danger:hover { background: rgba(248,81,73,.15); color: #f85149; }
+
+    /* ── Post Body ── */
+    .post-text {
+        color: #e4e6eb; font-size: 15px; line-height: 1.6; margin: 0 0 12px;
+        white-space: pre-wrap; word-break: break-word;
+    }
+    .post-img-wrap {
+        border-radius: 10px; overflow: hidden; margin-bottom: 10px;
+        background: #1a1a1b;
+    }
+    .post-img { width: 100%; display: block; max-height: 480px; object-fit: cover; }
+
+    /* ── Reaction Stats ── */
+    .reaction-stats {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        padding: 6px 0 10px; border-bottom: 1px solid #3a3b3c;
+        font-size: 13px; color: #b0b3b8;
+    }
+    .reaction-stats.hidden { display: none; }
+
+    .emoji-stack { display: flex; }
+    .stack-emoji {
+        font-size: 16px; margin-right: -4px;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+    }
+    .stats-label { color: #b0b3b8; font-size: 13px; flex: 1; }
+
+    .bubble-row { display: flex; gap: 5px; flex-wrap: wrap; width: 100%; margin-top: 4px; }
+    .react-bubble {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: #3a3b3c; border-radius: 20px; padding: 3px 10px;
+        font-size: 13px; color: #e4e6eb;
+        border: 1.5px solid transparent;
+        transition: border-color .15s, background .15s;
+    }
+    .react-bubble.mine {
+        border-color: #2d88ff; background: rgba(45,136,255,.15); color: #2d88ff; font-weight: 600;
+    }
+
+    /* ── Action Bar ── */
+    .action-bar {
+        display: flex; gap: 4px; padding-top: 6px;
+    }
+    .action-react-wrap { position: relative; }
+
+    .action-btn {
+        display: flex; align-items: center; gap: 6px;
+        border: none; background: transparent; cursor: pointer;
+        color: #b0b3b8; font-size: 14px; font-weight: 600;
+        padding: 8px 14px; border-radius: 8px;
+        transition: background .15s, color .15s;
+        white-space: nowrap;
+    }
+    .action-btn:hover { background: #3a3b3c; color: #e4e6eb; }
+    .action-btn.active-reaction { color: #2d88ff; }
+    .action-btn.active-reaction:hover { background: rgba(45,136,255,.12); }
+
+    .ab-emoji { font-size: 18px; }
+    .ab-label { font-size: 14px; }
+
+    /* ── Emoji Picker ── */
+    .emoji-picker {
+        position: absolute; bottom: 48px; left: 0;
+        background: #3a3b3c; border: 1px solid #4a4b4c;
+        border-radius: 32px; padding: 8px 12px;
+        display: flex; gap: 4px; align-items: flex-end;
+        box-shadow: 0 8px 32px rgba(0,0,0,.5);
+        z-index: 300;
+        animation: pickerPop .2s cubic-bezier(.34,1.56,.64,1);
+    }
+    @@keyframes pickerPop {
+        from { transform: scale(.5) translateY(10px); opacity: 0; }
+        to   { transform: scale(1)  translateY(0);    opacity: 1; }
+    }
+
+    .ep-btn {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 3px; border: none; background: transparent; cursor: pointer;
+        border-radius: 50%; padding: 4px;
+        transition: transform .18s cubic-bezier(.34,1.56,.64,1), background .15s;
+        font-size: 24px;
+    }
+    .ep-btn:hover { transform: scale(1.5) translateY(-4px); background: rgba(255,255,255,.07); }
+    .ep-active    { outline: 2px solid #2d88ff; border-radius: 50%; }
+
+    .ep-label {
+        font-size: 10px; color: #b0b3b8; font-weight: 600;
+        opacity: 0; transform: scale(.6);
+        transition: opacity .15s, transform .15s;
+        white-space: nowrap; pointer-events: none;
+    }
+    .ep-btn:hover .ep-label { opacity: 1; transform: scale(1); }
+
+    .ep-remove {
+        font-size: 14px; color: #f85149; background: rgba(248,81,73,.1);
+        border-radius: 50%; width: 36px; height: 36px;
+        display: flex; align-items: center; justify-content: center;
+        flex-direction: column;
+    }
+    .ep-remove:hover { background: rgba(248,81,73,.25); transform: scale(1.2); }
+
+    /* ── Empty State ── */
+    .empty-state {
+        text-align: center; padding: 60px 20px; color: #6e7073;
+    }
+    .empty-icon { font-size: 52px; margin-bottom: 16px; color: #3a3b3c; }
+    .empty-state h5 { color: #b0b3b8; margin-bottom: 8px; }
+    .empty-state p  { font-size: 14px; }
 </style>
 
-<!-- ======================== JS ======================== -->
+<!-- ═══════════════════════  SCRIPTS  ═══════════════════════ -->
 <script>
-    const emojiMap = {
-        Like: '👍', Love: '❤️', Haha: '😂', Wow: '😮', Sad: '😢', Angry: '😡'
-    };
+    const emojiMap = { Like:'👍', Love:'❤️', Haha:'😂', Wow:'😮', Sad:'😢', Angry:'😡' };
 
-    function toggleMenu(id) {
-        var menu = document.getElementById('menu-' + id);
-        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    // ── Compose expand ─────────────────────────────────────────────────
+    function expandCompose() {
+        const wrap = document.getElementById('compose-form-wrap');
+        if (wrap.style.display === 'none') {
+            wrap.style.display = 'block';
+            document.getElementById('compose-textarea').focus();
+        }
     }
 
+    document.getElementById('compose-image')?.addEventListener('change', function () {
+        document.getElementById('img-name').textContent = this.files[0]?.name ?? '';
+    });
+
+    // ── Dropdown menus ─────────────────────────────────────────────────
+    function toggleMenu(id) {
+        const dd = document.getElementById('menu-' + id);
+        const isOpen = dd.style.display !== 'none';
+        document.querySelectorAll('.post-dropdown').forEach(d => d.style.display = 'none');
+        dd.style.display = isOpen ? 'none' : 'block';
+    }
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.post-menu-wrap'))
+            document.querySelectorAll('.post-dropdown').forEach(d => d.style.display = 'none');
+    });
+
+    // ── Reaction picker ────────────────────────────────────────────────
     function openReactions(event, postId) {
         event.preventDefault();
-        document.querySelectorAll('.reaction-picker').forEach(p => p.style.display = 'none');
-        var picker = document.getElementById('reactions-' + postId);
-        picker.style.display = 'flex';
-        setTimeout(() => {
-            document.addEventListener('click', function handler(e) {
-                if (!picker.contains(e.target)) {
-                    picker.style.display = 'none';
-                    document.removeEventListener('click', handler);
-                }
-            });
-        }, 0);
+        const picker = document.getElementById('reactions-' + postId);
+        const isOpen = picker.style.display !== 'none';
+        document.querySelectorAll('.emoji-picker').forEach(p => p.style.display = 'none');
+        picker.style.display = isOpen ? 'none' : 'flex';
+        if (!isOpen) {
+            setTimeout(() => {
+                document.addEventListener('click', function handler(e) {
+                    if (!picker.contains(e.target) && !document.getElementById('react-btn-' + postId).contains(e.target)) {
+                        picker.style.display = 'none';
+                        document.removeEventListener('click', handler);
+                    }
+                });
+            }, 0);
+        }
     }
 
+    // ── Send reaction ──────────────────────────────────────────────────
     function sendReaction(postId, type, btn) {
-        const params = new URLSearchParams();
-        params.append('postId', postId);
-        params.append('type', type);
-
+        const params = new URLSearchParams({ postId, type });
         fetch('/Reaction/React', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -302,10 +654,9 @@
         });
     }
 
+    // ── Remove reaction ────────────────────────────────────────────────
     function removeReaction(postId, btn) {
-        const params = new URLSearchParams();
-        params.append('postId', postId);
-
+        const params = new URLSearchParams({ postId });
         fetch('/Reaction/Remove', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -318,70 +669,85 @@
         });
     }
 
+    // ── Update DOM after reaction change ───────────────────────────────
     function updateUI(postId, data) {
+        const { counts = {}, userReaction = null, total = 0 } = data;
         const summary = document.getElementById('summary-' + postId);
+
+        // Rebuild stats bar
         summary.innerHTML = '';
-
-        const counts      = data.counts      || {};
-        const userReaction = data.userReaction || null;
-        const total        = data.total        || 0;
-
         const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
-        sorted.forEach(([type, count]) => {
-            const bubble = document.createElement('span');
-            bubble.className = 'reaction-bubble' + (type === userReaction ? ' mine' : '');
-            bubble.innerHTML = `${emojiMap[type] || type} <span class="rbcount">${count}</span>`;
-            summary.appendChild(bubble);
-        });
-
         if (total > 0) {
-            const tot = document.createElement('span');
-            tot.className = 'total-count';
-            tot.textContent = total + ' total';
-            summary.appendChild(tot);
-            summary.style.display = 'flex';
+            // emoji stack
+            const stack = document.createElement('div');
+            stack.className = 'emoji-stack';
+            sorted.slice(0, 3).forEach(([t]) => {
+                const s = document.createElement('span');
+                s.className = 'stack-emoji';
+                s.textContent = emojiMap[t] || t;
+                stack.appendChild(s);
+            });
+            summary.appendChild(stack);
+
+            // count label
+            const lbl = document.createElement('span');
+            lbl.className = 'stats-label';
+            lbl.textContent = total + (total === 1 ? ' reaction' : ' reactions');
+            summary.appendChild(lbl);
+
+            // bubble row
+            const row = document.createElement('div');
+            row.className = 'bubble-row';
+            sorted.forEach(([t, c]) => {
+                const b = document.createElement('span');
+                b.className = 'react-bubble' + (t === userReaction ? ' mine' : '');
+                b.innerHTML = `${emojiMap[t] || t} <b>${c}</b>`;
+                row.appendChild(b);
+            });
+            summary.appendChild(row);
+
+            summary.classList.remove('hidden');
         } else {
-            summary.style.display = 'none';
+            summary.classList.add('hidden');
         }
 
-        // Update react button
+        // React button
         const btn       = document.getElementById('react-btn-' + postId);
-        const emojiSpan = btn.querySelector('.btn-emoji');
-        const labelSpan = btn.querySelector('.btn-label');
-
+        const emojiSpan = btn.querySelector('.ab-emoji');
+        const labelSpan = btn.querySelector('.ab-label');
         if (userReaction) {
-            btn.classList.add('reacted');
+            btn.classList.add('active-reaction');
             emojiSpan.textContent = emojiMap[userReaction] || '👍';
             labelSpan.textContent = userReaction;
         } else {
-            btn.classList.remove('reacted');
+            btn.classList.remove('active-reaction');
             emojiSpan.textContent = '👍';
             labelSpan.textContent = 'Like';
         }
 
-        // Highlight active pick
+        // Picker highlights
         const picker = document.getElementById('reactions-' + postId);
-        picker.querySelectorAll('.pick-btn').forEach(b => b.classList.remove('active-pick'));
+        picker.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('ep-active'));
         if (userReaction) {
-            const active = [...picker.querySelectorAll('.pick-btn')].find(b => b.title === userReaction);
-            if (active) active.classList.add('active-pick');
+            const active = [...picker.querySelectorAll('.ep-btn')].find(b => b.title === userReaction);
+            if (active) active.classList.add('ep-active');
         }
 
-        // Show/hide remove button
-        let removeBtn = picker.querySelector('.remove-btn');
+        // Remove button
+        let rmBtn = picker.querySelector('.ep-remove');
         if (userReaction) {
-            if (!removeBtn) {
-                removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.className = 'pick-btn remove-btn';
-                removeBtn.title = 'Remove';
-                removeBtn.textContent = '✖';
-                removeBtn.onclick = () => removeReaction(postId, removeBtn);
-                picker.appendChild(removeBtn);
+            if (!rmBtn) {
+                rmBtn = document.createElement('button');
+                rmBtn.type = 'button';
+                rmBtn.className = 'ep-btn ep-remove';
+                rmBtn.title = 'Remove';
+                rmBtn.innerHTML = '<i class="fas fa-times"></i><span class="ep-label">Remove</span>';
+                rmBtn.onclick = () => removeReaction(postId, rmBtn);
+                picker.appendChild(rmBtn);
             }
         } else {
-            if (removeBtn) removeBtn.remove();
+            rmBtn?.remove();
         }
     }
 </script>

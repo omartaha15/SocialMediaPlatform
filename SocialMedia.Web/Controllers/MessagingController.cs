@@ -75,15 +75,17 @@ namespace SocialMedia.Web.Controllers
             var dto = new SendMessageDto { ReceiverId = receiverId, Content = content };
             var message = await _messageService.SendMessageAsync(senderId, dto);
 
-            await _hubContext.Clients
-                .Group(receiverId)
-                .SendAsync("ReceiveDirectMessage", new
-                {
-                    senderId = message.SenderId,
-                    senderName = message.SenderName,
-                    content = message.Content,
-                    sentAt = message.CreatedAt
-                });
+            var payload = new
+            {
+                senderId = message.SenderId,
+                senderName = message.SenderName,
+                content = message.Content,
+                sentAt = message.CreatedAt
+            };
+
+            await Task.WhenAll(
+                _hubContext.Clients.Group(receiverId).SendAsync("ReceiveDirectMessage", payload),
+                _hubContext.Clients.Group(senderId).SendAsync("ReceiveDirectMessage", payload));
 
             return Json(message);
         }

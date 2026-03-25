@@ -30,11 +30,14 @@
                                     <small class="text-muted">@friend.Email</small>
                                 </div>
                             </div>
-                            <!-- Remove Friend Button -->
-                            <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="d-inline">
-                                <input type="hidden" name="friendId" value="@friend.Id" />
-                                <button type="submit" class="btn btn-danger btn-sm">Remove Friend</button>
-                            </form>
+                            <div class="d-flex gap-2">
+                                <a class="btn btn-primary btn-sm" href="@Url.Action("Chat", "Messaging", new { otherUserId = friend.Id })">Message</a>
+                                <!-- Remove Friend Button -->
+                                <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="d-inline">
+                                    <input type="hidden" name="friendId" value="@friend.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove Friend</button>
+                                </form>
+                            </div>
                         </div>
                     }
                 </div>

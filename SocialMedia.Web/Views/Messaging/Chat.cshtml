@@ -167,6 +167,7 @@
 
     <!-- Input -->
     <div class="chat-input-area">
+        @Html.AntiForgeryToken()
         <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
         <button id="sendBtn" title="Send">
             <i class="fas fa-paper-plane"></i>
@@ -181,8 +182,6 @@
     const otherUserId    = "@Model.OtherUserId";
     const otherUserName  = "@Model.OtherUserName";
     const senderName     = "@User.Identity?.Name";
-    const token          = document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                        ?? "@Html.AntiForgeryToken()";
 
     const container = document.getElementById("messagesContainer");
     const input     = document.getElementById("msgInput");
@@ -240,12 +239,8 @@
         formData.append("content",    content);
         formData.append("__RequestVerificationToken", getAntiForgeryToken());
 
-        // 1. Save to DB
+        // Save to DB (controller also pushes real-time to both users)
         await fetch("/Messaging/SendMessage", { method: "POST", body: formData });
-
-        // 2. Push real-time via hub (hub echoes back to sender too)
-        await connection.invoke("SendDirectMessage", otherUserId, senderName, content)
-            .catch(err => console.error(err));
     }
 
     function getAntiForgeryToken() {
@@ -255,5 +250,4 @@
     sendBtn.addEventListener("click", sendMessage);
     input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 </script>
-@Html.AntiForgeryToken()
 }

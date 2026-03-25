@@ -43,7 +43,7 @@ builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IPostService, PostService>();  
 builder.Services.AddScoped<IReactionService, ReactionService>();
-
+builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddSignalR();
 
 var app = builder.Build();

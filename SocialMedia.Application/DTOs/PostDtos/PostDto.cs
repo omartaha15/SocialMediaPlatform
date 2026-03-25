@@ -14,7 +14,9 @@ namespace SocialMedia.Application.DTOs.PostDtos
         public int ReactionCount { get; set; }
         public string UserName { get; set; }
         public string userId { get; set; }
+        public string? UserAvatarUrl { get; set; }
         public string? ImageUrl { get; set; }
+        public int CommentCount { get; set; }
         public DateTime CreatedAt { get; set; }
 
         /// <summary>Count per reaction type for this post.</summary>

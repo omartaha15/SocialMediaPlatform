@@ -57,6 +57,7 @@ namespace SocialMedia.Application.Services
        
         public async Task<IEnumerable<PostDto>> GetAllPostsAsync()
         {
+
             var posts = await _unitOfWork.Repository<Post>()
                 .Query()
                 .Include(p => p.Creator)
@@ -69,7 +70,9 @@ namespace SocialMedia.Application.Services
                 Id = p.Id,
                 Content = p.Content,
                 userId = p.UserId,
+                CommentCount = p.Comments.Count,
                 UserName = p.Creator?.UserName ?? "Unknown",
+                UserAvatarUrl = p.Creator?.ProfilePictureUrl,
                 CreatedAt = p.CreatedAt,
                 ImageUrl = p.ImageUrl
             });
@@ -90,6 +93,7 @@ namespace SocialMedia.Application.Services
                 Content   = post.Content,
                 userId    = post.UserId,
                 UserName  = post.Creator?.UserName ?? "Unknown",
+                UserAvatarUrl = post.Creator?.ProfilePictureUrl,
                 CreatedAt = post.CreatedAt,
                 ImageUrl  = post.ImageUrl
             };
@@ -112,7 +116,8 @@ namespace SocialMedia.Application.Services
                 ImageUrl  = p.ImageUrl,
                 CreatedAt = p.CreatedAt,
                 userId    = p.UserId,
-                UserName  = p.Creator?.UserName ?? "Unknown"
+                UserName  = p.Creator?.UserName ?? "Unknown",
+                UserAvatarUrl = p.Creator?.ProfilePictureUrl
             });
         }
 

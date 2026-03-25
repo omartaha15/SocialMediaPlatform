@@ -1,11 +1,16 @@
 @model IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>
 
+@using Microsoft.AspNetCore.Identity
 @using System.Security.Claims
 @using SocialMedia.Domain.Enums
+@using SocialMedia.Domain.Entities
+@inject UserManager<ApplicationUser> _userManager
 @{
     ViewData["Title"] = "Home";
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    var currentUserName = User.Identity?.Name ?? "You";
+    var currentUser = currentUserId != null ? await _userManager.FindByIdAsync(currentUserId) : null;
+    var currentUserName = currentUser?.UserName ?? "You";
+    var currentUserPic  = currentUser?.ProfilePictureUrl ?? "/images/user.jpg";
 
     var emojiMap = new Dictionary<string, string>
     {
@@ -56,7 +61,7 @@
     <!-- LEFT SIDEBAR -->
     <aside class="sidebar-left d-none d-lg-flex">
         <div class="sidebar-card">
-            <div class="sb-avatar" style="background:@AvatarColor(currentUserName)">@Initials(currentUserName)</div>
+            <div class="sb-avatar"><img src="@currentUserPic" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" /></div>
             <div class="sb-name">@currentUserName</div>
             <div class="sb-sub">Your profile</div>
             <hr class="sb-divider" />
@@ -78,7 +83,7 @@
         <!-- COMPOSE CARD -->
         <div class="card-dark compose-card">
             <div class="compose-top">
-                <div class="mini-avatar" style="background:@AvatarColor(currentUserName)">@Initials(currentUserName)</div>
+                <div class="mini-avatar"><img src="@currentUserPic" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" /></div>
                 <div class="compose-field-wrap" onclick="expandCompose()">
                     <span class="compose-placeholder">What's on your mind, @currentUserName.Split(' ')[0]?</span>
                 </div>
@@ -120,15 +125,14 @@
                 var reactionEmoji = reactionStr != "" && emojiMap.ContainsKey(reactionStr) ? emojiMap[reactionStr] : "👍";
                 var hasReaction   = reactionStr != "";
                 var isOwner       = currentUserId != null && post.userId == currentUserId;
-                var avatarGrad    = AvatarColor(post.UserName ?? "U");
-                var initials      = Initials(post.UserName ?? "U");
+                var avatarUrl = !string.IsNullOrEmpty(post.UserAvatarUrl) ? post.UserAvatarUrl : "/images/user.jpg";
 
                 <article class="card-dark post-card" id="post-@post.Id">
 
                     <!-- POST HEADER -->
                     <div class="post-header">
                         <div class="post-avatar-wrap">
-                            <div class="post-avatar" style="background:@avatarGrad">@initials</div>
+                            <div class="post-avatar"><img src="@avatarUrl" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" /></div>
                             <div class="online-dot"></div>
                         </div>
                         <div class="post-meta">
@@ -235,9 +239,13 @@
                         </div>
 
                         <!-- COMMENT -->
-                        <button class="action-btn">
+                        <!-- COMMENT -->
+                        <button class="action-btn" onclick="toggleComments('@post.Id')">
                             <i class="far fa-comment-alt me-1"></i>
                             <span class="ab-label">Comment</span>
+                            @* <span class="comment-count-badge" id="comment-count-@post.Id">
+                                @(post.CommentCount > 0 ? post.CommentCount.ToString() : "")
+                            </span> *@
                         </button>
 
                         <!-- SHARE -->
@@ -245,6 +253,29 @@
                             <i class="fas fa-share me-1"></i>
                             <span class="ab-label">Share</span>
                         </button>
+                    </div>
+                    <!-- COMMENTS SECTION -->
+                    <div class="comments-section" id="comments-section-@post.Id" style="display:none;">
+                        <div class="comments-list" id="comments-list-@post.Id">
+                            <!-- loaded dynamically -->
+                        </div>
+                        <div class="comment-input-row">
+                            <div class="mini-avatar" style="background:@AvatarColor(currentUserName)">
+                                @Initials(currentUserName)
+                            </div>
+                            <div class="comment-input-wrap">
+                                <input type="text"
+                                       class="comment-input"
+                                       id="comment-input-@post.Id"
+                                       placeholder="Write a comment…"
+                                       data-post-id="@post.Id"
+                                       onkeydown="handleCommentKey(event, '@post.Id')" />
+                                <button class="comment-send-btn"
+                                        onclick="submitComment('@post.Id')">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                 </article>
@@ -296,6 +327,152 @@
     @@media (max-width: 1199px) { .feed-layout { grid-template-columns: 240px 1fr; } }
     @@media (max-width: 991px)  { .feed-layout { grid-template-columns: 1fr; } }
 
+
+    /* ── Comments Section ── */
+    .comments-section {
+        border-top: 1px solid #3a3b3c;
+        padding: 12px 0 4px;
+        margin-top: 4px;
+    }
+
+    .comment-input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #3a3b3c;
+    }
+
+    .comment-input-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        background: #3a3b3c;
+        border-radius: 20px;
+        padding: 6px 12px;
+        border: 1px solid transparent;
+        transition: border-color .2s;
+    }
+
+        .comment-input-wrap:focus-within {
+            border-color: #2d88ff;
+        }
+
+    .comment-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #e4e6eb;
+        font-size: 14px;
+    }
+
+        .comment-input::placeholder {
+            color: #b0b3b8;
+        }
+
+    .comment-send-btn {
+        background: none;
+        border: none;
+        color: #2d88ff;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0 4px;
+        opacity: 0.7;
+        transition: opacity .15s;
+    }
+
+        .comment-send-btn:hover {
+            opacity: 1;
+        }
+
+    /* ── Comment Item ── */
+    .comment-item {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        animation: fadeUp .2s ease both;
+    }
+
+    .comment-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .comment-bubble {
+        background: #3a3b3c;
+        border-radius: 14px;
+        padding: 8px 12px;
+        max-width: 85%;
+    }
+
+        .comment-bubble .c-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #e4e6eb;
+            margin-bottom: 2px;
+        }
+
+        .comment-bubble .c-text {
+            font-size: 14px;
+            color: #d4d6db;
+            margin: 0;
+            word-break: break-word;
+        }
+
+    .comment-meta {
+        font-size: 11px;
+        color: #6e7073;
+        margin-top: 3px;
+        padding-left: 44px;
+        display: flex;
+        gap: 10px;
+    }
+
+        .comment-meta .reply-btn {
+            background: none;
+            border: none;
+            color: #6e7073;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            transition: color .15s;
+        }
+
+            .comment-meta .reply-btn:hover {
+                color: #2d88ff;
+            }
+
+    /* Replies indent */
+    .replies-list {
+        padding-left: 40px;
+        margin-top: 4px;
+    }
+
+    /* Comment count badge on button */
+    .comment-count-badge {
+        font-size: 12px;
+        color: #6e7073;
+        margin-left: 2px;
+    }
+
+    /* Loading skeleton */
+    .comments-loading {
+        text-align: center;
+        color: #6e7073;
+        font-size: 13px;
+        padding: 10px 0;
+    }
     .feed-main { min-width: 0; }
 
     /* ── Dark card base ── */
@@ -742,6 +919,7 @@
                 rmBtn.type = 'button';
                 rmBtn.className = 'ep-btn ep-remove';
                 rmBtn.title = 'Remove';
+                rmBtn.title = 'Remove';
                 rmBtn.innerHTML = '<i class="fas fa-times"></i><span class="ep-label">Remove</span>';
                 rmBtn.onclick = () => removeReaction(postId, rmBtn);
                 picker.appendChild(rmBtn);
@@ -749,5 +927,167 @@
         } else {
             rmBtn?.remove();
         }
+    }
+
+
+        // ── Avatar helpers (mirrors C# logic for JS-rendered comments) ──
+    const avatarPalette = [
+        'linear-gradient(135deg,#6c63ff,#a78bfa)',
+        'linear-gradient(135deg,#2d88ff,#56ccf2)',
+        'linear-gradient(135deg,#f953c6,#b91d73)',
+        'linear-gradient(135deg,#11998e,#38ef7d)',
+        'linear-gradient(135deg,#f7971e,#ffd200)',
+        'linear-gradient(135deg,#e74c3c,#f39c12)'
+    ];
+    function jsAvatarColor(name) {
+        name = name || 'U';
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return avatarPalette[Math.abs(hash) % avatarPalette.length];
+    }
+    function jsInitials(name) {
+        name = (name || 'U').trim();
+        const parts = name.split(/\s+/);
+        return parts.length >= 2
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : name.substring(0, 2).toUpperCase();
+    }
+
+    // ── Toggle comments panel ────────────────────────────────────────
+    function toggleComments(postId) {
+        const section = document.getElementById('comments-section-' + postId);
+        const isHidden = section.style.display === 'none';
+        section.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) loadComments(postId);
+    }
+
+    // ── Load comments from server ────────────────────────────────────
+    async function loadComments(postId) {
+        const list = document.getElementById('comments-list-' + postId);
+        list.innerHTML = '<div class="comments-loading"><i class="fas fa-spinner fa-spin me-1"></i>Loading…</div>';
+
+        try {
+            const res = await fetch(`/Comments/GetPostComments?postId=${postId}`);
+            const comments = await res.json();
+            list.innerHTML = '';
+            if (comments.length === 0) {
+                list.innerHTML = '<div class="comments-loading">No comments yet. Be the first!</div>';
+                return;
+            }
+            comments.forEach(c => list.appendChild(buildCommentEl(c)));
+        } catch {
+            list.innerHTML = '<div class="comments-loading text-danger">Failed to load comments.</div>';
+        }
+    }
+
+    // ── Build a comment DOM element ──────────────────────────────────
+    function buildCommentEl(c) {
+        const wrap = document.createElement('div');
+        wrap.className = 'comment-item';
+        wrap.id = 'comment-' + c.id;
+        wrap.innerHTML = `
+            <div class="comment-avatar">
+                <img src="${c.authorAvatarUrl || '/images/user.jpg'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" />
+            </div>
+            <div class="comment-content-wrap">
+                <div class="comment-bubble">
+                    <div class="c-name">${escapeHtml(c.authorName)}</div>
+                    <p class="c-text">${escapeHtml(c.content)}</p>
+                </div>
+                <div class="comment-meta">
+                    <span>${jsTimeAgo(c.createdAt)}</span>
+                    <button class="reply-btn" onclick="focusReply('${c.postId}', '${c.id}', '${escapeHtml(c.authorName)}')">
+                        Reply
+                    </button>
+                </div>
+                ${c.replies && c.replies.length
+                    ? `<div class="replies-list" id="replies-${c.id}">
+                         ${c.replies.map(r => buildCommentEl(r).outerHTML).join('')}
+                       </div>`
+                    : `<div class="replies-list" id="replies-${c.id}"></div>`
+                }
+            </div>`;
+        return wrap;
+    }
+
+    // ── Reply: focus input and tag it ────────────────────────────────
+    function focusReply(postId, parentId, parentUserName) {
+        const input = document.getElementById('comment-input-' + postId);
+        input.dataset.parentCommentId = parentId;
+        input.placeholder = `Replying to ${parentUserName}… (Esc to cancel)`;
+        input.focus();
+        input.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                delete input.dataset.parentCommentId;
+                input.placeholder = 'Write a comment…';
+                input.removeEventListener('keydown', escHandler);
+            }
+        });
+    }
+
+    // ── Enter key on input ───────────────────────────────────────────
+    function handleCommentKey(event, postId) {
+        if (event.key === 'Enter') submitComment(postId);
+    }
+
+    // ── Submit comment ───────────────────────────────────────────────
+    async function submitComment(postId) {
+        const input = document.getElementById('comment-input-' + postId);
+        const content = input.value.trim();
+        if (!content) return;
+
+        const parentCommentId = input.dataset.parentCommentId || null;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        try {
+            const res = await fetch('/Comments/Add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ content, postId, parentCommentId })
+            });
+
+            if (!res.ok) return;
+            const newComment = await res.json();
+
+            // Append to correct container
+            if (parentCommentId) {
+                const repliesContainer = document.getElementById('replies-' + parentCommentId);
+                if (repliesContainer) repliesContainer.appendChild(buildCommentEl(newComment));
+            } else {
+                const list = document.getElementById('comments-list-' + postId);
+                const empty = list.querySelector('.comments-loading');
+                if (empty) empty.remove();
+                list.appendChild(buildCommentEl(newComment));
+            }
+
+            // Bump count badge
+            const badge = document.getElementById('comment-count-' + postId);
+            badge.textContent = (parseInt(badge.textContent || '0') + 1).toString();
+
+            // Reset input
+            input.value = '';
+            delete input.dataset.parentCommentId;
+            input.placeholder = 'Write a comment…';
+
+        } catch {
+            console.error('Failed to post comment');
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function jsTimeAgo(dateStr) {
+        const diff = (Date.now() - new Date(dateStr)) / 1000;
+        if (diff < 60)    return 'just now';
+        if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
     }
 </script>

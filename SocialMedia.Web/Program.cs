@@ -33,6 +33,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Only repos that are NOT inside UnitOfWork are registered here explicitly.
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IFriendshipRepository, FriendshipRepository>(); // Dev3 — not in UoW
+builder.Services.AddScoped<IUserSearchRepository, UserSearchRepository>();
 
 // ── Application Services ──────────────────────────────────────────────────────
 builder.Services.AddScoped<IUserService, UserService>();
@@ -41,6 +42,7 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IGroupChatService, GroupChatService>();
 builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
 
 builder.Services.AddSignalR();
 

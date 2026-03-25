@@ -242,7 +242,37 @@
             <div class="info-card p-4 text-center text-muted border border-light">
                 <i class="bi bi-card-text fs-1 mb-2 text-secondary"></i>
                 <h5 class="fw-bold text-dark">Posts</h5>
-                <p>You haven't posted anything yet.</p>
+                @{
+                    var userPosts = ViewBag.UserPosts as IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>;
+                }
+
+                @if (userPosts != null && userPosts.Any())
+                {
+                    @foreach (var post in userPosts)
+                    {
+                        <div class="post-card mb-3 p-3 border rounded">
+
+                            <div class="d-flex justify-content-between">
+                                <strong>@post.UserName</strong>
+                                <small>@post.CreatedAt.ToString("MMM dd")</small>
+                            </div>
+
+                            <p>@post.Content</p>
+
+                            @if (!string.IsNullOrEmpty(post.ImageUrl))
+                            {
+                                <img src="@post.ImageUrl" style="max-width:100%; border-radius:8px;" />
+                            }
+
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-muted">
+                        <p>No posts yet.</p>
+                    </div>
+                }
             </div>
         </div>
     </div>

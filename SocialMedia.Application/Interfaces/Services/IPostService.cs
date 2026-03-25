@@ -15,11 +15,11 @@ namespace SocialMedia.Application.Interfaces.Services
         Task CreatePostAsync(CreatePostDto dto );
        Task<IEnumerable<PostDto>> GetAllPostsAsync();
 
-       // Task<PostDto?> GetPostByIdAsync(int id);
+       Task<PostDto?> GetPostByIdAsync(Guid id);
 
-      //  Task UpdatePostAsync(UpdatePostDto dto);
-
-        Task DeletePostAsync(int id);
+      Task UpdatePostAsync(UpdatePostDto dto);
+        Task<IEnumerable<PostDto>> GetPostsByUserIdAsync(Guid userId);
+        Task DeletePostAsync(Guid id);
     }
 
 

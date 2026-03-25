@@ -40,25 +40,20 @@ namespace SocialMedia.Application.Services
 
       
 
-        public Task DeletePostAsync(int id)
+        public Task DeletePostAsync(Guid id)
         {
-            throw new NotImplementedException();
+
+            var post =  _unitOfWork.Repository<Post>().GetByIdAsync(id).Result;
+
+            if (post == null)
+                throw new Exception("Post not found");
+
+            _unitOfWork.Repository<Post>().Delete(post);
+
+            return _unitOfWork.CompleteAsync();
         }
 
-        //public async Task DeletePostAsync(Guid id, Guid userId)
-        //{
-        //    var post = await _unitOfWork.Repository<Post>().GetByIdAsync(id);
-
-        //    if (post == null)
-        //        throw new Exception("Post not found");
-
-        //    if (post.UserId != userId)
-        //        throw new UnauthorizedAccessException();
-
-        //    _unitOfWork.Repository<Post>().Delete(post);
-        //    await _unitOfWork.CompleteAsync();
-        //}
-
+       
         public async Task<IEnumerable<PostDto>> GetAllPostsAsync()
         {
             var posts = await _unitOfWork.Repository<Post>().GetAllAsync();
@@ -75,5 +70,62 @@ namespace SocialMedia.Application.Services
 
             return result;
         }
+
+        public Task<PostDto?> GetPostByIdAsync(Guid id)
+        {
+           var post =  _unitOfWork.Repository<Post>().GetByIdAsync(id).Result;
+            if (post == null)
+                return Task.FromResult<PostDto?>(null);
+            var result = new PostDto
+            {
+                Id = post.Id,
+                Content = post.Content,
+                userId = post.UserId,
+                 UserName = "Abdo",
+                CreatedAt = post.CreatedAt,
+                ImageUrl = post.ImageUrl
+            };
+            return Task.FromResult<PostDto?>(result);
+        }
+
+        public async Task<IEnumerable<PostDto>> GetPostsByUserIdAsync(Guid userId)
+        {
+            var posts = await _unitOfWork.Repository<Post>()
+                .FindAsync(p => p.UserId == userId.ToString());
+
+            return posts.Select(p => new PostDto
+            {
+                Id = p.Id,
+                Content = p.Content,
+                ImageUrl = p.ImageUrl,
+                CreatedAt = p.CreatedAt,
+                userId = p.UserId,
+                UserName = "Abdo"
+            });
+        }
+
+    
+        public  async Task UpdatePostAsync(UpdatePostDto dto)
+        {
+            var post = _unitOfWork.Repository<Post>().GetByIdAsync(dto.Id).Result;
+
+            if(post == null)
+                throw new Exception("Post not found");
+
+            post.Content = dto.Content;
+            if (!string.IsNullOrEmpty(dto.ImageUrl))
+                post.ImageUrl = dto.ImageUrl;
+
+            if (!string.IsNullOrEmpty(dto.ImageUrl))
+                post.ImageUrl = dto.ImageUrl;
+            _unitOfWork.Repository<Post>().Update(post);
+
+            await _unitOfWork.CompleteAsync();
+
+
+        }
+
+
+
     }
 }

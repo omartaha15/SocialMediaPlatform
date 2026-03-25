@@ -64,13 +64,13 @@
                             <div id="menu-@post.Id" class="menu" style="display:none;">
                                 <a asp-controller="Post"
                                    asp-action="EditPost"
-                                   asp-route-id="@post.Id">
+                                   asp-route-postId="@post.Id">
                                     ✏️ Edit
                                 </a>
 
                                 <form asp-controller="Post"
                                       asp-action="DeletePost"
-                                      asp-route-id="@post.Id"
+                                      asp-route-postId="@post.Id"
                                       method="post"
                                       onsubmit="return confirm('Delete this post?')">
                                     <button type="submit">🗑 Delete</button>

@@ -21,6 +21,8 @@ namespace SocialMedia.Web.Controllers
             var posts = await _postService.GetAllPostsAsync();
             return View(posts);
         }
+
+        [HttpPost]
         public async Task<IActionResult> CreatePost(CreatePostDto dto, IFormFile image)
         {
 
@@ -35,5 +37,51 @@ namespace SocialMedia.Web.Controllers
 
             return RedirectToAction("Index");
         }
+
+        [HttpPost]
+        public async Task<IActionResult> DeletePost(Guid postId)
+        {
+            await _postService.DeletePostAsync(postId);
+            return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditPost(Guid postId)
+        {
+            var post = await _postService.GetPostByIdAsync(postId);
+
+            if (post == null)
+                return NotFound();
+
+            var dto = new UpdatePostDto
+            {
+                Id = post.Id,
+                Content = post.Content,
+                ImageUrl = post.ImageUrl
+            };
+
+            return View(dto);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditPost(UpdatePostDto dto, IFormFile image)
+        {
+            if (image != null)
+            {
+                dto.ImageUrl = await _imageService.UploadImageAsync(image);
+            }
+
+            await _postService.UpdatePostAsync(dto);
+
+            return RedirectToAction("Index");
+        }
+
+
+
     }
+
+
+
+
+
 }

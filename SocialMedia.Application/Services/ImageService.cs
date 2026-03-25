@@ -44,9 +44,11 @@ namespace SocialMedia.Application.Services
         }
         public void DeleteImageAsync(string imagePath)
         {
-            if (string.IsNullOrEmpty(imagePath) || imagePath == "/images/user.jpg" || imagePath == "/images/coverImage.png")
+            if (string.IsNullOrEmpty(imagePath) ||
+                imagePath == "/images/user.jpg" ||
+                imagePath == "/images/coverImage.png")
             {
-                return; 
+                return ;
             }
 
             var pathWithoutSlash = imagePath.TrimStart('/');

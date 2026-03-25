@@ -1,0 +1,37 @@
+﻿@model SocialMedia.Application.DTOs.PostDtos.UpdatePostDto
+
+<h2>Edit Post</h2>
+
+<form asp-action="EditPost" method="post" enctype="multipart/form-data">
+
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div>
+        <textarea asp-for="Content" class="form-control"></textarea>
+    </div>
+
+    <br />
+
+    <div>
+        <input type="file" name="image" class="form-control" />
+    </div>
+
+    <br />
+
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <div>
+            <p>Current Image:</p>
+            <img src="@Model.ImageUrl" width="200" />
+        </div>
+    }
+
+    <br />
+
+    <button type="submit" class="btn btn-primary">Save</button>
+
+</form>

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SocialMedia.Application.DTOs.ProfileDTOs;
 using SocialMedia.Application.Interfaces.Services;
@@ -12,13 +12,19 @@ namespace SocialMedia.Web.Controllers
     {
         private readonly IProfileService _profileService;
         private readonly IFriendshipService _friendshipService;
+        private readonly IPostService _postService;
 
-        public ProfileController(IProfileService profileService, IFriendshipService friendshipService)
+        public ProfileController(
+            IProfileService profileService,
+            IFriendshipService friendshipService,
+            IPostService postService) // ✅ ADD THIS
         {
             _profileService = profileService;
             _friendshipService = friendshipService;
+            _postService = postService; // ✅
         }
 
+        [HttpGet]
         [HttpGet]
         public async Task<IActionResult> Index(string id = null)
         {
@@ -31,8 +37,12 @@ namespace SocialMedia.Web.Controllers
             var profile = await _profileService.GetProfileAsync(targetUserId);
             if (profile == null) return NotFound();
 
+
+            var posts = await _postService.GetPostsByUserIdAsync(Guid.Parse(targetUserId)); ViewBag.UserPosts = posts;
+
             ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(targetUserId);
             ViewBag.IsOwner = (loggedInUserId == targetUserId);
+
             return View(profile);
         }
 

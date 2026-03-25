@@ -1,0 +1,143 @@
+@model IEnumerable<SocialMedia.Application.DTOs.GroupChatDTOs.GroupDto>
+
+@{
+    ViewData["Title"] = "Groups";
+}
+
+<style>
+    .groups-wrapper { max-width: 750px; margin: 0 auto; }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .group-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+
+    .group-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        transition: var(--transition);
+    }
+
+    .group-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .group-icon {
+        width: 48px; height: 48px;
+        border-radius: var(--radius-sm);
+        background: var(--gradient-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: white;
+    }
+
+    .group-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    .group-desc {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .group-members {
+        color: var(--text-secondary);
+        font-size: 0.78rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+</style>
+
+<div class="groups-wrapper">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-users me-2" style="color: var(--accent);"></i>Groups
+        </h1>
+        <a asp-controller="GroupChat" asp-action="Create" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i> New Group
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state glass-card">
+            <i class="fas fa-users-slash" style="color: var(--text-muted);"></i>
+            <h5 style="color: var(--text-secondary);">No groups yet</h5>
+            <p style="font-size:0.88rem;">Create a group or ask someone to add you.</p>
+            <a asp-controller="GroupChat" asp-action="Create" class="btn btn-primary mt-2">
+                <i class="fas fa-plus me-1"></i> Create Group
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="group-grid">
+            @foreach (var group in Model)
+            {
+                <a class="group-card"
+                   asp-controller="GroupChat"
+                   asp-action="Room"
+                   asp-route-groupId="@group.Id">
+                    <div class="group-icon">
+                        @if (!string.IsNullOrEmpty(group.ImageUrl))
+                        {
+                            <img src="@group.ImageUrl" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />
+                        }
+                        else
+                        {
+                            <i class="fas fa-users"></i>
+                        }
+                    </div>
+                    <div class="group-name">@group.Name</div>
+                    @if (!string.IsNullOrEmpty(group.Description))
+                    {
+                        <div class="group-desc">@group.Description</div>
+                    }
+                    <div class="group-members">
+                        <i class="fas fa-user me-1"></i>@group.MemberCount member@(group.MemberCount != 1 ? "s" : "")
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>

@@ -53,6 +53,29 @@ namespace SocialMedia.Web.Controllers
             var messages = await _messageService.GetChatHistoryAsync(userId, otherUserId);
             await _messageService.MarkAsReadAsync(userId, otherUserId);
 
+            if (string.IsNullOrWhiteSpace(otherUserName) || string.IsNullOrWhiteSpace(otherUserProfilePicture))
+            {
+                var conversation = (await _messageService.GetConversationsAsync(userId))
+                    .FirstOrDefault(c => c.OtherUserId == otherUserId);
+
+                if (string.IsNullOrWhiteSpace(otherUserName))
+                    otherUserName = conversation?.OtherUserName ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(otherUserProfilePicture))
+                    otherUserProfilePicture = conversation?.OtherUserProfilePicture;
+
+                var otherUserLastMessage = messages
+                    .Where(m => m.SenderId == otherUserId)
+                    .OrderByDescending(m => m.CreatedAt)
+                    .FirstOrDefault();
+
+                if (string.IsNullOrWhiteSpace(otherUserName))
+                    otherUserName = otherUserLastMessage?.SenderName ?? "User";
+
+                if (string.IsNullOrWhiteSpace(otherUserProfilePicture))
+                    otherUserProfilePicture = otherUserLastMessage?.SenderProfilePicture;
+            }
+
             var vm = new ChatViewModel
             {
                 OtherUserId = otherUserId,

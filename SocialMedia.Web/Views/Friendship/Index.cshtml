@@ -31,7 +31,12 @@
                                 </div>
                             </div>
                             <div class="d-flex gap-2">
-                                <a class="btn btn-primary btn-sm" href="@Url.Action("Chat", "Messaging", new { otherUserId = friend.Id })">Message</a>
+                                <a class="btn btn-primary btn-sm"
+                                   asp-controller="Messaging"
+                                   asp-action="Chat"
+                                   asp-route-otherUserId="@friend.Id"
+                                   asp-route-otherUserName="@friend.UserName"
+                                   asp-route-otherUserProfilePicture="@friend.ProfilePictureUrl">Message</a>
                                 <!-- Remove Friend Button -->
                                 <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="d-inline">
                                     <input type="hidden" name="friendId" value="@friend.Id" />

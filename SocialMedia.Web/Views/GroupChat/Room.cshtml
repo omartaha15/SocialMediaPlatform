@@ -191,6 +191,11 @@
     }
     .add-member-input:focus { border-color: var(--accent); }
 
+    .add-member-input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
     .leave-btn {
         width: 100%;
         background: rgba(239,68,68,0.1);
@@ -289,8 +294,21 @@
         <div class="members-footer">
             @if (Model.IsAdmin)
             {
-                <input type="text" id="addMemberInput" class="add-member-input" placeholder="User ID to add..." />
-                <button class="btn btn-primary w-100 btn-sm mb-2" style="font-size:0.78rem;" onclick="addMember()">
+                <select id="addMemberSelect" class="add-member-input" @(Model.AvailableFriendsToAdd.Count == 0 ? "disabled" : null)>
+                    <option value="">Select a friend to add...</option>
+                    @foreach (var friend in Model.AvailableFriendsToAdd)
+                    {
+                        <option value="@friend.Id">@friend.UserName</option>
+                    }
+                </select>
+                @if (Model.AvailableFriendsToAdd.Count == 0)
+                {
+                    <div class="text-muted mb-2" style="font-size:0.75rem;">All your friends are already in this group.</div>
+                }
+                <button class="btn btn-primary w-100 btn-sm mb-2"
+                        style="font-size:0.78rem;"
+                        onclick="addMember()"
+                        @(Model.AvailableFriendsToAdd.Count == 0 ? "disabled" : null)>
                     <i class="fas fa-user-plus me-1"></i> Add Member
                 </button>
             }
@@ -385,12 +403,17 @@
 
     // ── Admin: Add / Remove member ────────────────────────────────────────────
     async function addMember() {
-        const targetId = document.getElementById("addMemberInput").value.trim();
+        const select = document.getElementById("addMemberSelect");
+        if (!select) return;
+
+        const targetId = select.value;
         if (!targetId) return;
+
         const fd = new FormData();
         fd.append("groupId",      groupId);
         fd.append("targetUserId", targetId);
         fd.append("__RequestVerificationToken", getToken());
+
         const res = await fetch("/GroupChat/AddMember", { method: "POST", body: fd });
         if (res.ok) { location.reload(); }
         else        { const d = await res.json(); alert(d.error ?? "Could not add member."); }

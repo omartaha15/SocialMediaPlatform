@@ -108,11 +108,18 @@
                                     <i class="fas fa-compass me-1"></i> Discover
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">
-                                    <i class="fas fa-shield-alt me-1"></i> Privacy
-                                </a>
-                            </li>
+                            
+                            <li class="nav-item position-relative">
+                            <a class="nav-link" asp-controller="Messaging" asp-action="Index">
+                                <i class="fas fa-envelope"></i>
+                                <span id="msg-badge"
+                                      class="badge bg-danger position-absolute"
+                                      style="top:4px; right:0; font-size:0.65rem; display:none;">
+                                    0
+                                </span>
+                                <span> Messages</span>
+                            </a>
+                        </li>   
                             <li class="nav-item ms-2 d-flex align-items-center">
                                 <a asp-controller="Profile" asp-action="Index" class="d-flex align-items-center text-decoration-none text-dark">
                                     <img src="@profilePic" class="rounded-circle me-2" style="width:36px; height:36px; object-fit:cover;" />
@@ -127,6 +134,7 @@
                                     </button>
                                 </form>
                             </li>
+                                
                         }
                     </ul>
                 </div>

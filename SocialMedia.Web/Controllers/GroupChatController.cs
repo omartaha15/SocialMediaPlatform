@@ -15,15 +15,18 @@ namespace SocialMedia.Web.Controllers
     {
         private readonly IGroupChatService _groupChatService;
         private readonly IMessageService _messageService;
+        private readonly IFriendshipService _friendshipService;
         private readonly IHubContext<ChatHub> _hubContext;
 
         public GroupChatController(
             IGroupChatService groupChatService,
             IMessageService messageService,
+            IFriendshipService friendshipService,
             IHubContext<ChatHub> hubContext)
         {
             _groupChatService = groupChatService;
             _messageService = messageService;
+            _friendshipService = friendshipService;
             _hubContext = hubContext;
         }
 
@@ -77,11 +80,18 @@ namespace SocialMedia.Web.Controllers
             var members = await _groupChatService.GetMembersAsync(groupId);
             var unreadDMs = await _messageService.GetUnreadCountAsync(userId);
 
+            var memberIds = members.Select(m => m.UserId).ToHashSet();
+            var availableFriendsToAdd = (await _friendshipService.GetFriendsListAsync(userId))
+                .Where(f => !memberIds.Contains(f.Id))
+                .OrderBy(f => f.UserName)
+                .ToList();
+
             var vm = new GroupRoomViewModel
             {
                 Group = group,
                 History = history.ToList(),
                 Members = members.ToList(),
+                AvailableFriendsToAdd = availableFriendsToAdd,
                 IsAdmin = members.Any(m => m.UserId == userId && m.Role == "Admin"),
                 CurrentUserId = userId
             };

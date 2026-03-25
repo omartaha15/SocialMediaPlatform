@@ -60,17 +60,18 @@ namespace SocialMedia.Application.Services
             var posts = await _unitOfWork.Repository<Post>()
                 .Query()
                 .Include(p => p.Creator)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+.OrderByDescending(p => p.CreatedAt)
+    .ToListAsync();
+   
 
             return posts.Select(p => new PostDto
             {
-                Id        = p.Id,
-                Content   = p.Content,
-                userId    = p.UserId,
-                UserName  = p.Creator?.UserName ?? "Unknown",
+                Id = p.Id,
+                Content = p.Content,
+                userId = p.UserId,
+                UserName = p.Creator?.UserName ?? "Unknown",
                 CreatedAt = p.CreatedAt,
-                ImageUrl  = p.ImageUrl
+                ImageUrl = p.ImageUrl
             });
         }
 

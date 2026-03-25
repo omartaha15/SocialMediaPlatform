@@ -64,13 +64,27 @@
     .bubble-row { display: flex; align-items: flex-end; gap: 0.5rem; }
     .bubble-row.sent { flex-direction: row-reverse; }
 
+    .bubble-stack {
+        display: flex;
+        flex-direction: column;
+        max-width: min(72%, 560px);
+        align-items: flex-start;
+    }
+
+    .bubble-row.sent .bubble-stack {
+        align-items: flex-end;
+    }
+
     .bubble {
-        max-width: 65%;
-        padding: 0.6rem 0.95rem;
+        width: auto;
+        max-width: 100%;
+        padding: 0.7rem 1rem;
         border-radius: var(--radius-lg);
         font-size: 0.9rem;
         line-height: 1.45;
-        word-break: break-word;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: normal;
     }
     .bubble.sent     { background: var(--gradient-primary); color: white; border-bottom-right-radius: 4px; }
     .bubble.received { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
@@ -223,7 +237,7 @@
                 var isSent = msg.SenderId == currentUserId;
                 <div class="bubble-row @(isSent ? "sent" : "received")">
                     <span class="bubble-time">@msg.CreatedAt.ToString("HH:mm")</span>
-                    <div>
+                    <div class="bubble-stack">
                         @if (!isSent)
                         {
                             <div class="bubble-sender">@msg.SenderName</div>
@@ -251,7 +265,8 @@
             @foreach (var member in Model.Members)
             {
                 <div class="member-item">
-                    <img class="member-avatar" src="/images/user.jpg" alt="@member.UserName" />
+                    <img class="member-avatar" src="@member.ProfilePicture" alt="@member.UserName" />
+                    @* <img class="member-avatar" src="/images/user.jpg" alt="@member.UserName" /> *@
                     <span class="member-name">@member.UserName</span>
                     @if (member.Role == "Admin")
                     {
@@ -314,7 +329,7 @@
         row.className = `bubble-row ${isSent ? "sent" : "received"}`;
         row.innerHTML = `
             <span class="bubble-time">${time}</span>
-            <div>
+            <div class="bubble-stack">
                 ${!isSent ? `<div class="bubble-sender">${escapeHtml(senderDisplayName)}</div>` : ""}
                 <div class="bubble ${isSent ? "sent" : "received"}">${escapeHtml(content)}</div>
             </div>`;
@@ -357,9 +372,10 @@
         fd.append("content",  content);
         fd.append("__RequestVerificationToken", getToken());
 
-        await fetch("/GroupChat/SendMessage", { method: "POST", body: fd });
-        await connection.invoke("SendGroupMessage", groupId, senderName, content)
-            .catch(err => console.error(err));
+        const res = await fetch("/GroupChat/SendMessage", { method: "POST", body: fd });
+        if (!res.ok) {
+            console.error("Send group message failed", res.status);
+        }
     }
 
     sendBtn.addEventListener("click", sendMessage);

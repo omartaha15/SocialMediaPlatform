@@ -26,6 +26,8 @@ namespace SocialMedia.Infrastructure.Repositories
         public async Task<IEnumerable<T>> GetAllAsync()
             => await _dbSet.ToListAsync();
 
+        public IQueryable<T> Query() => _dbSet.AsQueryable();
+
         public async Task AddAsync(T entity)
             => await _dbSet.AddAsync(entity);
 
@@ -37,6 +39,11 @@ namespace SocialMedia.Infrastructure.Repositories
         public void Delete(T entity)
         {
             _dbSet.Remove(entity);
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _dbSet.Where(predicate).ToListAsync();
         }
     }
 }

@@ -1,14 +1,25 @@
-﻿@model IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>
+@model IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>
 
 @using System.Security.Claims
+@using SocialMedia.Domain.Enums
 @{
     ViewData["Title"] = "Home";
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    var emojiMap = new Dictionary<string, string>
+    {
+        ["Like"]  = "👍",
+        ["Love"]  = "❤️",
+        ["Haha"]  = "😂",
+        ["Wow"]   = "😮",
+        ["Sad"]   = "😢",
+        ["Angry"] = "😡"
+    };
 }
 
 <div class="feed-wrap">
 
-    <!-- Compose -->
+    <!-- ================= COMPOSE ================= -->
     <div class="compose-card">
         <div class="compose-header">
             <div class="avatar">You</div>
@@ -16,15 +27,11 @@
         </div>
 
         <form asp-controller="Post" asp-action="CreatePost" method="post" enctype="multipart/form-data">
-
             <textarea name="Content" placeholder="Share something..." required></textarea>
-
             <input type="file" name="Image" accept="image/*" />
-
             <div class="compose-footer">
                 <button type="submit">Post</button>
             </div>
-
         </form>
     </div>
 
@@ -34,69 +41,105 @@
     {
         @foreach (var post in Model)
         {
+            var userReactionStr = post.CurrentUserReaction?.ToString() ?? "";
+            var userEmoji       = userReactionStr != "" && emojiMap.ContainsKey(userReactionStr) ? emojiMap[userReactionStr] : "👍";
+            var hasReaction     = userReactionStr != "";
+
             <div class="post-card">
 
-                <!-- Header -->
+                <!-- HEADER -->
                 <div class="post-head">
-
                     <div class="post-avatar">
                         @{
                             var name = post.UserName ?? "U";
                             var initials = name.Length >= 2
-                            ? $"{name[0]}{name.Split(' ').Last()[0]}"
-                            : name.Substring(0, 1);
+                                ? $"{name[0]}{name.Split(' ').Last()[0]}"
+                                : name.Substring(0, 1);
                         }
                         @initials
                     </div>
 
                     <div class="post-info">
                         <div class="post-name">@post.UserName</div>
-
                         <div class="post-time">@post.CreatedAt.ToString("MMM dd")</div>
                     </div>
 
-                    <!-- Settings -->
                     @if (currentUserId != null && post.userId.ToString() == currentUserId)
                     {
                         <div class="settings">
                             <button type="button" onclick="toggleMenu('@post.Id')">⋮</button>
-
                             <div id="menu-@post.Id" class="menu" style="display:none;">
-                                <a asp-controller="Post"
-                                   asp-action="EditPost"
-                                   asp-route-postId="@post.Id">
-                                    ✏️ Edit
-                                </a>
-
-                                <form asp-controller="Post"
-                                      asp-action="DeletePost"
-                                      asp-route-postId="@post.Id"
-                                      method="post"
-                                      onsubmit="return confirm('Delete this post?')">
+                                <a asp-controller="Post" asp-action="EditPost" asp-route-postId="@post.Id">✏️ Edit</a>
+                                <form asp-controller="Post" asp-action="DeletePost" asp-route-postId="@post.Id"
+                                      method="post" onsubmit="return confirm('Delete this post?')">
                                     <button type="submit">🗑 Delete</button>
                                 </form>
                             </div>
                         </div>
                     }
-
                 </div>
 
-                <!-- Content -->
+                <!-- CONTENT -->
                 <div class="post-content">
                     @post.Content
-
                     @if (!string.IsNullOrEmpty(post.ImageUrl))
                     {
-                        <div class="post-image">
-                            <img src="@post.ImageUrl" alt="Post Image" />
-                        </div>
+                        <div class="post-image"><img src="@post.ImageUrl" /></div>
                     }
                 </div>
 
-                <!-- Actions -->
+                <!-- REACTION SUMMARY BAR -->
+                @if (post.ReactionCounts.Any())
+                {
+                    <div class="reaction-summary" id="summary-@post.Id">
+                        @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value))
+                        {
+                            var e = emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍";
+                            <span class="reaction-bubble @(kv.Key.ToString() == userReactionStr ? "mine" : "")">
+                                @e <span class="rbcount">@kv.Value</span>
+                            </span>
+                        }
+                        <span class="total-count">@post.ReactionCount total</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="reaction-summary" id="summary-@post.Id" style="display:none;"></div>
+                }
+
+                <!-- ACTIONS -->
                 <div class="post-actions">
-                    <button>❤️ Like</button>
-                    <button>💬 Comment</button>
+
+                    <div class="reaction-wrapper">
+                        <button type="button"
+                                id="react-btn-@post.Id"
+                                class="react-btn @(hasReaction ? "reacted" : "")"
+                                onmousedown="openReactions(event, '@post.Id')"
+                                data-post="@post.Id">
+                            <span class="btn-emoji">@(hasReaction ? userEmoji : "👍")</span>
+                            <span class="btn-label">@(hasReaction ? userReactionStr : "Like")</span>
+                        </button>
+
+                        <!-- PICKER -->
+                        <div id="reactions-@post.Id" class="reaction-picker" style="display:none;">
+                            @foreach (var kv in emojiMap)
+                            {
+                                <button type="button"
+                                        class="pick-btn @(kv.Key == userReactionStr ? "active-pick" : "")"
+                                        title="@kv.Key"
+                                        onclick="sendReaction('@post.Id', '@kv.Key', this)">
+                                    @kv.Value
+                                </button>
+                            }
+                            @if (hasReaction)
+                            {
+                                <button type="button" class="pick-btn remove-btn" title="Remove"
+                                        onclick="removeReaction('@post.Id', this)">✖</button>
+                            }
+                        </div>
+                    </div>
+
+                    <button type="button" class="comment-btn">💬 Comment</button>
                 </div>
 
             </div>
@@ -104,25 +147,241 @@
     }
     else
     {
-        <div class="empty">
-            <p>No posts yet.</p>
-        </div>
+        <div class="empty"><p>No posts yet.</p></div>
     }
 
 </div>
 
-<!-- JS -->
-<script>
-    function toggleMenu(id) {
-        var menu = document.getElementById("menu-" + id);
-        menu.style.display = menu.style.display === "block" ? "none" : "block";
+<!-- ======================== CSS ======================== -->
+<style>
+    .feed-wrap { max-width: 600px; margin: auto; }
+
+    /* Post card */
+    .post-card {
+        background: #fff;
+        margin-bottom: 15px;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.09);
     }
 
-    document.addEventListener('click', function (e) {
-        document.querySelectorAll('.menu').forEach(menu => {
-            if (!menu.contains(e.target) && !e.target.closest('.settings')) {
-                menu.style.display = "none";
-            }
+    .post-head { display: flex; align-items: flex-start; justify-content: space-between; }
+
+    .post-avatar {
+        width: 40px; height: 40px;
+        background: #6c63ff; color: #fff; font-weight: 700;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; margin-right: 10px;
+    }
+
+    .post-info { flex: 1; }
+    .post-name { font-weight: 600; }
+    .post-time { font-size: 12px; color: #888; }
+
+    /* Reaction summary */
+    .reaction-summary {
+        display: flex; flex-wrap: wrap; align-items: center;
+        gap: 6px; margin: 8px 0 4px; min-height: 28px;
+    }
+
+    .reaction-bubble {
+        display: inline-flex; align-items: center; gap: 3px;
+        background: #f0f2f5; border-radius: 20px; padding: 3px 10px;
+        font-size: 14px; cursor: default; user-select: none;
+        transition: transform .15s, background .15s;
+    }
+
+    .reaction-bubble.mine {
+        background: #e8e4ff;
+        border: 1.5px solid #6c63ff;
+        color: #6c63ff; font-weight: 600;
+    }
+
+    .rbcount { font-size: 12px; font-weight: 600; }
+    .total-count { font-size: 12px; color: #888; margin-left: 4px; }
+
+    /* Actions */
+    .post-actions {
+        display: flex; gap: 10px; margin-top: 8px;
+        border-top: 1px solid #f0f2f5; padding-top: 8px;
+    }
+
+    .reaction-wrapper { position: relative; }
+
+    .react-btn {
+        display: flex; align-items: center; gap: 5px;
+        border: none; background: none; cursor: pointer;
+        font-size: 14px; color: #555;
+        padding: 5px 10px; border-radius: 6px;
+        transition: background .15s, color .15s;
+    }
+    .react-btn:hover { background: #f0f2f5; }
+    .react-btn.reacted { color: #6c63ff; font-weight: 600; }
+    .react-btn.reacted:hover { background: #ede9ff; }
+
+    .btn-emoji { font-size: 18px; }
+    .btn-label { font-size: 13px; }
+
+    .comment-btn {
+        border: none; background: none; cursor: pointer;
+        font-size: 14px; color: #555;
+        padding: 5px 10px; border-radius: 6px;
+        transition: background .15s;
+    }
+    .comment-btn:hover { background: #f0f2f5; }
+
+    /* Picker */
+    .reaction-picker {
+        position: absolute; bottom: 42px; left: 0;
+        background: #fff; border-radius: 30px; padding: 6px 10px;
+        display: flex; gap: 4px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+        z-index: 100;
+        animation: popIn .18s ease;
+    }
+
+    @@keyframes popIn {
+        from { transform: scale(.7); opacity: 0; }
+        to   { transform: scale(1);  opacity: 1; }
+    }
+
+    .pick-btn {
+        font-size: 22px; border: none; background: none; cursor: pointer;
+        border-radius: 50%; width: 38px; height: 38px;
+        display: flex; align-items: center; justify-content: center;
+        transition: transform .15s, background .15s;
+    }
+    .pick-btn:hover { transform: scale(1.35); background: #f0f2f5; }
+    .pick-btn.active-pick { background: #e8e4ff; outline: 2px solid #6c63ff; }
+
+    .remove-btn { font-size: 14px; color: #e74c3c; background: #fff0ee; }
+    .remove-btn:hover { background: #fde; transform: scale(1.2); }
+</style>
+
+<!-- ======================== JS ======================== -->
+<script>
+    const emojiMap = {
+        Like: '👍', Love: '❤️', Haha: '😂', Wow: '😮', Sad: '😢', Angry: '😡'
+    };
+
+    function toggleMenu(id) {
+        var menu = document.getElementById('menu-' + id);
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function openReactions(event, postId) {
+        event.preventDefault();
+        document.querySelectorAll('.reaction-picker').forEach(p => p.style.display = 'none');
+        var picker = document.getElementById('reactions-' + postId);
+        picker.style.display = 'flex';
+        setTimeout(() => {
+            document.addEventListener('click', function handler(e) {
+                if (!picker.contains(e.target)) {
+                    picker.style.display = 'none';
+                    document.removeEventListener('click', handler);
+                }
+            });
+        }, 0);
+    }
+
+    function sendReaction(postId, type, btn) {
+        const params = new URLSearchParams();
+        params.append('postId', postId);
+        params.append('type', type);
+
+        fetch('/Reaction/React', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('reactions-' + postId).style.display = 'none';
+            updateUI(postId, data);
         });
-    });
+    }
+
+    function removeReaction(postId, btn) {
+        const params = new URLSearchParams();
+        params.append('postId', postId);
+
+        fetch('/Reaction/Remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('reactions-' + postId).style.display = 'none';
+            updateUI(postId, data);
+        });
+    }
+
+    function updateUI(postId, data) {
+        const summary = document.getElementById('summary-' + postId);
+        summary.innerHTML = '';
+
+        const counts      = data.counts      || {};
+        const userReaction = data.userReaction || null;
+        const total        = data.total        || 0;
+
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+        sorted.forEach(([type, count]) => {
+            const bubble = document.createElement('span');
+            bubble.className = 'reaction-bubble' + (type === userReaction ? ' mine' : '');
+            bubble.innerHTML = `${emojiMap[type] || type} <span class="rbcount">${count}</span>`;
+            summary.appendChild(bubble);
+        });
+
+        if (total > 0) {
+            const tot = document.createElement('span');
+            tot.className = 'total-count';
+            tot.textContent = total + ' total';
+            summary.appendChild(tot);
+            summary.style.display = 'flex';
+        } else {
+            summary.style.display = 'none';
+        }
+
+        // Update react button
+        const btn       = document.getElementById('react-btn-' + postId);
+        const emojiSpan = btn.querySelector('.btn-emoji');
+        const labelSpan = btn.querySelector('.btn-label');
+
+        if (userReaction) {
+            btn.classList.add('reacted');
+            emojiSpan.textContent = emojiMap[userReaction] || '👍';
+            labelSpan.textContent = userReaction;
+        } else {
+            btn.classList.remove('reacted');
+            emojiSpan.textContent = '👍';
+            labelSpan.textContent = 'Like';
+        }
+
+        // Highlight active pick
+        const picker = document.getElementById('reactions-' + postId);
+        picker.querySelectorAll('.pick-btn').forEach(b => b.classList.remove('active-pick'));
+        if (userReaction) {
+            const active = [...picker.querySelectorAll('.pick-btn')].find(b => b.title === userReaction);
+            if (active) active.classList.add('active-pick');
+        }
+
+        // Show/hide remove button
+        let removeBtn = picker.querySelector('.remove-btn');
+        if (userReaction) {
+            if (!removeBtn) {
+                removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'pick-btn remove-btn';
+                removeBtn.title = 'Remove';
+                removeBtn.textContent = '✖';
+                removeBtn.onclick = () => removeReaction(postId, removeBtn);
+                picker.appendChild(removeBtn);
+            }
+        } else {
+            if (removeBtn) removeBtn.remove();
+        }
+    }
 </script>

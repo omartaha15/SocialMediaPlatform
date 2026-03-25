@@ -1,8 +1,128 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>
+
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Home";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="feed-wrap">
+
+    <!-- Compose -->
+    <div class="compose-card">
+        <div class="compose-header">
+            <div class="avatar">You</div>
+            <span>What's on your mind?</span>
+        </div>
+
+        <form asp-controller="Post" asp-action="CreatePost" method="post" enctype="multipart/form-data">
+
+            <textarea name="Content" placeholder="Share something..." required></textarea>
+
+            <input type="file" name="Image" accept="image/*" />
+
+            <div class="compose-footer">
+                <button type="submit">Post</button>
+            </div>
+
+        </form>
+    </div>
+
+    <h3>Recent Posts</h3>
+
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var post in Model)
+        {
+            <div class="post-card">
+
+                <!-- Header -->
+                <div class="post-head">
+
+                    <div class="post-avatar">
+                        @{
+                            var name = post.UserName ?? "U";
+                            var initials = name.Length >= 2
+                            ? $"{name[0]}{name.Split(' ').Last()[0]}"
+                            : name.Substring(0, 1);
+                        }
+                        @initials
+                    </div>
+
+                    <div class="post-info">
+                        <div class="post-name">@post.UserName</div>
+
+                        <div class="post-time">@post.CreatedAt.ToString("MMM dd")</div>
+                    </div>
+
+                    <!-- Settings -->
+                    @if (currentUserId != null && post.userId.ToString() == currentUserId)
+                    {
+                        <div class="settings">
+                            <button type="button" onclick="toggleMenu('@post.Id')">⋮</button>
+
+                            <div id="menu-@post.Id" class="menu" style="display:none;">
+                                <a asp-controller="Post"
+                                   asp-action="EditPost"
+                                   asp-route-id="@post.Id">
+                                    ✏️ Edit
+                                </a>
+
+                                <form asp-controller="Post"
+                                      asp-action="DeletePost"
+                                      asp-route-id="@post.Id"
+                                      method="post"
+                                      onsubmit="return confirm('Delete this post?')">
+                                    <button type="submit">🗑 Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Content -->
+                <div class="post-content">
+                    @post.Content
+
+                    @if (!string.IsNullOrEmpty(post.ImageUrl))
+                    {
+                        <div class="post-image">
+                            <img src="@post.ImageUrl" alt="Post Image" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Actions -->
+                <div class="post-actions">
+                    <button>❤️ Like</button>
+                    <button>💬 Comment</button>
+                </div>
+
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty">
+            <p>No posts yet.</p>
+        </div>
+    }
+
 </div>
+
+<!-- JS -->
+<script>
+    function toggleMenu(id) {
+        var menu = document.getElementById("menu-" + id);
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener('click', function (e) {
+        document.querySelectorAll('.menu').forEach(menu => {
+            if (!menu.contains(e.target) && !e.target.closest('.settings')) {
+                menu.style.display = "none";
+            }
+        });
+    });
+</script>

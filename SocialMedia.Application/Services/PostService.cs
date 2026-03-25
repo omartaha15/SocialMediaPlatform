@@ -25,7 +25,8 @@ namespace SocialMedia.Application.Services
 
         public async Task CreatePostAsync(CreatePostDto dto)
         {
-            // Upload image using service
+  
+
 
             var post = new Post
             {

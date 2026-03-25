@@ -31,11 +31,15 @@ namespace SocialMedia.Web.Controllers
             dto.UserId = userIdString.ToString();
             var imageUrl = await _imageService.UploadImageAsync(image);
 
-            dto.ImageUrl = imageUrl;
+            if(imageUrl != null)
+            {
+                dto.ImageUrl = imageUrl;
+            }
+           
 
             await _postService.CreatePostAsync(dto);
 
-            return RedirectToAction("Index");
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpPost]

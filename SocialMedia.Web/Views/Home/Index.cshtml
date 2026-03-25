@@ -1064,11 +1064,13 @@
             }
 
             // Bump count badge
-            const badge = document.getElementById('comment-count-' + postId);
-            badge.textContent = (parseInt(badge.textContent || '0') + 1).toString();
+             const badge = document.getElementById('comment-count-' + postId);
+    if (badge) {
+        badge.textContent = (parseInt(badge.textContent || '0') + 1).toString();
+    }
 
             // Reset input
-            input.value = '';
+           input.value = '';
             delete input.dataset.parentCommentId;
             input.placeholder = 'Write a comment…';
 

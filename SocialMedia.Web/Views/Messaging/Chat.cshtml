@@ -239,8 +239,12 @@
         formData.append("content",    content);
         formData.append("__RequestVerificationToken", getAntiForgeryToken());
 
-        // Save to DB (controller also pushes real-time to both users)
+        // Save to DB — controller broadcasts via SignalR to both users, so we
+        // do NOT manually append a bubble here (that would cause a double render).
         await fetch("/Messaging/SendMessage", { method: "POST", body: formData });
+
+        // Update the navbar unread badge (in case receiver had open conversations)
+        if (typeof refreshMsgBadge === 'function') refreshMsgBadge();
     }
 
     function getAntiForgeryToken() {

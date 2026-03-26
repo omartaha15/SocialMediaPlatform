@@ -7,11 +7,10 @@
 <style>
     .room-wrapper {
         max-width: 960px;
-        margin: 0 auto 2rem auto;
+        margin: 0 auto;
         display: flex;
         gap: 1rem;
-        height: calc(100vh - 180px);
-        min-height: 400px;
+        height: calc(100vh - 130px);
     }
 
     /* ── Chat panel ── */
@@ -203,11 +202,6 @@
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
     }
 
-    .add-member-input option {
-        background-color: var(--bg-input, #fff);
-        color: var(--text-primary, #212529);
-    }
-
     .add-member-input:disabled {
         opacity: 0.6;
         cursor: not-allowed;
@@ -288,8 +282,7 @@
             @foreach (var member in Model.Members)
             {
                 <div class="member-item">
-                    <img class="member-avatar" src="@member.ProfilePicture" alt="@member.UserName" />
-                    @* <img class="member-avatar" src="/images/user.jpg" alt="@member.UserName" /> *@
+                    <img class="member-avatar" src="@(string.IsNullOrEmpty(member.ProfilePicture) ? "/images/user.jpg" : member.ProfilePicture)" alt="@member.UserName" />
                     <span class="member-name">@member.UserName</span>
                     @if (member.Role == "Admin")
                     {
@@ -319,6 +312,7 @@
                         <option value="@friend.Id">@friend.UserName</option>
                     }
                 </select>
+                @Html.AntiForgeryToken()
                 @if (Model.AvailableFriendsToAdd.Count == 0)
                 {
                     <div class="text-muted mb-2" style="font-size:0.75rem;">All your friends are already in this group.</div>
@@ -448,5 +442,4 @@
         else        { const d = await res.json(); alert(d.error ?? "Could not remove member."); }
     }
 </script>
-@Html.AntiForgeryToken()
 }

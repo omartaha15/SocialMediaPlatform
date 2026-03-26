@@ -67,5 +67,15 @@ namespace SocialMedia.Infrastructure.Repositories
             return await _dbSet
                 .CountAsync(m => m.ReceiverId == userId && !m.IsRead);
         }
+
+        /// <inheritdoc/>
+        public async Task<Dictionary<string, int>> GetUnreadCountPerSenderAsync(string userId)
+        {
+            return await _dbSet
+                .Where(m => m.ReceiverId == userId && !m.IsRead)
+                .GroupBy(m => m.SenderId)
+                .Select(g => new { SenderId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.SenderId, x => x.Count);
+        }
     }
 }

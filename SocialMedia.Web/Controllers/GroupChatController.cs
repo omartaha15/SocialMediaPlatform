@@ -84,6 +84,12 @@ namespace SocialMedia.Web.Controllers
             var availableFriendsToAdd = (await _friendshipService.GetFriendsListAsync(userId))
                 .Where(f => !memberIds.Contains(f.Id))
                 .OrderBy(f => f.UserName)
+                .Select(f => new SocialMedia.Application.DTOs.ProfileDTOs.UserSuggestionDto
+                {
+                    Id                = f.Id,
+                    UserName          = f.UserName ?? string.Empty,
+                    ProfilePictureUrl = f.ProfilePictureUrl
+                })
                 .ToList();
 
             var vm = new GroupRoomViewModel

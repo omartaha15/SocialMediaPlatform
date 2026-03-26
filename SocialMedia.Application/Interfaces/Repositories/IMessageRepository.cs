@@ -22,5 +22,11 @@ namespace SocialMedia.Application.Interfaces.Repositories
 
         /// <summary>Total count of unread messages received by userId.</summary>
         Task<int> GetUnreadCountAsync(string userId);
+
+        /// <summary>
+        /// Returns a dictionary of senderId -> unread count for all unread messages
+        /// received by userId. Used to show per-conversation unread badges.
+        /// </summary>
+        Task<Dictionary<string, int>> GetUnreadCountPerSenderAsync(string userId);
     }
 }

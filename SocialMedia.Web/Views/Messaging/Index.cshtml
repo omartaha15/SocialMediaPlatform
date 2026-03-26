@@ -168,7 +168,18 @@
 
                     <div class="conv-meta">
                         <span class="conv-time">
-                            @conv.LastMessageTime.ToString("MMM dd")
+                            @{
+                                var localNow  = DateTime.Now;
+                                var msgDate   = conv.LastMessageTime.ToLocalTime();
+                                string timeLabel;
+                                if (msgDate.Date == localNow.Date)
+                                    timeLabel = msgDate.ToString("HH:mm");
+                                else if (msgDate.Date == localNow.Date.AddDays(-1))
+                                    timeLabel = "Yesterday";
+                                else
+                                    timeLabel = msgDate.ToString("MMM dd");
+                            }
+                            @timeLabel
                         </span>
                         @if (conv.UnreadCount > 0)
                         {

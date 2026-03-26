@@ -55,17 +55,23 @@ namespace SocialMedia.Application.Services
             var latest = await _uow.Messages
                 .GetLatestMessagePerConversationAsync(userId);
 
+            // Get per-sender unread counts in a single DB round-trip
+            var unreadPerSender = await _uow.Messages
+                .GetUnreadCountPerSenderAsync(userId);
+
             return latest.Select(m =>
             {
                 var otherUser = m.SenderId == userId ? m.Receiver : m.Sender;
+                var otherId   = otherUser?.Id ?? string.Empty;
+
                 return new ConversationSummaryDto
                 {
-                    OtherUserId             = otherUser?.Id ?? string.Empty,
+                    OtherUserId             = otherId,
                     OtherUserName           = otherUser?.UserName ?? "Unknown",
                     OtherUserProfilePicture = otherUser?.ProfilePictureUrl,
                     LastMessage             = m.Content,
                     LastMessageTime         = m.CreatedAt,
-                    UnreadCount             = 0   // refined in Phase 5
+                    UnreadCount             = unreadPerSender.TryGetValue(otherId, out var cnt) ? cnt : 0
                 };
             });
         }

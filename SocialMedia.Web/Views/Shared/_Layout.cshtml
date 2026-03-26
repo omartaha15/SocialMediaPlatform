@@ -160,5 +160,25 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <script>
+            // ── Navbar unread DM badge polling ────────────────────────────────
+            async function refreshMsgBadge() {
+                try {
+                    const res  = await fetch('/Messaging/UnreadCount');
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const badge = document.getElementById('msg-badge');
+                    if (!badge) return;
+                    badge.textContent    = data.count;
+                    badge.style.display  = data.count > 0 ? 'inline-block' : 'none';
+                } catch { /* ignore network errors */ }
+            }
+            refreshMsgBadge();
+            setInterval(refreshMsgBadge, 30000); // refresh every 30 seconds
+        </script>
+    }
 </body>
 </html>

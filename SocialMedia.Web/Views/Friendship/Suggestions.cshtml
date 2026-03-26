@@ -6,86 +6,225 @@
     ViewData["Title"] = "Discover Friends";
 }
 
+<style>
+    .discover-header {
+        background: linear-gradient(135deg, #1a1d21 0%, #242526 100%);
+        border-radius: 16px;
+        border: 1px solid #393a3b;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    .discover-header h3 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+
+    .suggestion-card {
+        background: #242526;
+        border: 1px solid #393a3b;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .suggestion-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+        border-color: rgba(45, 136, 255, 0.3);
+    }
+    .suggestion-card-img-wrap {
+        position: relative;
+        overflow: hidden;
+        height: 180px;
+    }
+    .suggestion-card-img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.35s ease;
+    }
+    .suggestion-card:hover .suggestion-card-img-wrap img {
+        transform: scale(1.08);
+    }
+    .suggestion-card-img-wrap::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to top, #242526, transparent);
+        pointer-events: none;
+    }
+    .suggestion-card-body {
+        padding: 1rem 1.2rem 1.2rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .suggestion-card-name {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #e4e6eb;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    .suggestion-card-name:hover {
+        color: #2d88ff;
+    }
+    .mutual-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.78rem;
+        color: #b0b3b8;
+        font-weight: 500;
+    }
+    .mutual-badge i { color: #2d88ff; font-size: 0.7rem; }
+
+    .btn-add-friend {
+        background: #2d88ff;
+        color: #fff !important;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.88rem;
+        padding: 0.55rem;
+        transition: all 0.2s;
+        width: 100%;
+    }
+    .btn-add-friend:hover {
+        background: #1a73e8;
+        box-shadow: 0 2px 8px rgba(45,136,255,0.3);
+    }
+
+    .pagination-bar {
+        background: #242526;
+        border: 1px solid #393a3b;
+        border-radius: 12px;
+        padding: 0.75rem 1.25rem;
+    }
+    .pagination-bar .btn-page {
+        background: #3a3b3c;
+        color: #e4e6eb;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.45rem 1.2rem;
+        transition: all 0.2s;
+    }
+    .pagination-bar .btn-page:hover:not(:disabled) {
+        background: #4e4f50;
+    }
+    .pagination-bar .btn-page:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+    .empty-discover-card {
+        background: linear-gradient(135deg, #1a1d21 0%, #242526 100%);
+        border: 1px dashed #393a3b;
+        border-radius: 16px;
+        padding: 3.5rem 2rem;
+    }
+    .empty-discover-card i {
+        font-size: 4rem;
+        background: linear-gradient(135deg, #2d88ff, #6c5dd3);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
 <div class="container mt-4 mb-5" style="max-width: 1000px;">
-    <!-- Main Content -->
-    <div class="row">
-        <div class="col-12">
-            <h4 class="mb-4 fw-bold text-fb-primary border-bottom pb-3">People You May Know</h4>
-            
-            @if (!Model.Items.Any())
+    <!-- Header -->
+    <div class="discover-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h3 class="text-fb-primary mb-1"><i class="fas fa-compass me-2" style="color: #6c5dd3;"></i>Discover People</h3>
+            <p class="text-fb-muted mb-0 small">People you may know based on mutual connections</p>
+        </div>
+        <a asp-controller="Friendship" asp-action="Index" class="btn btn-fb-secondary px-4 fw-bold" style="border-radius: 8px;">
+            <i class="fas fa-user-friends me-1"></i> My Friends
+        </a>
+    </div>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="empty-discover-card text-center">
+            <i class="fas fa-search-minus d-block"></i>
+            <h5 class="fw-bold mb-2 text-fb-primary">No Suggestions Available</h5>
+            <p class="text-fb-muted mb-0">Check back later — more people are joining every day!</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var suggestion in Model.Items)
             {
-                <div class="fb-card text-center p-5">
-                    <i class="fas fa-search-minus fa-4x text-fb-muted mb-4 opacity-50"></i>
-                    <h5 class="fw-bold mb-3 text-fb-primary">No Suggestions Available</h5>
-                    <p class="text-fb-muted mb-0">Check back later when you've expanded your network!</p>
-                </div>
-            }
-            else
-            {
-                <div class="row g-3">
-                    @foreach (var suggestion in Model.Items)
-                    {
-                        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-                            <div class="fb-card h-100 d-flex flex-column align-items-center text-center overflow-hidden">
-                                <a asp-controller="Profile" asp-action="Index" asp-route-id="@suggestion.Id" class="text-decoration-none w-100 d-flex flex-column align-items-center">
-                                    <img src="@suggestion.ProfilePictureUrl" alt="@suggestion.UserName" style="width: 100%; height: 160px; object-fit: cover;" />
-                                    <div class="p-3 w-100 d-flex flex-column flex-grow-1">
-                                        <h6 class="fw-bold text-fb-primary mb-1 text-truncate w-100">@suggestion.UserName</h6>
-                                        
-                                        <div style="min-height: 20px;" class="mb-3 w-100">
-                                            @if(suggestion.MutualFriendsCount > 0)
-                                            {
-                                                <small class="text-fb-muted d-block fw-semibold text-truncate">@suggestion.MutualFriendsCount mutual friends</small>
-                                            }
-                                            else if (!string.IsNullOrEmpty(suggestion.Location))
-                                            {
-                                                <small class="text-fb-muted d-block text-truncate">@suggestion.Location</small>
-                                            }
-                                        </div>
-                                    </div>
-                                </a>
-                                
-                                <div class="px-3 pb-3 mt-auto w-100">
-                                    <form asp-controller="Friendship" asp-action="SendRequest" method="post" class="w-100">
-                                        <input type="hidden" name="receiverId" value="@suggestion.Id" />
-                                        <button type="submit" class="btn btn-fb-secondary w-100 fw-bold">
-                                            <i class="fas fa-user-plus me-1"></i> Add Friend
-                                        </button>
-                                    </form>
-                                </div>
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                    <div class="suggestion-card">
+                        <a asp-controller="Profile" asp-action="Index" asp-route-id="@suggestion.Id" class="text-decoration-none">
+                            <div class="suggestion-card-img-wrap">
+                                <img src="@suggestion.ProfilePictureUrl" alt="@suggestion.UserName" />
+                            </div>
+                        </a>
+                        <div class="suggestion-card-body">
+                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@suggestion.Id" class="suggestion-card-name">
+                                @suggestion.UserName
+                            </a>
+                            <div style="min-height: 22px;" class="mb-2">
+                                @if (suggestion.MutualFriendsCount > 0)
+                                {
+                                    <span class="mutual-badge"><i class="fas fa-user-check"></i> @suggestion.MutualFriendsCount mutual friends</span>
+                                }
+                                else if (!string.IsNullOrEmpty(suggestion.Location))
+                                {
+                                    <span class="mutual-badge"><i class="fas fa-map-marker-alt"></i> @suggestion.Location</span>
+                                }
+                            </div>
+                            <div class="mt-auto">
+                                <form asp-controller="Friendship" asp-action="SendRequest" method="post" class="w-100">
+                                    <input type="hidden" name="receiverId" value="@suggestion.Id" />
+                                    <button type="submit" class="btn-add-friend">
+                                        <i class="fas fa-user-plus me-1"></i> Add Friend
+                                    </button>
+                                </form>
                             </div>
                         </div>
-                    }
-                </div>
-
-                <!-- Pagination Controls -->
-                <div class="d-flex justify-content-between align-items-center mt-4 fb-card p-3">
-                    <div class="text-fb-muted fw-bold">
-                        Page <span class="text-fb-primary">@Model.PageIndex</span> of @Model.TotalPages
-                    </div>
-                    <div class="d-flex gap-2">
-                        @if (Model.HasPreviousPage)
-                        {
-                            <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex - 1)" class="btn btn-fb-secondary btn-sm px-3 fw-bold">&laquo; Previous</a>
-                        }
-                        else
-                        {
-                            <button class="btn btn-fb-secondary btn-sm px-3 opacity-50 fw-bold" disabled>&laquo; Previous</button>
-                        }
-
-                        @if (Model.HasNextPage)
-                        {
-                            <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex + 1)" class="btn btn-fb-secondary btn-sm px-3 fw-bold">Next &raquo;</a>
-                        }
-                        else
-                        {
-                            <button class="btn btn-fb-secondary btn-sm px-3 opacity-50 fw-bold" disabled>Next &raquo;</button>
-                        }
                     </div>
                 </div>
             }
         </div>
-    </div>
+
+        <!-- Pagination -->
+        <div class="pagination-bar d-flex justify-content-between align-items-center mt-4">
+            <div class="text-fb-muted fw-bold small">
+                Page <span class="text-fb-primary">@Model.PageIndex</span> of @Model.TotalPages
+            </div>
+            <div class="d-flex gap-2">
+                @if (Model.HasPreviousPage)
+                {
+                    <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex - 1)" class="btn btn-page">&laquo; Previous</a>
+                }
+                else
+                {
+                    <button class="btn btn-page" disabled>&laquo; Previous</button>
+                }
+
+                @if (Model.HasNextPage)
+                {
+                    <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex + 1)" class="btn btn-page">Next &raquo;</a>
+                }
+                else
+                {
+                    <button class="btn btn-page" disabled>Next &raquo;</button>
+                }
+            </div>
+        </div>
+    }
 </div>
-
-

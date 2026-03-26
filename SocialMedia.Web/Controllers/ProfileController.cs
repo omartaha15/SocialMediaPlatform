@@ -17,11 +17,11 @@ namespace SocialMedia.Web.Controllers
         public ProfileController(
             IProfileService profileService,
             IFriendshipService friendshipService,
-            IPostService postService) // ✅ ADD THIS
+            IPostService postService) 
         {
             _profileService = profileService;
             _friendshipService = friendshipService;
-            _postService = postService; // ✅
+            _postService = postService; 
         }
 
         [HttpGet]

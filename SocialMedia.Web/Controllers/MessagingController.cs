@@ -135,5 +135,13 @@ namespace SocialMedia.Web.Controllers
             var count = await _messageService.GetUnreadCountAsync(userId);
             return Json(new { count });
         }
+
+        // ── Online status check (used by Chat view header) ────────────────────
+        [HttpGet]
+        public IActionResult IsOnline(string userId)
+        {
+            var online = ChatHub.IsUserOnline(userId);
+            return Json(new { online });
+        }
     }
 }

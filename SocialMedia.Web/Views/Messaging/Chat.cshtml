@@ -1,3 +1,4 @@
+
 @model SocialMedia.Web.ViewModels.Chat.ChatViewModel
 
 @{
@@ -24,17 +25,79 @@
         gap: 0.85rem;
     }
 
-    .chat-header img {
-        width: 40px; height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid var(--accent);
+        .chat-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent);
+        }
+
+    .chat-header-info {
+        display: flex;
+        flex-direction: column;
     }
 
     .chat-header-name {
         font-weight: 600;
         color: var(--text-primary);
+        line-height: 1.2;
     }
+
+    .online-status {
+        font-size: 0.72rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 1px;
+    }
+
+    .online-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+
+        .online-dot.online {
+            background: #22c55e;
+            box-shadow: 0 0 0 2px rgba(34,197,94,0.25);
+        }
+
+        .online-dot.offline {
+            background: var(--text-muted);
+        }
+
+    .typing-indicator {
+        display: none;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.85rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .typing-dots span {
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        animation: typingBounce 1.2s infinite;
+        margin: 0 1px;
+    }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
 
     .chat-back {
         margin-left: auto;
@@ -44,7 +107,9 @@
         transition: var(--transition);
     }
 
-    .chat-back:hover { color: var(--accent); }
+        .chat-back:hover {
+            color: var(--accent);
+        }
 
     .chat-messages {
         flex: 1;
@@ -64,7 +129,9 @@
         gap: 0.5rem;
     }
 
-    .bubble-row.sent { flex-direction: row-reverse; }
+        .bubble-row.sent {
+            flex-direction: row-reverse;
+        }
 
     .bubble {
         max-width: 65%;
@@ -75,18 +142,18 @@
         word-break: break-word;
     }
 
-    .bubble.sent {
-        background: var(--gradient-primary);
-        color: white;
-        border-bottom-right-radius: 4px;
-    }
+        .bubble.sent {
+            background: var(--gradient-primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
 
-    .bubble.received {
-        background: var(--bg-card);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        border-bottom-left-radius: 4px;
-    }
+        .bubble.received {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+        }
 
     .bubble-time {
         font-size: 0.68rem;
@@ -118,13 +185,14 @@
         transition: var(--transition);
     }
 
-    #msgInput:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--accent-glow);
-    }
+        #msgInput:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
 
     #sendBtn {
-        width: 40px; height: 40px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         background: var(--gradient-primary);
         border: none;
@@ -137,17 +205,23 @@
         transition: var(--transition);
     }
 
-    #sendBtn:hover {
-        transform: scale(1.08);
-        box-shadow: var(--shadow-glow);
-    }
+        #sendBtn:hover {
+            transform: scale(1.08);
+            box-shadow: var(--shadow-glow);
+        }
 </style>
 
 <div class="chat-wrapper">
     <!-- Header -->
     <div class="chat-header">
         <img src="@(Model.OtherUserProfilePicture ?? "/images/user.jpg")" alt="@Model.OtherUserName" />
-        <span class="chat-header-name">@Model.OtherUserName</span>
+        <div class="chat-header-info">
+            <span class="chat-header-name">@Model.OtherUserName</span>
+            <span class="online-status" id="onlineStatus">
+                <span class="online-dot offline" id="onlineDot"></span>
+                <span id="onlineLabel" style="color: var(--text-muted);">Offline</span>
+            </span>
+        </div>
         <a class="chat-back" asp-controller="Messaging" asp-action="Index">
             <i class="fas fa-arrow-left me-1"></i> Back
         </a>
@@ -165,6 +239,12 @@
         }
     </div>
 
+    <!-- Typing indicator -->
+    <div class="typing-indicator" id="typingIndicator">
+        <span>@Model.OtherUserName is typing</span>
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+    </div>
+
     <!-- Input -->
     <div class="chat-input-area">
         @Html.AntiForgeryToken()
@@ -176,82 +256,159 @@
 </div>
 
 @section Scripts {
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-<script>
-    const currentUserId  = "@currentUserId";
-    const otherUserId    = "@Model.OtherUserId";
-    const otherUserName  = "@Model.OtherUserName";
-    const senderName     = "@User.Identity?.Name";
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        const currentUserId  = "@currentUserId";
+        const otherUserId    = "@Model.OtherUserId";
+        const otherUserName  = "@Model.OtherUserName";
+        const senderName     = "@User.Identity?.Name";
 
-    const container = document.getElementById("messagesContainer");
-    const input     = document.getElementById("msgInput");
-    const sendBtn   = document.getElementById("sendBtn");
+        const container = document.getElementById("messagesContainer");
+        const input     = document.getElementById("msgInput");
+        const sendBtn   = document.getElementById("sendBtn");
 
-    // ── Scroll to bottom ──────────────────────────────────────────────────────
-    function scrollToBottom() {
-        container.scrollTop = container.scrollHeight;
-    }
-    scrollToBottom();
-
-    // ── Append bubble ─────────────────────────────────────────────────────────
-    function appendBubble(senderId, content, sentAt) {
-        const isSent = senderId === currentUserId;
-        const time   = new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        const row = document.createElement("div");
-        row.className = `bubble-row ${isSent ? "sent" : "received"}`;
-        row.innerHTML = `
-            <span class="bubble-time">${time}</span>
-            <div class="bubble ${isSent ? "sent" : "received"}">${escapeHtml(content)}</div>`;
-
-        container.appendChild(row);
-        scrollToBottom();
-    }
-
-    function escapeHtml(text) {
-        return text.replace(/&/g,"&amp;").replace(/</g,"&lt;")
-                   .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-    }
-
-    // ── SignalR ───────────────────────────────────────────────────────────────
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl("/chathub")
-        .withAutomaticReconnect()
-        .build();
-
-    connection.on("ReceiveDirectMessage", (data) => {
-        // only render if this message belongs to this conversation
-        if (data.senderId === otherUserId || data.senderId === currentUserId) {
-            appendBubble(data.senderId, data.content, data.sentAt);
+        // ── Scroll to bottom ──────────────────────────────────────────────────────
+        function scrollToBottom() {
+            container.scrollTop = container.scrollHeight;
         }
-    });
+        scrollToBottom();
 
-    connection.start().catch(err => console.error("SignalR error:", err));
+        // ── Append bubble ─────────────────────────────────────────────────────────
+        function appendBubble(senderId, content, sentAt) {
+            const isSent = senderId === currentUserId;
+            const time   = new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // ── Send ──────────────────────────────────────────────────────────────────
-    async function sendMessage() {
-        const content = input.value.trim();
-        if (!content) return;
-        input.value = "";
+            const row = document.createElement("div");
+            row.className = `bubble-row ${isSent ? "sent" : "received"}`;
+            row.innerHTML = `
+                <span class="bubble-time">${time}</span>
+                <div class="bubble ${isSent ? "sent" : "received"}">${escapeHtml(content)}</div>`;
 
-        const formData = new FormData();
-        formData.append("receiverId", otherUserId);
-        formData.append("content",    content);
-        formData.append("__RequestVerificationToken", getAntiForgeryToken());
+            container.appendChild(row);
+            scrollToBottom();
+        }
 
-        // Save to DB — controller broadcasts via SignalR to both users, so we
-        // do NOT manually append a bubble here (that would cause a double render).
-        await fetch("/Messaging/SendMessage", { method: "POST", body: formData });
+        function escapeHtml(text) {
+            return text.replace(/&/g,"&amp;").replace(/</g,"&lt;")
+                       .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+        }
 
-        // Update the navbar unread badge (in case receiver had open conversations)
-        if (typeof refreshMsgBadge === 'function') refreshMsgBadge();
-    }
+        // ── SignalR ───────────────────────────────────────────────────────────────
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .withAutomaticReconnect()
+            .build();
 
-    function getAntiForgeryToken() {
-        return document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
-    }
+        connection.on("ReceiveDirectMessage", (data) => {
+            // only render if this message belongs to this conversation
+            if (data.senderId === otherUserId || data.senderId === currentUserId) {
+                appendBubble(data.senderId, data.content, data.sentAt);
+            }
+        });
 
-    sendBtn.addEventListener("click", sendMessage);
-    input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-</script>
+        connection.start().catch(err => console.error("SignalR error:", err));
+
+        // ── Send ──────────────────────────────────────────────────────────────────
+        async function sendMessage() {
+            const content = input.value.trim();
+            if (!content) return;
+            input.value = "";
+
+            const formData = new FormData();
+            formData.append("receiverId", otherUserId);
+            formData.append("content",    content);
+            formData.append("__RequestVerificationToken", getAntiForgeryToken());
+
+            // Save to DB — controller broadcasts via SignalR to both users, so we
+            // do NOT manually append a bubble here (that would cause a double render).
+            await fetch("/Messaging/SendMessage", { method: "POST", body: formData });
+
+            // Update the navbar unread badge (in case receiver had open conversations)
+            if (typeof refreshMsgBadge === 'function') refreshMsgBadge();
+        }
+
+        function getAntiForgeryToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+        input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+        // ── Online status ────────────────────────────────────────────────────
+        const onlineDot   = document.getElementById("onlineDot");
+        const onlineLabel = document.getElementById("onlineLabel");
+        function setOnline(isOnline) {
+            onlineDot.className     = `online-dot ${isOnline ? 'online' : 'offline'}`;
+            onlineLabel.textContent = isOnline ? 'Online' : 'Offline';
+            onlineLabel.style.color = isOnline ? '#22c55e' : 'var(--text-muted)';
+        }
+        async function refreshOnlineStatus() {
+            try {
+                const res  = await fetch(`/Messaging/IsOnline?userId=${encodeURIComponent(otherUserId)}`);
+                const data = await res.json();
+                setOnline(data.online);
+            } catch { /* ignore */ }
+        }
+        refreshOnlineStatus();
+        setInterval(refreshOnlineStatus, 20000);
+
+        // ── Typing indicator ──────────────────────────────────────────────────
+        const typingIndicator = document.getElementById("typingIndicator");
+        let typingTimer;
+        let isTyping = false;
+        function showTyping() { typingIndicator.style.display = 'flex'; container.scrollTop = container.scrollHeight; }
+        function hideTyping() { typingIndicator.style.display = 'none'; }
+
+        // Wire up typing events on the existing SignalR connection
+        connection.on("UserTyping",        (id) => { if (id === otherUserId) showTyping(); });
+        connection.on("UserStoppedTyping", (id) => { if (id === otherUserId) hideTyping(); });
+        connection.on("UserOnlineStatus",  (id, online) => { if (id === otherUserId) setOnline(online); });
+
+        // Also auto mark-as-read and refresh badge when message arrives from other user
+        connection.on("ReceiveDirectMessage_Extras", () => {}); // placeholder, handled below via patch
+        const _origReceive = connection.methods["receivedirectmessage"]?.[0];
+        // Patch: after original handler runs, also mark-read if incoming
+        connection.off("ReceiveDirectMessage");
+        connection.on("ReceiveDirectMessage", (data) => {
+            if (data.senderId === otherUserId || data.senderId === currentUserId) {
+                hideTyping();
+                appendBubble(data.senderId, data.content, data.sentAt);
+                if (data.senderId === otherUserId) {
+                    const fd = new FormData();
+                    fd.append("otherUserId", otherUserId);
+                    fd.append("__RequestVerificationToken", getAntiForgeryToken());
+                    fetch("/Messaging/MarkRead", { method: "POST", body: fd });
+                    if (typeof refreshMsgBadge === 'function') refreshMsgBadge();
+                }
+            }
+        });
+
+        input.addEventListener("input", () => {
+            if (!isTyping) {
+                isTyping = true;
+                connection.invoke("StartTyping", otherUserId).catch(() => {});
+            }
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                isTyping = false;
+                connection.invoke("StopTyping", otherUserId).catch(() => {});
+            }, 2000);
+        });
+
+        // Clear typing on send
+        const _origSend = sendMessage;
+        // Already defined above — just add cleanup via original send
+        const _wrappedSend = async () => {
+            if (isTyping) {
+                isTyping = false;
+                clearTimeout(typingTimer);
+                connection.invoke("StopTyping", otherUserId).catch(() => {});
+            }
+            await _origSend();
+        };
+        sendBtn.removeEventListener("click", sendMessage);
+        sendBtn.addEventListener("click", _wrappedSend);
+        input.removeEventListener("keydown", null);
+        input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); _wrappedSend(); } });
+    </script>
 }

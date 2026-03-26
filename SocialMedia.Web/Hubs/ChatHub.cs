@@ -27,6 +27,11 @@ public class ChatHub : Hub
 
             // Join a personal group named after the userId for easy targeting
             await Groups.AddToGroupAsync(Context.ConnectionId, userId);
+
+            await Clients.Others.SendAsync("UserOnlineStatus", userId, true);
+
+            // Broadcast online status to everyone who may have this user's chat open
+            await Clients.Others.SendAsync("UserOnlineStatus", userId, true);
         }
 
         await base.OnConnectedAsync();
@@ -39,7 +44,11 @@ public class ChatHub : Hub
         {
             lock (set) { set.Remove(Context.ConnectionId); }
             if (set.Count == 0)
+            {
                 _userConnections.TryRemove(userId, out _);
+                // Broadcast offline status only when the last tab disconnects
+                await Clients.Others.SendAsync("UserOnlineStatus", userId, false);
+            }
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -109,6 +118,21 @@ public class ChatHub : Hub
         });
     }
 
+
+    // ── Typing Indicators ───────────────────────────────────────────────
+    /// <summary>Notifies the receiver that this user started typing.</summary>
+    public async Task StartTyping(string receiverId)
+    {
+        var senderId = Context.UserIdentifier ?? "unknown";
+        await Clients.Group(receiverId).SendAsync("UserTyping", senderId);
+    }
+
+    /// <summary>Notifies the receiver that this user stopped typing.</summary>
+    public async Task StopTyping(string receiverId)
+    {
+        var senderId = Context.UserIdentifier ?? "unknown";
+        await Clients.Group(receiverId).SendAsync("UserStoppedTyping", senderId);
+    }
     // ── Utility ─────────────────────────────────────────────────────────────
     public static bool IsUserOnline(string userId)
         => _userConnections.ContainsKey(userId) && _userConnections[userId].Count > 0;

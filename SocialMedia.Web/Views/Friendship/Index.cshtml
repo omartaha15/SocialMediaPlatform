@@ -3,72 +3,150 @@
 
 @{
     ViewData["Title"] = "Friends";
-    var pendingRequests = ViewBag.PendingRequests as IEnumerable<ApplicationUser> ?? new List<ApplicationUser>();
+    var receivedRequests = ViewBag.PendingRequests as IEnumerable<ApplicationUser> ?? new List<ApplicationUser>();
+    var sentRequests = ViewBag.SentRequests as IEnumerable<ApplicationUser> ?? new List<ApplicationUser>();
     var friendsCount = ViewBag.FriendsCount ?? 0;
 }
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <h2>Your Friends (@friendsCount)</h2>
-            <hr />
+<div class="container mt-4 mb-5" style="max-width: 1000px;">
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-pills mb-4 border-bottom pb-3 gap-2" id="friendshipTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold px-4" id="friends-tab" data-bs-toggle="pill" data-bs-target="#friends" type="button" role="tab" style="border-radius: 8px;">
+                <i class="fas fa-user-friends me-2"></i> Friends <span class="badge bg-secondary ms-1">@friendsCount</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold px-4" id="requests-tab" data-bs-toggle="pill" data-bs-target="#requests" type="button" role="tab" style="border-radius: 8px;">
+                <i class="fas fa-bell me-2"></i> Requests <span class="badge bg-danger ms-1">@receivedRequests.Count()</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold px-4" id="pending-tab" data-bs-toggle="pill" data-bs-target="#pending" type="button" role="tab" style="border-radius: 8px;">
+                <i class="fas fa-paper-plane me-2"></i> Pending <span class="badge bg-secondary ms-1">@sentRequests.Count()</span>
+            </button>
+        </li>
+    </ul>
 
+    <div class="tab-content" id="friendshipTabsContent">
+        <!-- Friends Tab -->
+        <div class="tab-pane fade show active" id="friends" role="tabpanel">
             @if (!Model.Any())
             {
-                <p class="text-muted">You do not have any friends yet.</p>
+                <div class="fb-card text-center p-5">
+                    <i class="fas fa-user-friends fa-4x text-fb-muted mb-4 opacity-50"></i>
+                    <h5 class="fw-bold mb-3 text-fb-primary">You do not have any friends yet</h5>
+                    <p class="text-fb-muted mb-0">Start exploring and expanding your network.</p>
+                </div>
             }
             else
             {
-                <div class="list-group mb-4">
+                <div class="row g-3">
                     @foreach (var friend in Model)
                     {
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <img src="@friend.ProfilePictureUrl" alt="@friend.UserName" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" />
-                                <div>
-                                    <h5 class="mb-0">@friend.UserName</h5>
-                                    <small class="text-muted">@friend.Email</small>
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="fb-card p-3 h-100 d-flex flex-column align-items-center text-center">
+                                <a asp-controller="Profile" asp-action="Index" asp-route-id="@friend.Id" class="text-decoration-none">
+                                    <img src="@friend.ProfilePictureUrl" alt="@friend.UserName" class="rounded-circle mb-3 border" style="width: 100px; height: 100px; object-fit: cover;" />
+                                    <h6 class="fw-bold mb-2 fs-5 text-fb-primary">@friend.UserName</h6>
+                                </a>
+                                <div class="mt-auto w-100">
+                                    <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="w-100">
+                                        <input type="hidden" name="friendId" value="@friend.Id" />
+                                        <button type="submit" class="btn btn-fb-secondary btn-sm w-100 fw-bold" title="Disconnect">
+                                            <i class="fas fa-user-minus"></i> Remove
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
-                            <!-- Remove Friend Button -->
-                            <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="d-inline">
-                                <input type="hidden" name="friendId" value="@friend.Id" />
-                                <button type="submit" class="btn btn-danger btn-sm">Remove Friend</button>
-                            </form>
+                            <div class="d-flex gap-2">
+                                <a class="btn btn-primary btn-sm"
+                                   asp-controller="Messaging"
+                                   asp-action="Chat"
+                                   asp-route-otherUserId="@friend.Id"
+                                   asp-route-otherUserName="@friend.UserName"
+                                   asp-route-otherUserProfilePicture="@friend.ProfilePictureUrl">Message</a>
+                                <!-- Remove Friend Button -->
+                                <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="d-inline">
+                                    <input type="hidden" name="friendId" value="@friend.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove Friend</button>
+                                </form>
+                            </div>
+
                         </div>
                     }
                 </div>
             }
         </div>
 
-        <div class="col-md-4">
-            <h4>Pending Requests (@pendingRequests.Count())</h4>
-            <div class="card">
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        @if (!pendingRequests.Any())
-                        {
-                            <li class="list-group-item text-muted">No pending requests.</li>
-                        }
-                        else
-                        {
-                            @foreach (var sender in pendingRequests)
-                            {
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center">
-                                        <img src="@sender.ProfilePictureUrl" alt="@sender.UserName" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" />
-                                        <span>@sender.UserName</span>
-                                    </div>
-                                    <form asp-controller="Friendship" asp-action="AcceptRequest" method="post" class="d-inline">
-                                        <input type="hidden" name="senderId" value="@sender.Id" />
-                                        <button type="submit" class="btn btn-success btn-sm">Accept</button>
-                                    </form>
-                                </li>
-                            }
-                        }
-                    </ul>
+        <!-- Received Requests Tab -->
+        <div class="tab-pane fade" id="requests" role="tabpanel">
+            @if (!receivedRequests.Any())
+            {
+                <div class="fb-card text-center p-5">
+                    <i class="fas fa-check-circle fa-4x text-fb-muted mb-4 opacity-50"></i>
+                    <h5 class="fw-bold mb-0 text-fb-primary">No new requests</h5>
                 </div>
-            </div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var sender in receivedRequests)
+                    {
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="fb-card p-3 h-100 d-flex flex-column align-items-center text-center">
+                                <a asp-controller="Profile" asp-action="Index" asp-route-id="@sender.Id" class="text-decoration-none">
+                                    <img src="@sender.ProfilePictureUrl" alt="@sender.UserName" class="rounded-circle mb-3 border" style="width: 100px; height: 100px; object-fit: cover;" />
+                                    <h6 class="fw-bold mb-2 fs-5 text-fb-primary">@sender.UserName</h6>
+                                </a>
+                                <div class="mt-auto w-100">
+                                    <form asp-controller="Friendship" asp-action="AcceptRequest" method="post" class="w-100">
+                                        <input type="hidden" name="senderId" value="@sender.Id" />
+                                        <button type="submit" class="btn btn-fb-primary btn-sm w-100 fw-bold">Confirm</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Pending (Sent) Requests Tab -->
+        <div class="tab-pane fade" id="pending" role="tabpanel">
+            @if (!sentRequests.Any())
+            {
+                <div class="fb-card text-center p-5">
+                    <i class="fas fa-paper-plane fa-4x text-fb-muted mb-4 opacity-50"></i>
+                    <h5 class="fw-bold mb-0 text-fb-primary">No pending requests</h5>
+                </div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var receiver in sentRequests)
+                    {
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="fb-card p-3 h-100 d-flex flex-column align-items-center text-center">
+                                <a asp-controller="Profile" asp-action="Index" asp-route-id="@receiver.Id" class="text-decoration-none">
+                                    <img src="@receiver.ProfilePictureUrl" alt="@receiver.UserName" class="rounded-circle mb-3 border" style="width: 100px; height: 100px; object-fit: cover;" />
+                                    <h6 class="fw-bold mb-2 fs-5 text-fb-primary">@receiver.UserName</h6>
+                                </a>
+                                <div class="mt-auto w-100">
+                                    <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="w-100">
+                                        <input type="hidden" name="friendId" value="@receiver.Id" />
+                                        <button type="submit" class="btn btn-fb-secondary btn-sm w-100 fw-bold" title="Cancel Request">
+                                            <i class="fas fa-times"></i> Cancel Request
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>
+
+

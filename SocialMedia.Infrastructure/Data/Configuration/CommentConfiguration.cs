@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SocialMedia.Domain.Entities;
 
@@ -12,9 +12,9 @@ public class CommentConfiguration : IEntityTypeConfiguration<Comment>
 
         builder.Property(c => c.Content)
             .IsRequired()
-            .HasMaxLength(2000);
+            .HasMaxLength(2000);         
 
-        builder.Property(c => c.UserId)
+        builder.Property(c => c.AuthorId )
             .IsRequired();
 
         builder.Property(c => c.PostId)
@@ -26,13 +26,13 @@ public class CommentConfiguration : IEntityTypeConfiguration<Comment>
             .HasForeignKey(c => c.PostId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(c => c.User)
+        builder.HasOne(c => c.Author)
             .WithMany(u => u.Comments)
-            .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .HasForeignKey(c => c.AuthorId)
+            .OnDelete(DeleteBehavior.NoAction);   
 
         // Indexes
         builder.HasIndex(c => c.PostId);
-        builder.HasIndex(c => c.UserId);
+        builder.HasIndex(c => c.AuthorId);
     }
 }

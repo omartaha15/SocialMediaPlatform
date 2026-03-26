@@ -29,6 +29,7 @@ namespace SocialMedia.Infrastructure.Repositories
             return await _context.GroupMembers
                 .Where(gm => gm.UserId == userId)
                 .Include(gm => gm.Group)
+                    .ThenInclude(g => g!.GroupMembers)
                 .Select(gm => gm.Group!)
                 .ToListAsync();
         }

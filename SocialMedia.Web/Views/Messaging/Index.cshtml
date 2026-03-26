@@ -1,0 +1,182 @@
+@model SocialMedia.Web.ViewModels.Chat.ConversationsViewModel
+
+@{
+    ViewData["Title"] = "Messages";
+}
+
+<style>
+    .conversations-wrapper {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .unread-total-badge {
+        background: var(--gradient-primary);
+        color: white;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+    }
+
+    .conversation-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .conversation-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-decoration: none;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .conversation-item:hover {
+        border-color: var(--accent);
+        background: rgba(59, 130, 246, 0.06);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .conv-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .conv-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .conv-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .conv-last-msg {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .conv-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+        flex-shrink: 0;
+    }
+
+    .conv-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .conv-unread {
+        background: var(--accent);
+        color: white;
+        font-size: 0.72rem;
+        font-weight: 700;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.4rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+        color: var(--text-muted);
+    }
+</style>
+
+<div class="conversations-wrapper">
+    <div class="page-header">
+        <h1 class="page-title"><i class="fas fa-envelope me-2" style="color: var(--accent);"></i>Messages</h1>
+        @if (Model.TotalUnread > 0)
+        {
+            <span class="unread-total-badge">@Model.TotalUnread unread</span>
+        }
+    </div>
+
+    @if (!Model.Conversations.Any())
+    {
+        <div class="empty-state glass-card">
+            <i class="fas fa-comment-slash"></i>
+            <h5 style="color: var(--text-secondary);">No conversations yet</h5>
+            <p style="font-size: 0.88rem;">Start a conversation by visiting someone's profile.</p>
+        </div>
+    }
+    else
+    {
+        <div class="conversation-list">
+            @foreach (var conv in Model.Conversations)
+            {
+                <a class="conversation-item"
+                   asp-controller="Messaging"
+                   asp-action="Chat"
+                   asp-route-otherUserId="@conv.OtherUserId"
+                   asp-route-otherUserName="@conv.OtherUserName"
+                   asp-route-otherUserProfilePicture="@conv.OtherUserProfilePicture">
+
+                    <img class="conv-avatar"
+                         src="@(conv.OtherUserProfilePicture ?? "/images/user.jpg")"
+                         alt="@conv.OtherUserName" />
+
+                    <div class="conv-body">
+                        <div class="conv-name">@conv.OtherUserName</div>
+                        <div class="conv-last-msg">@conv.LastMessage</div>
+                    </div>
+
+                    <div class="conv-meta">
+                        <span class="conv-time">
+                            @conv.LastMessageTime.ToString("MMM dd")
+                        </span>
+                        @if (conv.UnreadCount > 0)
+                        {
+                            <span class="conv-unread">@conv.UnreadCount</span>
+                        }
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>

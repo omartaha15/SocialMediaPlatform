@@ -1,0 +1,40 @@
+﻿@model IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>
+
+@{
+    ViewData["Title"] = "Posts";
+}
+
+<h2>Create Post</h2>
+
+<form asp-action="CreatePost" method="post">
+    <div>
+        <textarea name="Content" class="form-control"
+                  placeholder="Write something..." required></textarea>
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-success">Post</button>
+</form>
+
+<hr />
+
+<h2>All Posts</h2>
+
+@if (Model != null && Model.Any())
+{
+    foreach (var post in Model)
+    {
+        <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+            <p>@post.Content</p>
+            <small>@post.CreatedAt</small>
+        </div>
+    }
+}
+else
+{
+    <div style="text-align:center; padding:20px;">
+        <p>No posts yet.</p>
+        <p>You can create a new post above 👆</p>
+    </div>
+}

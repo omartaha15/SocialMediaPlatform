@@ -10,12 +10,14 @@ namespace SocialMedia.Application.Interfaces
         IGenericRepository<T> Repository<T>() where T : BaseEntity;
 
         // ── Dev4 custom repos ─────────────────────────────────────────────────
+        
         IMessageRepository Messages { get; }
         IGroupChatRepository GroupChats { get; }
 
         // ── User lookup — ApplicationUser extends IdentityUser, not BaseEntity,
         //    so it cannot go through Repository<T>. This method handles it directly.
         Task<ApplicationUser?> FindUserByIdAsync(string userId);
+
 
         // ── Commit all pending changes in one transaction ─────────────────────
         int Complete();

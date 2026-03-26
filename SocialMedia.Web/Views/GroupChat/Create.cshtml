@@ -1,0 +1,49 @@
+@model SocialMedia.Web.ViewModels.GroupChat.CreateGroupViewModel
+
+@{
+    ViewData["Title"] = "Create Group";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card" style="max-width: 480px;">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h2>Create a Group</h2>
+            <p>Start a group conversation with your friends</p>
+        </div>
+
+        <form asp-controller="GroupChat" asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label asp-for="Name" class="form-label">Group Name</label>
+                <input asp-for="Name" class="form-control" placeholder="e.g. Study Buddies" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Description" class="form-label">Description <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="What is this group about?"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-2">
+                <i class="fas fa-plus me-2"></i> Create Group
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>
+                <a asp-controller="GroupChat" asp-action="Index">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Groups
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

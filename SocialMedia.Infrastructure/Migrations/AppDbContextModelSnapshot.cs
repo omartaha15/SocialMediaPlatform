@@ -253,6 +253,10 @@ namespace SocialMedia.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -261,21 +265,22 @@ namespace SocialMedia.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("ParentCommentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("PostId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("PostId");
+                    b.HasIndex("AuthorId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ParentCommentId");
+
+                    b.HasIndex("PostId");
 
                     b.ToTable("Comments");
                 });
@@ -612,21 +617,27 @@ namespace SocialMedia.Infrastructure.Migrations
 
             modelBuilder.Entity("SocialMedia.Domain.Entities.Comment", b =>
                 {
+                    b.HasOne("SocialMedia.Domain.Entities.ApplicationUser", "Author")
+                        .WithMany("Comments")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("SocialMedia.Domain.Entities.Comment", "ParentComment")
+                        .WithMany("Replies")
+                        .HasForeignKey("ParentCommentId");
+
                     b.HasOne("SocialMedia.Domain.Entities.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SocialMedia.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("Comments")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                    b.Navigation("Author");
+
+                    b.Navigation("ParentComment");
 
                     b.Navigation("Post");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SocialMedia.Domain.Entities.FriendShip", b =>
@@ -776,6 +787,11 @@ namespace SocialMedia.Infrastructure.Migrations
                     b.Navigation("SentFriendRequests");
 
                     b.Navigation("SentNotifications");
+                });
+
+            modelBuilder.Entity("SocialMedia.Domain.Entities.Comment", b =>
+                {
+                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("SocialMedia.Domain.Entities.Group", b =>

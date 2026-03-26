@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +19,7 @@ namespace SocialMedia.Application.Services
         public async Task<string> UploadImageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
-                return "/images/user.jpg";
+                return null;
 
      
             var regex = new System.Text.RegularExpressions.Regex(@"\.(jpg|jpeg|png|gif|bmp)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -44,9 +44,11 @@ namespace SocialMedia.Application.Services
         }
         public void DeleteImageAsync(string imagePath)
         {
-            if (string.IsNullOrEmpty(imagePath) || imagePath == "/images/user.jpg" || imagePath == "/images/coverImage.png")
+            if (string.IsNullOrEmpty(imagePath) ||
+                imagePath == "/images/user.jpg" ||
+                imagePath == "/images/coverImage.png")
             {
-                return; 
+                return ;
             }
 
             var pathWithoutSlash = imagePath.TrimStart('/');

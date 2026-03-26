@@ -41,6 +41,14 @@ namespace SocialMedia.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<FriendShip>> GetSentRequestsForUserAsync(string userId)
+        {
+            return await _context.Set<FriendShip>()
+                .Include(f => f.Receiver)
+                .Where(f => f.SenderId == userId && f.Status == FriendShipStatus.pending)
+                .ToListAsync();
+        }
+
         public async Task<int> GetFriendsCountAsync(string userId)
         {
             return await _context.Set<FriendShip>()

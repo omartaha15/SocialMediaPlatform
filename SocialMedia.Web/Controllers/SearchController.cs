@@ -17,7 +17,26 @@ namespace SocialMedia.Web.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Index([FromQuery] SearchRequestViewModel request)
+        {
+            var result = await SearchUsersInternalAsync(request);
+            var viewModel = new SearchPageViewModel
+            {
+                Query = request.Query ?? string.Empty,
+                Result = result
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Users([FromQuery] SearchRequestViewModel request)
+        {
+            var viewModel = await SearchUsersInternalAsync(request);
+            return Json(viewModel);
+        }
+
+        private async Task<SearchResultViewModel<UserSearchViewModel>> SearchUsersInternalAsync(SearchRequestViewModel request)
         {
             var dtoRequest = new SearchRequestDto
             {
@@ -43,7 +62,7 @@ namespace SocialMedia.Web.Controllers
                 PageSize = result.PageSize
             };
 
-            return Json(viewModel);
+            return viewModel;
         }
     }
 }

@@ -489,3 +489,119 @@ textarea.valid {
 .auth-card {
     animation: fadeInUp 0.5s ease-out;
 }
+
+/* ===== Search ===== */
+.search-nav-item {
+    min-width: 280px;
+}
+
+.search-nav-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-nav-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-nav-input-wrap i {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    z-index: 2;
+}
+
+.search-nav-input {
+    width: 100%;
+    padding-left: 2rem;
+    font-size: 0.88rem;
+}
+
+.search-nav-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: rgba(10, 14, 23, 0.98);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    max-height: 360px;
+    overflow-y: auto;
+    z-index: 1200;
+}
+
+.search-nav-state {
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+}
+
+.search-nav-result-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+}
+
+.search-nav-result-item:hover {
+    background: var(--bg-glass);
+    color: var(--text-primary);
+}
+
+.search-nav-result-item img {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+}
+
+.search-nav-all-link {
+    display: block;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.search-page h2 {
+    font-weight: 700;
+}
+
+.search-page-form {
+    min-width: min(520px, 100%);
+}
+
+.search-page-form .form-control {
+    min-width: 260px;
+}
+
+.search-result-list .list-group-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.search-result-list .list-group-item + .list-group-item {
+    margin-top: 0.65rem;
+}
+
+.search-empty-state {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #bfdbfe;
+}
+
+@media (max-width: 991.98px) {
+    .search-nav-item {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .search-nav-wrapper {
+        margin: 0.4rem 0;
+    }
+}

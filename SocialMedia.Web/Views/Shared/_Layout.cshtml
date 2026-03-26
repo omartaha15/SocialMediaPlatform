@@ -93,12 +93,39 @@
                             var user = await userManager.FindByNameAsync(User.Identity.Name);
                             var profilePic = user?.ProfilePictureUrl ?? "/images/user.jpg";
 
+                            <li class="nav-item search-nav-item me-2">
+                                <div class="search-nav-wrapper">
+                                    <div class="search-nav-input-wrap">
+                                        <i class="fas fa-search"></i>
+                                        <input id="navbarSearchInput"
+                                               class="form-control search-nav-input"
+                                               type="text"
+                                               placeholder="Search people..."
+                                               autocomplete="off" />
+                                    </div>
+                                    <div id="navbarSearchDropdown" class="search-nav-dropdown d-none">
+                                        <div id="navbarSearchState" class="search-nav-state text-muted">Type at least 2 characters</div>
+                                        <div id="navbarSearchResults" class="search-nav-results"></div>
+                                        <a id="navbarSearchAllLink" class="search-nav-all-link d-none" asp-controller="Search" asp-action="Index">
+                                            View all results
+                                        </a>
+                                    </div>
+                                </div>
+                            </li>
+
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
                                     <i class="fas fa-home me-1"></i> Home
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Search" asp-action="Index">
+                                    <i class="fas fa-search me-1"></i> Search
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">
+                                    <i class="fas fa-shield-alt me-1"></i> Privacy
                                 <a class="nav-link" asp-area="" asp-controller="Friendship" asp-action="Index">
                                     <i class="fas fa-user-friends me-1"></i> Friends
                                 </a>
@@ -159,6 +186,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/search.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

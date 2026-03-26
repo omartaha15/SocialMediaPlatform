@@ -1,0 +1,103 @@
+@model SocialMedia.Web.ViewModels.Search.SearchPageViewModel
+
+@{
+    ViewData["Title"] = "Search";
+    var hasQuery = !string.IsNullOrWhiteSpace(Model.Query);
+}
+
+<div class="search-page glass-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="mb-1">Search Users</h2>
+            <p class="text-muted mb-0">Find people and send friend requests.</p>
+        </div>
+        <form asp-controller="Search" asp-action="Index" method="get" class="search-page-form d-flex align-items-center gap-2">
+            <input type="text"
+                   name="query"
+                   value="@Model.Query"
+                   class="form-control"
+                   placeholder="Search by username or email"
+                   autocomplete="off" />
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="pageSize" value="@Model.Result.PageSize" />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+
+    @if (!hasQuery)
+    {
+        <div class="alert alert-info search-empty-state mb-0">
+            Start typing in the navbar search or use the form above.
+        </div>
+    }
+    else if (!Model.Result.Data.Any())
+    {
+        <div class="alert alert-info search-empty-state mb-0">
+            No users found for "<strong>@Model.Query</strong>".
+        </div>
+    }
+    else
+    {
+        <div class="list-group search-result-list">
+            @foreach (var user in Model.Result.Data)
+            {
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                    <div class="d-flex align-items-center">
+                        <img src="@(string.IsNullOrWhiteSpace(user.ProfileImage) ? "/images/user.jpg" : user.ProfileImage)"
+                             alt="@user.UserName"
+                             class="rounded-circle me-3"
+                             style="width: 48px; height: 48px; object-fit: cover;" />
+                        <div>
+                            <h6 class="mb-0">@user.UserName</h6>
+                        </div>
+                    </div>
+                    <form asp-controller="Friendship" asp-action="SendRequest" method="post" class="d-inline">
+                        <input type="hidden" name="receiverId" value="@user.Id" />
+                        <button type="submit" class="btn btn-primary btn-sm px-3">Add Friend</button>
+                    </form>
+                </div>
+            }
+        </div>
+
+        var totalPages = (int)Math.Ceiling((double)Model.Result.TotalCount / Model.Result.PageSize);
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <span class="text-muted">
+                Page @Model.Result.Page of @totalPages
+            </span>
+            <div class="d-flex gap-2">
+                @if (Model.Result.Page > 1)
+                {
+                    <a asp-controller="Search"
+                       asp-action="Index"
+                       asp-route-query="@Model.Query"
+                       asp-route-page="@(Model.Result.Page - 1)"
+                       asp-route-pageSize="@Model.Result.PageSize"
+                       class="btn btn-outline-light btn-sm">
+                        &laquo; Previous
+                    </a>
+                }
+                else
+                {
+                    <button class="btn btn-outline-light btn-sm" disabled>&laquo; Previous</button>
+                }
+
+                @if (Model.Result.Page < totalPages)
+                {
+                    <a asp-controller="Search"
+                       asp-action="Index"
+                       asp-route-query="@Model.Query"
+                       asp-route-page="@(Model.Result.Page + 1)"
+                       asp-route-pageSize="@Model.Result.PageSize"
+                       class="btn btn-outline-light btn-sm">
+                        Next &raquo;
+                    </a>
+                }
+                else
+                {
+                    <button class="btn btn-outline-light btn-sm" disabled>Next &raquo;</button>
+                }
+            </div>
+        </div>
+    }
+</div>

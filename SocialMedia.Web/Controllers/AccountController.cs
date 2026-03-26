@@ -64,7 +64,7 @@ namespace SocialMedia.Web.Controllers
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("ProfileImage", ex.Message);
+                ModelState.AddModelError("", ex.Message);
             }
 
             return View(model);

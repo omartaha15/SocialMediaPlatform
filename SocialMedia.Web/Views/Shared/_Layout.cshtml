@@ -214,6 +214,7 @@
                                     <span class="d-lg-none ms-3 fs-6">Search People</span>
                                 </a>
                             </li>
+                         
                         </ul>
                     }
                     else
@@ -274,6 +275,16 @@
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider mx-2"></li>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center py-2 px-2 m-1 rounded" asp-controller="AdminPanel" asp-action="Index" style="width: auto;">
+                                                <div class="nav-circle-btn me-3" style="width: 36px; height: 36px; background-color: #dc3545;"><i class="fas fa-chart-pie fs-6 text-light"></i></div>
+                                                <span class="fw-semibold text-danger">Admin Dashboard</span>
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider mx-2"></li>
+                                    }
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center py-2 px-2 m-1 rounded" asp-controller="Friendship" asp-action="Suggestions" style="width: auto;">
                                             <div class="nav-circle-btn me-3" style="width: 36px; height: 36px; background-color: #3a3b3c;"><i class="fas fa-compass fs-6 text-light"></i></div>

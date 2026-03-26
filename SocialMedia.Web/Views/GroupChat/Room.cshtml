@@ -303,6 +303,8 @@
         </div>
 
         <div class="members-footer">
+            @* Token always rendered so JS getToken() works for all users (e.g. removeMember) *@
+            @Html.AntiForgeryToken()
             @if (Model.IsAdmin)
             {
                 <select id="addMemberSelect" class="add-member-input" @(Model.AvailableFriendsToAdd.Count == 0 ? "disabled" : null)>
@@ -312,7 +314,6 @@
                         <option value="@friend.Id">@friend.UserName</option>
                     }
                 </select>
-                @Html.AntiForgeryToken()
                 @if (Model.AvailableFriendsToAdd.Count == 0)
                 {
                     <div class="text-muted mb-2" style="font-size:0.75rem;">All your friends are already in this group.</div>

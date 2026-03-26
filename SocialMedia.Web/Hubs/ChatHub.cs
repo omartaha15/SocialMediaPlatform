@@ -28,9 +28,7 @@ public class ChatHub : Hub
             // Join a personal group named after the userId for easy targeting
             await Groups.AddToGroupAsync(Context.ConnectionId, userId);
 
-            await Clients.Others.SendAsync("UserOnlineStatus", userId, true);
-
-            // Broadcast online status to everyone who may have this user's chat open
+            // Notify everyone who has this user's chat open that they came online
             await Clients.Others.SendAsync("UserOnlineStatus", userId, true);
         }
 

@@ -256,159 +256,142 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-    <script>
-        const currentUserId  = "@currentUserId";
-        const otherUserId    = "@Model.OtherUserId";
-        const otherUserName  = "@Model.OtherUserName";
-        const senderName     = "@User.Identity?.Name";
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+    // ── Constants ────────────────────────────────────────────────────────────
+    const currentUserId = "@currentUserId";
+    const otherUserId   = "@Model.OtherUserId";
 
-        const container = document.getElementById("messagesContainer");
-        const input     = document.getElementById("msgInput");
-        const sendBtn   = document.getElementById("sendBtn");
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const container       = document.getElementById("messagesContainer");
+    const input           = document.getElementById("msgInput");
+    const sendBtn         = document.getElementById("sendBtn");
+    const typingIndicator = document.getElementById("typingIndicator");
+    const onlineDot       = document.getElementById("onlineDot");
+    const onlineLabel     = document.getElementById("onlineLabel");
 
-        // ── Scroll to bottom ──────────────────────────────────────────────────────
-        function scrollToBottom() {
-            container.scrollTop = container.scrollHeight;
-        }
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function scrollToBottom() { container.scrollTop = container.scrollHeight; }
+    scrollToBottom();
+
+    function escapeHtml(t) {
+        return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function getToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
+    }
+
+    // ── Bubble renderer ───────────────────────────────────────────────────────
+    function appendBubble(senderId, content, sentAt) {
+        const isSent = senderId === currentUserId;
+        const time   = new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const row    = document.createElement("div");
+        row.className = `bubble-row ${isSent ? "sent" : "received"}`;
+        row.innerHTML = `
+            <span class="bubble-time">${time}</span>
+            <div class="bubble ${isSent ? "sent" : "received"}">${escapeHtml(content)}</div>`;
+        container.appendChild(row);
         scrollToBottom();
+    }
 
-        // ── Append bubble ─────────────────────────────────────────────────────────
-        function appendBubble(senderId, content, sentAt) {
-            const isSent = senderId === currentUserId;
-            const time   = new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // ── Online status ─────────────────────────────────────────────────────────
+    function setOnline(isOnline) {
+        onlineDot.className     = `online-dot ${isOnline ? 'online' : 'offline'}`;
+        onlineLabel.textContent = isOnline ? 'Online' : 'Offline';
+        onlineLabel.style.color = isOnline ? '#22c55e' : 'var(--text-muted)';
+    }
+    async function refreshOnlineStatus() {
+        try {
+            const res  = await fetch(`/Messaging/IsOnline?userId=${encodeURIComponent(otherUserId)}`);
+            const data = await res.json();
+            setOnline(data.online);
+        } catch { /* ignore network errors */ }
+    }
+    refreshOnlineStatus();
+    setInterval(refreshOnlineStatus, 20000); // poll every 20 s as a fallback
 
-            const row = document.createElement("div");
-            row.className = `bubble-row ${isSent ? "sent" : "received"}`;
-            row.innerHTML = `
-                <span class="bubble-time">${time}</span>
-                <div class="bubble ${isSent ? "sent" : "received"}">${escapeHtml(content)}</div>`;
+    // ── Typing state ──────────────────────────────────────────────────────────
+    let typingTimer  = null;
+    let isTyping     = false;
 
-            container.appendChild(row);
-            scrollToBottom();
-        }
+    function showTyping() { typingIndicator.style.display = 'flex'; scrollToBottom(); }
+    function hideTyping()  { typingIndicator.style.display = 'none'; }
 
-        function escapeHtml(text) {
-            return text.replace(/&/g,"&amp;").replace(/</g,"&lt;")
-                       .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-        }
+    function stopTypingSignal() {
+        if (!isTyping) return;
+        isTyping = false;
+        clearTimeout(typingTimer);
+        connection.invoke("StopTyping", otherUserId).catch(() => {});
+    }
 
-        // ── SignalR ───────────────────────────────────────────────────────────────
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/chathub")
-            .withAutomaticReconnect()
-            .build();
+    // ── SignalR ───────────────────────────────────────────────────────────────
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/chathub")
+        .withAutomaticReconnect()
+        .build();
 
-        connection.on("ReceiveDirectMessage", (data) => {
-            // only render if this message belongs to this conversation
-            if (data.senderId === otherUserId || data.senderId === currentUserId) {
-                appendBubble(data.senderId, data.content, data.sentAt);
-            }
-        });
-
-        connection.start().catch(err => console.error("SignalR error:", err));
-
-        // ── Send ──────────────────────────────────────────────────────────────────
-        async function sendMessage() {
-            const content = input.value.trim();
-            if (!content) return;
-            input.value = "";
-
-            const formData = new FormData();
-            formData.append("receiverId", otherUserId);
-            formData.append("content",    content);
-            formData.append("__RequestVerificationToken", getAntiForgeryToken());
-
-            // Save to DB — controller broadcasts via SignalR to both users, so we
-            // do NOT manually append a bubble here (that would cause a double render).
-            await fetch("/Messaging/SendMessage", { method: "POST", body: formData });
-
-            // Update the navbar unread badge (in case receiver had open conversations)
+    // Single ReceiveDirectMessage handler — renders bubble + auto mark-read
+    connection.on("ReceiveDirectMessage", (data) => {
+        if (data.senderId !== otherUserId && data.senderId !== currentUserId) return;
+        hideTyping();
+        appendBubble(data.senderId, data.content, data.sentAt);
+        // Auto mark-as-read when the other user's message arrives while we are in this chat
+        if (data.senderId === otherUserId) {
+            const fd = new FormData();
+            fd.append("otherUserId", otherUserId);
+            fd.append("__RequestVerificationToken", getToken());
+            fetch("/Messaging/MarkRead", { method: "POST", body: fd });
             if (typeof refreshMsgBadge === 'function') refreshMsgBadge();
         }
+    });
 
-        function getAntiForgeryToken() {
-            return document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
+    // Typing events
+    connection.on("UserTyping",        (id) => { if (id === otherUserId) showTyping(); });
+    connection.on("UserStoppedTyping", (id) => { if (id === otherUserId) hideTyping(); });
+
+    // Real-time online status pushed by hub on connect/disconnect
+    connection.on("UserOnlineStatus",  (id, online) => { if (id === otherUserId) setOnline(online); });
+
+    connection.start().catch(err => console.error("SignalR error:", err));
+
+    // ── Send message ──────────────────────────────────────────────────────────
+    async function sendMessage() {
+        const content = input.value.trim();
+        if (!content) return;
+        input.value = "";
+
+        stopTypingSignal(); // clear typing indicator on the receiver's side
+
+        const fd = new FormData();
+        fd.append("receiverId", otherUserId);
+        fd.append("content",    content);
+        fd.append("__RequestVerificationToken", getToken());
+
+        // POST saves to DB; the controller then broadcasts via SignalR to both parties.
+        // We do NOT append a bubble here — the ReceiveDirectMessage handler does that.
+        await fetch("/Messaging/SendMessage", { method: "POST", body: fd });
+
+        if (typeof refreshMsgBadge === 'function') refreshMsgBadge();
+    }
+
+    // ── Typing detection ──────────────────────────────────────────────────────
+    input.addEventListener("input", () => {
+        if (!isTyping) {
+            isTyping = true;
+            connection.invoke("StartTyping", otherUserId).catch(() => {});
         }
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            isTyping = false;
+            connection.invoke("StopTyping", otherUserId).catch(() => {});
+        }, 2000); // stop signal after 2 s of inactivity
+    });
 
-        sendBtn.addEventListener("click", sendMessage);
-        input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-
-        // ── Online status ────────────────────────────────────────────────────
-        const onlineDot   = document.getElementById("onlineDot");
-        const onlineLabel = document.getElementById("onlineLabel");
-        function setOnline(isOnline) {
-            onlineDot.className     = `online-dot ${isOnline ? 'online' : 'offline'}`;
-            onlineLabel.textContent = isOnline ? 'Online' : 'Offline';
-            onlineLabel.style.color = isOnline ? '#22c55e' : 'var(--text-muted)';
-        }
-        async function refreshOnlineStatus() {
-            try {
-                const res  = await fetch(`/Messaging/IsOnline?userId=${encodeURIComponent(otherUserId)}`);
-                const data = await res.json();
-                setOnline(data.online);
-            } catch { /* ignore */ }
-        }
-        refreshOnlineStatus();
-        setInterval(refreshOnlineStatus, 20000);
-
-        // ── Typing indicator ──────────────────────────────────────────────────
-        const typingIndicator = document.getElementById("typingIndicator");
-        let typingTimer;
-        let isTyping = false;
-        function showTyping() { typingIndicator.style.display = 'flex'; container.scrollTop = container.scrollHeight; }
-        function hideTyping() { typingIndicator.style.display = 'none'; }
-
-        // Wire up typing events on the existing SignalR connection
-        connection.on("UserTyping",        (id) => { if (id === otherUserId) showTyping(); });
-        connection.on("UserStoppedTyping", (id) => { if (id === otherUserId) hideTyping(); });
-        connection.on("UserOnlineStatus",  (id, online) => { if (id === otherUserId) setOnline(online); });
-
-        // Also auto mark-as-read and refresh badge when message arrives from other user
-        connection.on("ReceiveDirectMessage_Extras", () => {}); // placeholder, handled below via patch
-        const _origReceive = connection.methods["receivedirectmessage"]?.[0];
-        // Patch: after original handler runs, also mark-read if incoming
-        connection.off("ReceiveDirectMessage");
-        connection.on("ReceiveDirectMessage", (data) => {
-            if (data.senderId === otherUserId || data.senderId === currentUserId) {
-                hideTyping();
-                appendBubble(data.senderId, data.content, data.sentAt);
-                if (data.senderId === otherUserId) {
-                    const fd = new FormData();
-                    fd.append("otherUserId", otherUserId);
-                    fd.append("__RequestVerificationToken", getAntiForgeryToken());
-                    fetch("/Messaging/MarkRead", { method: "POST", body: fd });
-                    if (typeof refreshMsgBadge === 'function') refreshMsgBadge();
-                }
-            }
-        });
-
-        input.addEventListener("input", () => {
-            if (!isTyping) {
-                isTyping = true;
-                connection.invoke("StartTyping", otherUserId).catch(() => {});
-            }
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                isTyping = false;
-                connection.invoke("StopTyping", otherUserId).catch(() => {});
-            }, 2000);
-        });
-
-        // Clear typing on send
-        const _origSend = sendMessage;
-        // Already defined above — just add cleanup via original send
-        const _wrappedSend = async () => {
-            if (isTyping) {
-                isTyping = false;
-                clearTimeout(typingTimer);
-                connection.invoke("StopTyping", otherUserId).catch(() => {});
-            }
-            await _origSend();
-        };
-        sendBtn.removeEventListener("click", sendMessage);
-        sendBtn.addEventListener("click", _wrappedSend);
-        input.removeEventListener("keydown", null);
-        input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); _wrappedSend(); } });
-    </script>
+    // ── Event listeners (each registered exactly once) ────────────────────────
+    sendBtn.addEventListener("click", sendMessage);
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+</script>
 }

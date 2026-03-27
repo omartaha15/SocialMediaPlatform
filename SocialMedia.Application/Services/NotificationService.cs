@@ -41,5 +41,24 @@ namespace SocialMedia.Application.Services
 
             return notifications;
         }
+
+        public async Task<bool> MarkAsReadAsync(string userId, Guid notificationId)
+        {
+            var notification = await _uow.Repository<Notification>()
+                .Query()
+                .FirstOrDefaultAsync(n => n.Id == notificationId && n.UserId == userId);
+
+            if (notification == null)
+                return false;
+
+            if (notification.IsRead)
+                return true;
+
+            notification.IsRead = true;
+            notification.UpdatedAt = DateTime.UtcNow;
+            _uow.Repository<Notification>().Update(notification);
+
+            return await _uow.CompleteAsync() > 0;
+        }
     }
 }

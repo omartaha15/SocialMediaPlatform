@@ -24,5 +24,18 @@ namespace SocialMedia.Web.Controllers
             var notifications = await _notificationService.GetUserNotificationsAsync(userId, take);
             return Ok(notifications);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAsRead(Guid id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var updated = await _notificationService.MarkAsReadAsync(userId, id);
+            if (!updated) return NotFound();
+
+            return Ok(new { success = true });
+        }
     }
 }

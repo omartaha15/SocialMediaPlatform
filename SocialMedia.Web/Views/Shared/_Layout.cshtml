@@ -283,6 +283,9 @@
                             </li>
 
                             <li class="nav-item dropdown w-100 w-lg-auto border-top border-secondary d-lg-block pt-2 pt-lg-0 mt-2 mt-lg-0 pb-3 pb-lg-0">
+                                <form id="notificationsAntiForgeryForm" class="d-none">
+                                    @Html.AntiForgeryToken()
+                                </form>
                                 <a class="nav-link d-flex align-items-center gap-2 p-1 pe-2 rounded-pill hover-bg-dark text-decoration-none" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: transparent;">
                                     <img src="@profilePic" class="rounded-circle" style="width:36px; height:36px; object-fit:cover; border: 1px solid #393a3b;" />
                                     <span class="fw-bold text-light" style="font-size: 0.95rem;">@User.Identity.Name</span>
@@ -419,6 +422,12 @@
                 return map[type] ?? 'Notification';
             }
 
+            function getAntiForgeryToken() {
+                return document.querySelector('#notificationsAntiForgeryForm input[name="__RequestVerificationToken"]')?.value
+                    || document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    || '';
+            }
+
             function notificationIcon(type) {
                 const label = notificationTypeLabel(type);
                 switch (label) {
@@ -451,7 +460,7 @@
                 }
 
                 notifListDesktop.innerHTML = notificationItems.map(n => `
-                    <div class="px-3 py-2 border-bottom border-secondary ${n.isRead ? '' : 'bg-dark'}">
+                    <button type="button" class="w-100 text-start px-3 py-2 border-0 border-bottom border-secondary bg-transparent notification-item ${n.isRead ? '' : 'bg-dark'}" data-notification-id="${n.id}">
                         <div class="d-flex align-items-start gap-2">
                             <div class="mt-1"><i class="fas ${notificationIcon(n.type)} text-primary"></i></div>
                             <div class="flex-grow-1">
@@ -460,7 +469,7 @@
                             </div>
                             ${n.isRead ? '' : '<span class="badge bg-primary rounded-pill" style="font-size:0.55rem;">new</span>'}
                         </div>
-                    </div>
+                    </button>
                 `).join('');
             }
 
@@ -492,6 +501,40 @@
                 notificationItems = [item, ...notificationItems].slice(0, 20);
                 renderNotificationList();
                 updateNotificationBadges();
+                setTimeout(loadNotifications, 1000);
+            }
+
+            async function markNotificationAsRead(notificationId) {
+                if (!notificationId) return;
+
+                const notification = notificationItems.find(n => String(n.id) === String(notificationId));
+                if (!notification || notification.isRead) return;
+
+                notification.isRead = true;
+                renderNotificationList();
+                updateNotificationBadges();
+
+                try {
+                    const token = getAntiForgeryToken();
+                    const fd = new FormData();
+                    fd.append('id', notificationId);
+                    fd.append('__RequestVerificationToken', token);
+
+                    const res = await fetch('/Notifications/MarkAsRead', {
+                        method: 'POST',
+                        body: fd
+                    });
+
+                    if (!res.ok) {
+                        notification.isRead = false;
+                        renderNotificationList();
+                        updateNotificationBadges();
+                    }
+                } catch {
+                    notification.isRead = false;
+                    renderNotificationList();
+                    updateNotificationBadges();
+                }
             }
 
             loadNotifications();
@@ -508,6 +551,15 @@
             });
 
             notificationConnection.start().catch(() => {});
+
+            notifListDesktop?.addEventListener('click', (e) => {
+                const target = e.target instanceof HTMLElement ? e.target.closest('.notification-item') : null;
+                if (!target) return;
+                const id = target.getAttribute('data-notification-id');
+                if (id) {
+                    markNotificationAsRead(id);
+                }
+            });
         </script>
     }
 </body>

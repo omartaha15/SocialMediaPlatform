@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SocialMedia.Application.DTOs.PostDtos.CommentDtos;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
+using SocialMedia.Domain.Enums;
 
 namespace SocialMedia.Application.Services
 {
@@ -30,6 +31,9 @@ namespace SocialMedia.Application.Services
 
         public async Task<CommentDto> AddCommentAsync(CreateCommentDto dto, string userId)
         {
+            var post = await _uow.Repository<Post>().GetByIdAsync(dto.PostId)
+                ?? throw new KeyNotFoundException("Post not found.");
+
             var comment = new Comment
             {
                 Content = dto.Content,
@@ -39,6 +43,21 @@ namespace SocialMedia.Application.Services
             };
 
             await _uow.Repository<Comment>().AddAsync(comment);
+
+            if (post.UserId != userId)
+            {
+                var sender = await _uow.FindUserByIdAsync(userId);
+                var senderName = sender?.UserName ?? "Someone";
+
+                await _uow.Repository<Notification>().AddAsync(new Notification
+                {
+                    UserId = post.UserId,
+                    SenderId = userId,
+                    Type = NotificationType.Comment,
+                    Content = $"{senderName} commented on your post."
+                });
+            }
+
             await _uow.CompleteAsync();
 
             // Re-query to eager-load User for the returned DTO

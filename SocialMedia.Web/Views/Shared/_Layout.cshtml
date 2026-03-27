@@ -243,10 +243,34 @@
                             var user = await userManager.FindByNameAsync(User.Identity.Name);
                             var profilePic = user?.ProfilePictureUrl ?? "/images/user.jpg";
 
+                            <li class="nav-item dropdown position-relative d-none d-lg-block">
+                                <a class="nav-circle-btn text-decoration-none" href="#" id="navbarNotificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                    <i class="fas fa-bell"></i>
+                                    <span id="notif-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 p-0" aria-labelledby="navbarNotificationsDropdown" style="width: 360px;">
+                                    <div class="px-3 py-2 border-bottom border-secondary d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Notifications</span>
+                                        <small class="text-muted">Live</small>
+                                    </div>
+                                    <div id="notif-list-desktop" style="max-height: 360px; overflow-y: auto;">
+                                        <div class="px-3 py-3 text-muted small">Loading...</div>
+                                    </div>
+                                </div>
+                            </li>
+
                             <li class="nav-item position-relative d-none d-lg-block">
                                 <a class="nav-circle-btn text-decoration-none" asp-controller="Messaging" asp-action="Index" title="Messages">
                                     <i class="fas fa-envelope"></i>
                                     <span id="msg-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item d-lg-none">
+                                <a class="nav-icon-link" href="#" title="Notifications">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="ms-3 fs-6">Notifications</span>
+                                    <span id="notif-badge-mobile" class="badge bg-danger ms-2 rounded-pill" style="display:none;">0</span>
                                 </a>
                             </li>
 
@@ -325,6 +349,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/search.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
@@ -352,6 +377,137 @@
             }
             refreshMsgBadge();
             setInterval(refreshMsgBadge, 30000); // refresh every 30 seconds
+
+            // ── Notifications list + badge ────────────────────────────────────
+            const notifListDesktop = document.getElementById('notif-list-desktop');
+            const notifBadgeDesktop = document.getElementById('notif-badge-desktop');
+            const notifBadgeMobile = document.getElementById('notif-badge-mobile');
+            let notificationItems = [];
+
+            function escapeHtml(text) {
+                return String(text ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function relativeTime(dateInput) {
+                const date = new Date(dateInput);
+                const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+                if (Number.isNaN(seconds)) return '';
+                if (seconds < 60) return 'Just now';
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return `${minutes}m ago`;
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return `${hours}h ago`;
+                const days = Math.floor(hours / 24);
+                if (days < 7) return `${days}d ago`;
+                return date.toLocaleDateString();
+            }
+
+            function notificationTypeLabel(type) {
+                if (typeof type === 'string') return type;
+                const map = {
+                    1: 'FriendRequest',
+                    2: 'Message',
+                    3: 'PostReaction',
+                    4: 'Comment',
+                    5: 'GroupInvitation'
+                };
+                return map[type] ?? 'Notification';
+            }
+
+            function notificationIcon(type) {
+                const label = notificationTypeLabel(type);
+                switch (label) {
+                    case 'Message': return 'fa-envelope';
+                    case 'Comment': return 'fa-comment';
+                    case 'PostReaction': return 'fa-heart';
+                    case 'FriendRequest': return 'fa-user-plus';
+                    default: return 'fa-bell';
+                }
+            }
+
+            function updateNotificationBadges() {
+                const unread = notificationItems.filter(n => !n.isRead).length;
+                if (notifBadgeDesktop) {
+                    notifBadgeDesktop.textContent = unread;
+                    notifBadgeDesktop.style.display = unread > 0 ? 'inline-block' : 'none';
+                }
+                if (notifBadgeMobile) {
+                    notifBadgeMobile.textContent = unread;
+                    notifBadgeMobile.style.display = unread > 0 ? 'inline-block' : 'none';
+                }
+            }
+
+            function renderNotificationList() {
+                if (!notifListDesktop) return;
+
+                if (!notificationItems.length) {
+                    notifListDesktop.innerHTML = '<div class="px-3 py-3 text-muted small">No notifications yet.</div>';
+                    return;
+                }
+
+                notifListDesktop.innerHTML = notificationItems.map(n => `
+                    <div class="px-3 py-2 border-bottom border-secondary ${n.isRead ? '' : 'bg-dark'}">
+                        <div class="d-flex align-items-start gap-2">
+                            <div class="mt-1"><i class="fas ${notificationIcon(n.type)} text-primary"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="small fw-semibold">${escapeHtml(n.content)}</div>
+                                <div class="small text-muted">${relativeTime(n.createdAt)}</div>
+                            </div>
+                            ${n.isRead ? '' : '<span class="badge bg-primary rounded-pill" style="font-size:0.55rem;">new</span>'}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            async function loadNotifications() {
+                try {
+                    const res = await fetch('/Notifications/List?take=20');
+                    if (!res.ok) return;
+                    notificationItems = await res.json();
+                    renderNotificationList();
+                    updateNotificationBadges();
+                } catch {
+                    if (notifListDesktop) {
+                        notifListDesktop.innerHTML = '<div class="px-3 py-3 text-danger small">Failed to load notifications.</div>';
+                    }
+                }
+            }
+
+            function prependRealtimeNotification(payload) {
+                const item = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+                    type: payload.type,
+                    content: payload.message,
+                    isRead: false,
+                    createdAt: payload.createdAt ?? new Date().toISOString(),
+                    senderId: null,
+                    senderName: 'Unknown',
+                    senderProfilePictureUrl: null
+                };
+                notificationItems = [item, ...notificationItems].slice(0, 20);
+                renderNotificationList();
+                updateNotificationBadges();
+            }
+
+            loadNotifications();
+
+            // ── NotificationHub realtime listener ─────────────────────────────
+            const notificationConnection = new signalR.HubConnectionBuilder()
+                .withUrl('/notificationhub')
+                .withAutomaticReconnect()
+                .build();
+
+            notificationConnection.on('ReceiveNotification', (payload) => {
+                if (!payload || !payload.message) return;
+                prependRealtimeNotification(payload);
+            });
+
+            notificationConnection.start().catch(() => {});
         </script>
     }
 </body>

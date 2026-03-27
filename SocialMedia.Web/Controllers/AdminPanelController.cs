@@ -1,14 +1,21 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SocialMedia.Application.Interfaces.Services;
 
 namespace SocialMedia.Web.Controllers
 {
     [Authorize(Roles = "Admin")]
     public class AdminPanelController : Controller
     {
-        public IActionResult Index()
+        private readonly IDashboardService _dashboardService;
+        public AdminPanelController(IDashboardService dashboardService)
         {
-            return View();
+            _dashboardService = dashboardService;
+        }
+        public async Task<IActionResult> Index()
+        {
+            var analytics = await _dashboardService.GetAnalyticsSummaryAsync();
+            return View(analytics);
         }
     }
 }

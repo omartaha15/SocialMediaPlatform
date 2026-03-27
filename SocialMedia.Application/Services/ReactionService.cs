@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
@@ -14,13 +15,16 @@ namespace SocialMedia.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotificationRealtimeService _notificationRealtimeService;
+        private readonly ILogger<ReactionService> _logger;
 
         public ReactionService(
             IUnitOfWork unitOfWork,
-            INotificationRealtimeService notificationRealtimeService)
+            INotificationRealtimeService notificationRealtimeService,
+            ILogger<ReactionService> logger)
         {
             _unitOfWork = unitOfWork;
             _notificationRealtimeService = notificationRealtimeService;
+            _logger = logger;
         }
 
         public async Task AddOrUpdateReactionAsync(Guid postId, string userId, MultiReaction reaction)
@@ -67,10 +71,20 @@ namespace SocialMedia.Application.Services
                     });
 
                     await _unitOfWork.CompleteAsync();
-                    await _notificationRealtimeService.PushAsync(
-                        post.UserId,
-                        NotificationType.PostReaction,
-                        message);
+                    try
+                    {
+                        await _notificationRealtimeService.PushAsync(
+                            post.UserId,
+                            NotificationType.PostReaction,
+                            message);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(
+                            ex,
+                            "Failed to push realtime reaction notification. TargetUserId: {TargetUserId}",
+                            post.UserId);
+                    }
                     return;
                 }
             }

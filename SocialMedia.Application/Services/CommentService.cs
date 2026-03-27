@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SocialMedia.Application.DTOs.PostDtos.CommentDtos;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
@@ -11,11 +12,16 @@ namespace SocialMedia.Application.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly INotificationRealtimeService _notificationRealtimeService;
+        private readonly ILogger<CommentService> _logger;
 
-        public CommentService(IUnitOfWork uow, INotificationRealtimeService notificationRealtimeService)
+        public CommentService(
+            IUnitOfWork uow,
+            INotificationRealtimeService notificationRealtimeService,
+            ILogger<CommentService> logger)
         {
             _uow = uow;
             _notificationRealtimeService = notificationRealtimeService;
+            _logger = logger;
         }
 
         public async Task<List<CommentDto>> GetPostCommentsAsync(Guid postId)
@@ -61,10 +67,20 @@ namespace SocialMedia.Application.Services
                 });
 
                 await _uow.CompleteAsync();
-                await _notificationRealtimeService.PushAsync(
-                    post.UserId,
-                    NotificationType.Comment,
-                    message);
+                try
+                {
+                    await _notificationRealtimeService.PushAsync(
+                        post.UserId,
+                        NotificationType.Comment,
+                        message);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to push realtime comment notification. TargetUserId: {TargetUserId}",
+                        post.UserId);
+                }
             }
             else
             {

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SocialMedia.Application.DTOs.ChatDTOs;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
@@ -14,11 +15,16 @@ namespace SocialMedia.Application.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly INotificationRealtimeService _notificationRealtimeService;
+        private readonly ILogger<MessageService> _logger;
 
-        public MessageService(IUnitOfWork uow, INotificationRealtimeService notificationRealtimeService)
+        public MessageService(
+            IUnitOfWork uow,
+            INotificationRealtimeService notificationRealtimeService,
+            ILogger<MessageService> logger)
         {
             _uow = uow;
             _notificationRealtimeService = notificationRealtimeService;
+            _logger = logger;
         }
 
         // ── Send ──────────────────────────────────────────────────────────────
@@ -55,10 +61,20 @@ namespace SocialMedia.Application.Services
 
             if (senderId != dto.ReceiverId)
             {
-                await _notificationRealtimeService.PushAsync(
-                    dto.ReceiverId,
-                    NotificationType.Message,
-                    notificationMessage);
+                try
+                {
+                    await _notificationRealtimeService.PushAsync(
+                        dto.ReceiverId,
+                        NotificationType.Message,
+                        notificationMessage);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to push realtime message notification. TargetUserId: {TargetUserId}",
+                        dto.ReceiverId);
+                }
             }
 
             return MapToDto(message, sender);

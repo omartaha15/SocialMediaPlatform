@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Domain.Enums;
@@ -20,17 +21,20 @@ namespace SocialMedia.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly INotificationRealtimeService _notificationRealtimeService;
+        private readonly ILogger<FriendshipService> _logger;
 
         public FriendshipService(
             IFriendshipRepository friendshipRepository,
             IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager,
-            INotificationRealtimeService notificationRealtimeService)
+            INotificationRealtimeService notificationRealtimeService,
+            ILogger<FriendshipService> logger)
         {
             _friendshipRepository = friendshipRepository;
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _notificationRealtimeService = notificationRealtimeService;
+            _logger = logger;
         }
 
         public async Task<bool> SendRequestAsync(string senderId, string receiverId)
@@ -65,10 +69,20 @@ namespace SocialMedia.Application.Services
             var saved = await _unitOfWork.CompleteAsync() > 0;
             if (saved)
             {
-                await _notificationRealtimeService.PushAsync(
-                    receiverId,
-                    NotificationType.FriendRequest,
-                    $"{senderName} sent you a follow request.");
+                try
+                {
+                    await _notificationRealtimeService.PushAsync(
+                        receiverId,
+                        NotificationType.FriendRequest,
+                        $"{senderName} sent you a follow request.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to push realtime follow notification. TargetUserId: {TargetUserId}",
+                        receiverId);
+                }
             }
 
             return saved;

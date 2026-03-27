@@ -407,6 +407,8 @@
             const notifMarkAllBtn = document.getElementById('notif-mark-all-btn');
             const notifMarkAllMobileBtn = document.getElementById('notif-mark-all-mobile-btn');
             let notificationItems = [];
+            let notifSkip = 0;
+            const notifTake = 20;
 
             function escapeHtml(text) {
                 return String(text ?? '')
@@ -522,9 +524,18 @@
 
             async function loadNotifications() {
                 try {
-                    const res = await fetch('/Notifications/List?take=20');
+                    const res = await fetch(`/Notifications/List?take=${notifTake}&skip=${notifSkip}`);
                     if (!res.ok) return;
-                    notificationItems = await res.json();
+
+                    const items = await res.json();
+                    if (notifSkip === 0) {
+                        notificationItems = items;
+                    } else {
+                        const existingIds = new Set(notificationItems.map(n => String(n.id)));
+                        const newItems = items.filter(n => !existingIds.has(String(n.id)));
+                        notificationItems = [...notificationItems, ...newItems];
+                    }
+
                     renderNotificationList();
                     updateNotificationBadges();
                 } catch {
@@ -671,6 +682,18 @@
 
             notifMarkAllMobileBtn?.addEventListener('click', () => {
                 markAllNotificationsAsRead();
+            });
+
+            const desktopDropdown = document.getElementById('navbarNotificationsDropdown');
+            desktopDropdown?.addEventListener('shown.bs.dropdown', () => {
+                notifSkip = 0;
+                loadNotifications();
+            });
+
+            const mobileOffcanvas = document.getElementById('mobileNotificationsOffcanvas');
+            mobileOffcanvas?.addEventListener('show.bs.offcanvas', () => {
+                notifSkip = 0;
+                loadNotifications();
             });
         </script>
     }

@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using SocialMedia.Application.DTOs.NotificationDTOs;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
@@ -15,17 +14,15 @@ namespace SocialMedia.Application.Services
             _uow = uow;
         }
 
-        public async Task<IReadOnlyList<NotificationDto>> GetUserNotificationsAsync(string userId, int take = 20)
+        public async Task<IReadOnlyList<NotificationDto>> GetUserNotificationsAsync(string userId, int take = 20, int skip = 0)
         {
             if (take <= 0) take = 20;
             if (take > 100) take = 100;
+            if (skip < 0) skip = 0;
 
-            var notifications = await _uow.Repository<Notification>()
-                .Query()
-                .Where(n => n.UserId == userId)
-                .Include(n => n.Sender)
-                .OrderByDescending(n => n.CreatedAt)
-                .Take(take)
+            var notifications = await _uow.Notifications.GetForUserAsync(userId, skip, take);
+
+            return notifications
                 .Select(n => new NotificationDto
                 {
                     Id = n.Id,
@@ -37,23 +34,17 @@ namespace SocialMedia.Application.Services
                     SenderName = n.Sender != null ? (n.Sender.UserName ?? "Unknown") : "Unknown",
                     SenderProfilePictureUrl = n.Sender != null ? n.Sender.ProfilePictureUrl : null
                 })
-                .ToListAsync();
-
-            return notifications;
+                .ToList();
         }
 
         public async Task<int> GetUnreadCountAsync(string userId)
         {
-            return await _uow.Repository<Notification>()
-                .Query()
-                .CountAsync(n => n.UserId == userId && !n.IsRead);
+            return await _uow.Notifications.GetUnreadCountAsync(userId);
         }
 
         public async Task<bool> MarkAsReadAsync(string userId, Guid notificationId)
         {
-            var notification = await _uow.Repository<Notification>()
-                .Query()
-                .FirstOrDefaultAsync(n => n.Id == notificationId && n.UserId == userId);
+            var notification = await _uow.Notifications.GetByIdForUserAsync(notificationId, userId);
 
             if (notification == null)
                 return false;
@@ -63,29 +54,25 @@ namespace SocialMedia.Application.Services
 
             notification.IsRead = true;
             notification.UpdatedAt = DateTime.UtcNow;
-            _uow.Repository<Notification>().Update(notification);
+            _uow.Notifications.Update(notification);
 
             return await _uow.CompleteAsync() > 0;
         }
 
         public async Task<int> MarkAllAsReadAsync(string userId)
         {
-            var unreadNotifications = await _uow.Repository<Notification>()
-                .Query()
-                .Where(n => n.UserId == userId && !n.IsRead)
-                .ToListAsync();
+            var unreadNotifications = await _uow.Notifications.GetUnreadForUserAsync(userId);
 
             if (unreadNotifications.Count == 0)
                 return 0;
 
             var now = DateTime.UtcNow;
-            var repo = _uow.Repository<Notification>();
 
             foreach (var notification in unreadNotifications)
             {
                 notification.IsRead = true;
                 notification.UpdatedAt = now;
-                repo.Update(notification);
+                _uow.Notifications.Update(notification);
             }
 
             await _uow.CompleteAsync();

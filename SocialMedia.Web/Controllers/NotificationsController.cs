@@ -16,12 +16,12 @@ namespace SocialMedia.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> List(int take = 20)
+        public async Task<IActionResult> List(int take = 20, int skip = 0)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
-            var notifications = await _notificationService.GetUserNotificationsAsync(userId, take);
+            var notifications = await _notificationService.GetUserNotificationsAsync(userId, take, skip);
             return Ok(notifications);
         }
 

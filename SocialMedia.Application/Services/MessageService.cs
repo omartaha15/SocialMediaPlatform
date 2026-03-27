@@ -66,10 +66,12 @@ namespace SocialMedia.Application.Services
             {
                 try
                 {
+                    var actionUrl = $"/Messaging/Chat?otherUserId={senderId}";
                     await _notificationRealtimeService.PushAsync(
                         dto.ReceiverId,
                         NotificationType.Message,
                         notificationMessage,
+                        actionUrl: actionUrl,
                         notificationId: notification?.Id,
                         createdAt: notification?.CreatedAt);
                 }

@@ -502,7 +502,7 @@
                 }
 
                 const html = notificationItems.map(n => `
-                    <button type="button" class="w-100 text-start px-3 py-2 border-0 border-bottom border-secondary bg-transparent notification-item ${n.isRead ? '' : 'bg-dark'}" data-notification-id="${n.id}">
+                    <button type="button" class="w-100 text-start px-3 py-2 border-0 border-bottom border-secondary bg-transparent notification-item ${n.isRead ? '' : 'bg-dark'}" data-notification-id="${n.id}" data-action-url="${escapeHtml(n.actionUrl ?? '')}">
                         <div class="d-flex align-items-start gap-2">
                             <div class="mt-1"><i class="fas ${notificationIcon(n.type)} text-primary"></i></div>
                             <div class="flex-grow-1">
@@ -562,6 +562,7 @@
                     id: payload.id ?? (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
                     type: payload.type,
                     content: payload.message,
+                    actionUrl: payload.actionUrl ?? '',
                     isRead: false,
                     createdAt: payload.createdAt ?? new Date().toISOString(),
                     senderId: null,
@@ -578,10 +579,11 @@
             }
 
             async function markNotificationAsRead(notificationId) {
-                if (!notificationId) return;
+                if (!notificationId) return false;
 
                 const notification = notificationItems.find(n => String(n.id) === String(notificationId));
-                if (!notification || notification.isRead) return;
+                if (!notification) return false;
+                if (notification.isRead) return true;
 
                 notification.isRead = true;
                 renderNotificationList();
@@ -602,12 +604,16 @@
                         notification.isRead = false;
                         renderNotificationList();
                         updateNotificationBadges();
+                        return false;
                     }
                 } catch {
                     notification.isRead = false;
                     renderNotificationList();
                     updateNotificationBadges();
+                    return false;
                 }
+
+                return true;
             }
 
             async function markAllNotificationsAsRead() {
@@ -658,21 +664,29 @@
 
             notificationConnection.start().catch(() => {});
 
-            notifListDesktop?.addEventListener('click', (e) => {
+            notifListDesktop?.addEventListener('click', async (e) => {
                 const target = e.target instanceof HTMLElement ? e.target.closest('.notification-item') : null;
                 if (!target) return;
                 const id = target.getAttribute('data-notification-id');
+                const actionUrl = target.getAttribute('data-action-url');
                 if (id) {
-                    markNotificationAsRead(id);
+                    const ok = await markNotificationAsRead(id);
+                    if (ok && actionUrl) {
+                        window.location.href = actionUrl;
+                    }
                 }
             });
 
-            notifListMobile?.addEventListener('click', (e) => {
+            notifListMobile?.addEventListener('click', async (e) => {
                 const target = e.target instanceof HTMLElement ? e.target.closest('.notification-item') : null;
                 if (!target) return;
                 const id = target.getAttribute('data-notification-id');
+                const actionUrl = target.getAttribute('data-action-url');
                 if (id) {
-                    markNotificationAsRead(id);
+                    const ok = await markNotificationAsRead(id);
+                    if (ok && actionUrl) {
+                        window.location.href = actionUrl;
+                    }
                 }
             });
 

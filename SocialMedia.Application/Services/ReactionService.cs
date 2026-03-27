@@ -75,10 +75,12 @@ namespace SocialMedia.Application.Services
                     await _unitOfWork.CompleteAsync();
                     try
                     {
+                        var actionUrl = $"/Home/Index#post-{postId}";
                         await _notificationRealtimeService.PushAsync(
                             post.UserId,
                             NotificationType.PostReaction,
                             message,
+                            actionUrl: actionUrl,
                             notificationId: notification.Id,
                             createdAt: notification.CreatedAt);
                     }

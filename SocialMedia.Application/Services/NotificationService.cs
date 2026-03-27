@@ -2,6 +2,7 @@ using SocialMedia.Application.DTOs.NotificationDTOs;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
+using SocialMedia.Domain.Enums;
 
 namespace SocialMedia.Application.Services
 {
@@ -28,6 +29,7 @@ namespace SocialMedia.Application.Services
                     Id = n.Id,
                     Type = n.Type,
                     Content = n.Content,
+                    ActionUrl = BuildActionUrl(n.Type, n.SenderId),
                     IsRead = n.IsRead,
                     CreatedAt = n.CreatedAt,
                     SenderId = n.SenderId,
@@ -77,6 +79,24 @@ namespace SocialMedia.Application.Services
 
             await _uow.CompleteAsync();
             return unreadNotifications.Count;
+        }
+
+        private static string BuildActionUrl(NotificationType type, string? senderId)
+        {
+            return type switch
+            {
+                NotificationType.Message when !string.IsNullOrWhiteSpace(senderId)
+                    => $"/Messaging/Chat?otherUserId={senderId}",
+                NotificationType.FriendRequest when !string.IsNullOrWhiteSpace(senderId)
+                    => $"/Profile/Index?id={senderId}",
+                NotificationType.PostReaction
+                    => "/Home/Index",
+                NotificationType.Comment
+                    => "/Home/Index",
+                NotificationType.GroupInvitation
+                    => "/GroupChat/Index",
+                _ => "/Home/Index"
+            };
         }
     }
 }

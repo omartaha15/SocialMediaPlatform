@@ -74,10 +74,12 @@ namespace SocialMedia.Application.Services
             {
                 try
                 {
+                    var actionUrl = $"/Profile/Index?id={senderId}";
                     await _notificationRealtimeService.PushAsync(
                         receiverId,
                         NotificationType.FriendRequest,
                         notificationMessage,
+                        actionUrl: actionUrl,
                         notificationId: notification.Id,
                         createdAt: notification.CreatedAt);
                 }

@@ -7,6 +7,7 @@ namespace SocialMedia.Application.DTOs.NotificationDTOs
         public Guid Id { get; set; }
         public NotificationType Type { get; set; }
         public string Content { get; set; } = string.Empty;
+        public string? ActionUrl { get; set; }
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
         public string? SenderId { get; set; }

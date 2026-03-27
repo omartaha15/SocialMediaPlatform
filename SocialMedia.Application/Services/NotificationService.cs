@@ -42,6 +42,13 @@ namespace SocialMedia.Application.Services
             return notifications;
         }
 
+        public async Task<int> GetUnreadCountAsync(string userId)
+        {
+            return await _uow.Repository<Notification>()
+                .Query()
+                .CountAsync(n => n.UserId == userId && !n.IsRead);
+        }
+
         public async Task<bool> MarkAsReadAsync(string userId, Guid notificationId)
         {
             var notification = await _uow.Repository<Notification>()

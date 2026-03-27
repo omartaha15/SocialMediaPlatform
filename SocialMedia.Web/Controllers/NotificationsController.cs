@@ -25,6 +25,16 @@ namespace SocialMedia.Web.Controllers
             return Ok(notifications);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> UnreadCount()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var count = await _notificationService.GetUnreadCountAsync(userId);
+            return Ok(new { count });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsRead(Guid id)

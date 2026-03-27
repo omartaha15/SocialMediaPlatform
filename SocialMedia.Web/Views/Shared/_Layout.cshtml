@@ -256,6 +256,9 @@
                                     <div id="notif-list-desktop" style="max-height: 360px; overflow-y: auto;">
                                         <div class="px-3 py-3 text-muted small">Loading...</div>
                                     </div>
+                                    <div class="px-3 py-2 border-top border-secondary text-center">
+                                        <button id="notif-load-more-btn" type="button" class="btn btn-sm btn-outline-light w-100">Load more</button>
+                                    </div>
                                 </div>
                             </li>
 
@@ -357,6 +360,9 @@
                 <div id="notif-list-mobile" style="max-height: calc(100vh - 80px); overflow-y: auto;">
                     <div class="px-3 py-3 text-muted small">Loading...</div>
                 </div>
+                <div class="px-3 py-2 border-top border-secondary text-center">
+                    <button id="notif-load-more-mobile-btn" type="button" class="btn btn-sm btn-outline-light w-100">Load more</button>
+                </div>
             </div>
         </div>
     }
@@ -406,9 +412,13 @@
             const notifBadgeMobile = document.getElementById('notif-badge-mobile');
             const notifMarkAllBtn = document.getElementById('notif-mark-all-btn');
             const notifMarkAllMobileBtn = document.getElementById('notif-mark-all-mobile-btn');
+            const notifLoadMoreBtn = document.getElementById('notif-load-more-btn');
+            const notifLoadMoreMobileBtn = document.getElementById('notif-load-more-mobile-btn');
             let notificationItems = [];
             let notifSkip = 0;
             const notifTake = 20;
+            let notifHasMore = true;
+            let notifLoading = false;
 
             function escapeHtml(text) {
                 return String(text ?? '')
@@ -490,6 +500,23 @@
                 applyUnreadCount(unread);
             }
 
+            function updateLoadMoreButtons() {
+                const show = notifHasMore && notificationItems.length > 0;
+                const text = notifLoading ? 'Loading...' : 'Load more';
+
+                if (notifLoadMoreBtn) {
+                    notifLoadMoreBtn.textContent = text;
+                    notifLoadMoreBtn.disabled = notifLoading || !show;
+                    notifLoadMoreBtn.style.display = show ? 'inline-block' : 'none';
+                }
+
+                if (notifLoadMoreMobileBtn) {
+                    notifLoadMoreMobileBtn.textContent = text;
+                    notifLoadMoreMobileBtn.disabled = notifLoading || !show;
+                    notifLoadMoreMobileBtn.style.display = show ? 'inline-block' : 'none';
+                }
+            }
+
             function renderNotificationList() {
                 if (!notificationItems.length) {
                     if (notifListDesktop) {
@@ -523,6 +550,10 @@
             }
 
             async function loadNotifications() {
+                if (notifLoading) return;
+                notifLoading = true;
+                updateLoadMoreButtons();
+
                 try {
                     const res = await fetch(`/Notifications/List?take=${notifTake}&skip=${notifSkip}`);
                     if (!res.ok) return;
@@ -536,6 +567,7 @@
                         notificationItems = [...notificationItems, ...newItems];
                     }
 
+                    notifHasMore = items.length === notifTake;
                     renderNotificationList();
                     updateNotificationBadges();
                 } catch {
@@ -545,6 +577,9 @@
                     if (notifListMobile) {
                         notifListMobile.innerHTML = '<div class="px-3 py-3 text-danger small">Failed to load notifications.</div>';
                     }
+                } finally {
+                    notifLoading = false;
+                    updateLoadMoreButtons();
                 }
             }
 
@@ -698,15 +733,29 @@
                 markAllNotificationsAsRead();
             });
 
+            notifLoadMoreBtn?.addEventListener('click', () => {
+                if (notifLoading || !notifHasMore) return;
+                notifSkip += notifTake;
+                loadNotifications();
+            });
+
+            notifLoadMoreMobileBtn?.addEventListener('click', () => {
+                if (notifLoading || !notifHasMore) return;
+                notifSkip += notifTake;
+                loadNotifications();
+            });
+
             const desktopDropdown = document.getElementById('navbarNotificationsDropdown');
             desktopDropdown?.addEventListener('shown.bs.dropdown', () => {
                 notifSkip = 0;
+                notifHasMore = true;
                 loadNotifications();
             });
 
             const mobileOffcanvas = document.getElementById('mobileNotificationsOffcanvas');
             mobileOffcanvas?.addEventListener('show.bs.offcanvas', () => {
                 notifSkip = 0;
+                notifHasMore = true;
                 loadNotifications();
             });
         </script>

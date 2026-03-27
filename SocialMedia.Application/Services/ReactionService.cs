@@ -47,6 +47,20 @@ namespace SocialMedia.Application.Services
                 };
 
                 await repo.AddAsync(newReaction);
+
+                if (post.UserId != userId)
+                {
+                    var sender = await _unitOfWork.FindUserByIdAsync(userId);
+                    var senderName = sender?.UserName ?? "Someone";
+
+                    await _unitOfWork.Repository<Notification>().AddAsync(new Notification
+                    {
+                        UserId = post.UserId,
+                        SenderId = userId,
+                        Type = NotificationType.PostReaction,
+                        Content = $"{senderName} reacted to your post."
+                    });
+                }
             }
 
             await _unitOfWork.CompleteAsync();

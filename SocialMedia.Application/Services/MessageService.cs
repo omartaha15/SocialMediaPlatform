@@ -13,10 +13,12 @@ namespace SocialMedia.Application.Services
     public class MessageService : IMessageService
     {
         private readonly IUnitOfWork _uow;
+        private readonly INotificationRealtimeService _notificationRealtimeService;
 
-        public MessageService(IUnitOfWork uow)
+        public MessageService(IUnitOfWork uow, INotificationRealtimeService notificationRealtimeService)
         {
             _uow = uow;
+            _notificationRealtimeService = notificationRealtimeService;
         }
 
         // ── Send ──────────────────────────────────────────────────────────────
@@ -36,6 +38,7 @@ namespace SocialMedia.Application.Services
             // ApplicationUser is not a BaseEntity so we use FindUserByIdAsync, not Repository<T>
             var sender = await _uow.FindUserByIdAsync(senderId);
             var senderName = sender?.UserName ?? "Someone";
+            var notificationMessage = $"{senderName} sent you a message.";
 
             if (senderId != dto.ReceiverId)
             {
@@ -44,11 +47,19 @@ namespace SocialMedia.Application.Services
                     UserId = dto.ReceiverId,
                     SenderId = senderId,
                     Type = NotificationType.Message,
-                    Content = $"{senderName} sent you a message."
+                    Content = notificationMessage
                 });
             }
 
             await _uow.CompleteAsync();
+
+            if (senderId != dto.ReceiverId)
+            {
+                await _notificationRealtimeService.PushAsync(
+                    dto.ReceiverId,
+                    NotificationType.Message,
+                    notificationMessage);
+            }
 
             return MapToDto(message, sender);
         }

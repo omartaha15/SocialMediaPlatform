@@ -10,10 +10,12 @@ namespace SocialMedia.Application.Services
     public class CommentService : ICommentService
     {
         private readonly IUnitOfWork _uow;
+        private readonly INotificationRealtimeService _notificationRealtimeService;
 
-        public CommentService(IUnitOfWork uow)
+        public CommentService(IUnitOfWork uow, INotificationRealtimeService notificationRealtimeService)
         {
             _uow = uow;
+            _notificationRealtimeService = notificationRealtimeService;
         }
 
         public async Task<List<CommentDto>> GetPostCommentsAsync(Guid postId)
@@ -48,17 +50,26 @@ namespace SocialMedia.Application.Services
             {
                 var sender = await _uow.FindUserByIdAsync(userId);
                 var senderName = sender?.UserName ?? "Someone";
+                var message = $"{senderName} commented on your post.";
 
                 await _uow.Repository<Notification>().AddAsync(new Notification
                 {
                     UserId = post.UserId,
                     SenderId = userId,
                     Type = NotificationType.Comment,
-                    Content = $"{senderName} commented on your post."
+                    Content = message
                 });
-            }
 
-            await _uow.CompleteAsync();
+                await _uow.CompleteAsync();
+                await _notificationRealtimeService.PushAsync(
+                    post.UserId,
+                    NotificationType.Comment,
+                    message);
+            }
+            else
+            {
+                await _uow.CompleteAsync();
+            }
 
             // Re-query to eager-load User for the returned DTO
             var saved = await _uow.Repository<Comment>()

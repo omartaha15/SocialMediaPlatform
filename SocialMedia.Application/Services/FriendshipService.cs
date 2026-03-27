@@ -19,12 +19,18 @@ namespace SocialMedia.Application.Services
         private readonly IFriendshipRepository _friendshipRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationRealtimeService _notificationRealtimeService;
 
-        public FriendshipService(IFriendshipRepository friendshipRepository, IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
+        public FriendshipService(
+            IFriendshipRepository friendshipRepository,
+            IUnitOfWork unitOfWork,
+            UserManager<ApplicationUser> userManager,
+            INotificationRealtimeService notificationRealtimeService)
         {
             _friendshipRepository = friendshipRepository;
             _unitOfWork = unitOfWork;
             _userManager = userManager;
+            _notificationRealtimeService = notificationRealtimeService;
         }
 
         public async Task<bool> SendRequestAsync(string senderId, string receiverId)
@@ -56,7 +62,16 @@ namespace SocialMedia.Application.Services
                 Content = $"{senderName} sent you a follow request."
             });
 
-            return await _unitOfWork.CompleteAsync() > 0;
+            var saved = await _unitOfWork.CompleteAsync() > 0;
+            if (saved)
+            {
+                await _notificationRealtimeService.PushAsync(
+                    receiverId,
+                    NotificationType.FriendRequest,
+                    $"{senderName} sent you a follow request.");
+            }
+
+            return saved;
         }
 
         public async Task<bool> AcceptRequestAsync(string receiverId, string senderId)

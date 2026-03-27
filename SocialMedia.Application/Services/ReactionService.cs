@@ -13,10 +13,14 @@ namespace SocialMedia.Application.Services
     public class ReactionService : IReactionService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationRealtimeService _notificationRealtimeService;
 
-        public ReactionService(IUnitOfWork unitOfWork)
+        public ReactionService(
+            IUnitOfWork unitOfWork,
+            INotificationRealtimeService notificationRealtimeService)
         {
             _unitOfWork = unitOfWork;
+            _notificationRealtimeService = notificationRealtimeService;
         }
 
         public async Task AddOrUpdateReactionAsync(Guid postId, string userId, MultiReaction reaction)
@@ -52,14 +56,22 @@ namespace SocialMedia.Application.Services
                 {
                     var sender = await _unitOfWork.FindUserByIdAsync(userId);
                     var senderName = sender?.UserName ?? "Someone";
+                    var message = $"{senderName} reacted to your post.";
 
                     await _unitOfWork.Repository<Notification>().AddAsync(new Notification
                     {
                         UserId = post.UserId,
                         SenderId = userId,
                         Type = NotificationType.PostReaction,
-                        Content = $"{senderName} reacted to your post."
+                        Content = message
                     });
+
+                    await _unitOfWork.CompleteAsync();
+                    await _notificationRealtimeService.PushAsync(
+                        post.UserId,
+                        NotificationType.PostReaction,
+                        message);
+                    return;
                 }
             }
 

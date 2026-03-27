@@ -37,5 +37,16 @@ namespace SocialMedia.Web.Controllers
 
             return Ok(new { success = true });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var updatedCount = await _notificationService.MarkAllAsReadAsync(userId);
+            return Ok(new { success = true, updatedCount });
+        }
     }
 }

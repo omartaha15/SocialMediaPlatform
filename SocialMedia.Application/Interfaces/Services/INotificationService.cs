@@ -6,5 +6,6 @@ namespace SocialMedia.Application.Interfaces.Services
     {
         Task<IReadOnlyList<NotificationDto>> GetUserNotificationsAsync(string userId, int take = 20);
         Task<bool> MarkAsReadAsync(string userId, Guid notificationId);
+        Task<int> MarkAllAsReadAsync(string userId);
     }
 }

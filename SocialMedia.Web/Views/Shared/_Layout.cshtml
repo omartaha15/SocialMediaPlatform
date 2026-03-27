@@ -251,7 +251,7 @@
                                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 p-0" aria-labelledby="navbarNotificationsDropdown" style="width: 360px;">
                                     <div class="px-3 py-2 border-bottom border-secondary d-flex justify-content-between align-items-center">
                                         <span class="fw-bold">Notifications</span>
-                                        <small class="text-muted">Live</small>
+                                        <button id="notif-mark-all-btn" type="button" class="btn btn-link p-0 text-decoration-none small" style="color:#2d88ff;">Mark all as read</button>
                                     </div>
                                     <div id="notif-list-desktop" style="max-height: 360px; overflow-y: auto;">
                                         <div class="px-3 py-3 text-muted small">Loading...</div>
@@ -385,6 +385,7 @@
             const notifListDesktop = document.getElementById('notif-list-desktop');
             const notifBadgeDesktop = document.getElementById('notif-badge-desktop');
             const notifBadgeMobile = document.getElementById('notif-badge-mobile');
+            const notifMarkAllBtn = document.getElementById('notif-mark-all-btn');
             let notificationItems = [];
 
             function escapeHtml(text) {
@@ -537,6 +538,37 @@
                 }
             }
 
+            async function markAllNotificationsAsRead() {
+                const unreadItems = notificationItems.filter(n => !n.isRead);
+                if (unreadItems.length === 0) return;
+
+                const prevState = notificationItems.map(n => ({ ...n }));
+                notificationItems = notificationItems.map(n => ({ ...n, isRead: true }));
+                renderNotificationList();
+                updateNotificationBadges();
+
+                try {
+                    const token = getAntiForgeryToken();
+                    const fd = new FormData();
+                    fd.append('__RequestVerificationToken', token);
+
+                    const res = await fetch('/Notifications/MarkAllAsRead', {
+                        method: 'POST',
+                        body: fd
+                    });
+
+                    if (!res.ok) {
+                        notificationItems = prevState;
+                        renderNotificationList();
+                        updateNotificationBadges();
+                    }
+                } catch {
+                    notificationItems = prevState;
+                    renderNotificationList();
+                    updateNotificationBadges();
+                }
+            }
+
             loadNotifications();
 
             // ── NotificationHub realtime listener ─────────────────────────────
@@ -559,6 +591,10 @@
                 if (id) {
                     markNotificationAsRead(id);
                 }
+            });
+
+            notifMarkAllBtn?.addEventListener('click', () => {
+                markAllNotificationsAsRead();
             });
         </script>
     }

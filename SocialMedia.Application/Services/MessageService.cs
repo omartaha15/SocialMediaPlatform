@@ -2,6 +2,7 @@ using SocialMedia.Application.DTOs.ChatDTOs;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
+using SocialMedia.Domain.Enums;
 
 namespace SocialMedia.Application.Services
 {
@@ -31,10 +32,23 @@ namespace SocialMedia.Application.Services
             };
 
             await _uow.Messages.AddAsync(message);
-            await _uow.CompleteAsync();
 
             // ApplicationUser is not a BaseEntity so we use FindUserByIdAsync, not Repository<T>
             var sender = await _uow.FindUserByIdAsync(senderId);
+            var senderName = sender?.UserName ?? "Someone";
+
+            if (senderId != dto.ReceiverId)
+            {
+                await _uow.Repository<Notification>().AddAsync(new Notification
+                {
+                    UserId = dto.ReceiverId,
+                    SenderId = senderId,
+                    Type = NotificationType.Message,
+                    Content = $"{senderName} sent you a message."
+                });
+            }
+
+            await _uow.CompleteAsync();
 
             return MapToDto(message, sender);
         }

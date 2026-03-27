@@ -44,6 +44,18 @@ namespace SocialMedia.Application.Services
             };
 
             await _friendshipRepository.AddAsync(friendship);
+
+            var sender = await _unitOfWork.FindUserByIdAsync(senderId);
+            var senderName = sender?.UserName ?? "Someone";
+
+            await _unitOfWork.Repository<Notification>().AddAsync(new Notification
+            {
+                UserId = receiverId,
+                SenderId = senderId,
+                Type = NotificationType.FriendRequest,
+                Content = $"{senderName} sent you a follow request."
+            });
+
             return await _unitOfWork.CompleteAsync() > 0;
         }
 

@@ -14,14 +14,21 @@ namespace SocialMedia.Web.Services
             _hubContext = hubContext;
         }
 
-        public async Task PushAsync(string targetUserId, NotificationType type, string message, string? actionUrl = null)
+        public async Task PushAsync(
+            string targetUserId,
+            NotificationType type,
+            string message,
+            string? actionUrl = null,
+            Guid? notificationId = null,
+            DateTime? createdAt = null)
         {
             await _hubContext.Clients.Group(targetUserId).SendAsync("ReceiveNotification", new
             {
+                id = notificationId,
                 type = type.ToString(),
                 message,
                 actionUrl,
-                createdAt = DateTime.UtcNow
+                createdAt = createdAt ?? DateTime.UtcNow
             });
         }
     }

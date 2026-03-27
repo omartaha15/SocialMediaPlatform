@@ -58,13 +58,15 @@ namespace SocialMedia.Application.Services
                 var senderName = sender?.UserName ?? "Someone";
                 var message = $"{senderName} commented on your post.";
 
-                await _uow.Repository<Notification>().AddAsync(new Notification
+                var notification = new Notification
                 {
                     UserId = post.UserId,
                     SenderId = userId,
                     Type = NotificationType.Comment,
                     Content = message
-                });
+                };
+
+                await _uow.Repository<Notification>().AddAsync(notification);
 
                 await _uow.CompleteAsync();
                 try
@@ -72,7 +74,9 @@ namespace SocialMedia.Application.Services
                     await _notificationRealtimeService.PushAsync(
                         post.UserId,
                         NotificationType.Comment,
-                        message);
+                        message,
+                        notificationId: notification.Id,
+                        createdAt: notification.CreatedAt);
                 }
                 catch (Exception ex)
                 {

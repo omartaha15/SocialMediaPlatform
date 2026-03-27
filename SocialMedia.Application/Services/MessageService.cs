@@ -45,16 +45,19 @@ namespace SocialMedia.Application.Services
             var sender = await _uow.FindUserByIdAsync(senderId);
             var senderName = sender?.UserName ?? "Someone";
             var notificationMessage = $"{senderName} sent you a message.";
+            Notification? notification = null;
 
             if (senderId != dto.ReceiverId)
             {
-                await _uow.Repository<Notification>().AddAsync(new Notification
+                notification = new Notification
                 {
                     UserId = dto.ReceiverId,
                     SenderId = senderId,
                     Type = NotificationType.Message,
                     Content = notificationMessage
-                });
+                };
+
+                await _uow.Repository<Notification>().AddAsync(notification);
             }
 
             await _uow.CompleteAsync();
@@ -66,7 +69,9 @@ namespace SocialMedia.Application.Services
                     await _notificationRealtimeService.PushAsync(
                         dto.ReceiverId,
                         NotificationType.Message,
-                        notificationMessage);
+                        notificationMessage,
+                        notificationId: notification?.Id,
+                        createdAt: notification?.CreatedAt);
                 }
                 catch (Exception ex)
                 {

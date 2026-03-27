@@ -450,6 +450,12 @@
                     notifBadgeMobile.textContent = unread;
                     notifBadgeMobile.style.display = unread > 0 ? 'inline-block' : 'none';
                 }
+
+                if (notifMarkAllBtn) {
+                    notifMarkAllBtn.disabled = unread === 0;
+                    notifMarkAllBtn.style.opacity = unread === 0 ? '0.5' : '1';
+                    notifMarkAllBtn.style.pointerEvents = unread === 0 ? 'none' : 'auto';
+                }
             }
 
             function renderNotificationList() {
@@ -490,7 +496,7 @@
 
             function prependRealtimeNotification(payload) {
                 const item = {
-                    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+                    id: payload.id ?? (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
                     type: payload.type,
                     content: payload.message,
                     isRead: false,
@@ -502,7 +508,10 @@
                 notificationItems = [item, ...notificationItems].slice(0, 20);
                 renderNotificationList();
                 updateNotificationBadges();
-                setTimeout(loadNotifications, 1000);
+
+                if (!payload.id) {
+                    setTimeout(loadNotifications, 1000);
+                }
             }
 
             async function markNotificationAsRead(notificationId) {

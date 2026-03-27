@@ -57,14 +57,17 @@ namespace SocialMedia.Application.Services
 
             var sender = await _unitOfWork.FindUserByIdAsync(senderId);
             var senderName = sender?.UserName ?? "Someone";
+            var notificationMessage = $"{senderName} sent you a follow request.";
 
-            await _unitOfWork.Repository<Notification>().AddAsync(new Notification
+            var notification = new Notification
             {
                 UserId = receiverId,
                 SenderId = senderId,
                 Type = NotificationType.FriendRequest,
-                Content = $"{senderName} sent you a follow request."
-            });
+                Content = notificationMessage
+            };
+
+            await _unitOfWork.Repository<Notification>().AddAsync(notification);
 
             var saved = await _unitOfWork.CompleteAsync() > 0;
             if (saved)
@@ -74,7 +77,9 @@ namespace SocialMedia.Application.Services
                     await _notificationRealtimeService.PushAsync(
                         receiverId,
                         NotificationType.FriendRequest,
-                        $"{senderName} sent you a follow request.");
+                        notificationMessage,
+                        notificationId: notification.Id,
+                        createdAt: notification.CreatedAt);
                 }
                 catch (Exception ex)
                 {

@@ -62,13 +62,15 @@ namespace SocialMedia.Application.Services
                     var senderName = sender?.UserName ?? "Someone";
                     var message = $"{senderName} reacted to your post.";
 
-                    await _unitOfWork.Repository<Notification>().AddAsync(new Notification
+                    var notification = new Notification
                     {
                         UserId = post.UserId,
                         SenderId = userId,
                         Type = NotificationType.PostReaction,
                         Content = message
-                    });
+                    };
+
+                    await _unitOfWork.Repository<Notification>().AddAsync(notification);
 
                     await _unitOfWork.CompleteAsync();
                     try
@@ -76,7 +78,9 @@ namespace SocialMedia.Application.Services
                         await _notificationRealtimeService.PushAsync(
                             post.UserId,
                             NotificationType.PostReaction,
-                            message);
+                            message,
+                            notificationId: notification.Id,
+                            createdAt: notification.CreatedAt);
                     }
                     catch (Exception ex)
                     {

@@ -192,14 +192,8 @@ namespace SocialMedia.Web.Controllers
 
             try
             {
-                // Get message details before deleting (to know who to notify)
-                var messages = await _messageService.GetChatHistoryAsync(userId, userId, 1, 1000);
-                var message = messages.FirstOrDefault(m => m.Id == messageId);
-                
-                if (message == null)
-                    return NotFound(new { error = "Message not found." });
-
-                await _messageService.DeleteMessageAsync(messageId, userId);
+                // Delete the message and get its info (service validates ownership)
+                var message = await _messageService.DeleteMessageAsync(messageId, userId);
 
                 // Broadcast delete to both users via SignalR
                 var payload = new { messageId };

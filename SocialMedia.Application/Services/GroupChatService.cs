@@ -213,7 +213,7 @@ namespace SocialMedia.Application.Services
         }
 
         // ── Delete Group Message ──────────────────────────────────────────────
-        public async Task DeleteGroupMessageAsync(Guid messageId, string userId)
+        public async Task<GroupMessageDto> DeleteGroupMessageAsync(Guid messageId, string userId)
         {
             var message = await _uow.GroupChats.GetGroupMessageByIdAsync(messageId);
             
@@ -226,8 +226,25 @@ namespace SocialMedia.Application.Services
             if (message.IsDeleted)
                 throw new InvalidOperationException("Message is already deleted.");
 
+            // Store message info before deletion
+            var messageDto = new GroupMessageDto
+            {
+                Id = message.Id,
+                Content = message.Content,
+                IsEdited = message.IsEdited,
+                EditedAt = message.EditedAt,
+                IsDeleted = message.IsDeleted,
+                CreatedAt = message.CreatedAt,
+                SenderId = message.SenderId,
+                SenderName = message.Sender?.UserName ?? "Unknown",
+                SenderProfilePicture = message.Sender?.ProfilePictureUrl,
+                GroupId = message.GroupId
+            };
+
             await _uow.GroupChats.DeleteGroupMessageAsync(messageId);
             await _uow.CompleteAsync();
+            
+            return messageDto;
         }
 
         // ── Mapper ────────────────────────────────────────────────────────────

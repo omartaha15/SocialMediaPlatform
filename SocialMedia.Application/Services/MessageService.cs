@@ -136,6 +136,14 @@ namespace SocialMedia.Application.Services
             return await _uow.Messages.GetUnreadCountAsync(userId);
         }
 
+        // ── Get Message By Id ─────────────────────────────────────────────────
+        public async Task<MessageDto?> GetMessageByIdAsync(Guid messageId)
+        {
+            var message = await _uow.Messages.GetMessageByIdAsync(messageId);
+            if (message == null) return null;
+            return MapToDto(message, message.Sender);
+        }
+
         // ── Mapper ────────────────────────────────────────────────────────────
         private static MessageDto MapToDto(Message m, ApplicationUser? sender) => new()
         {
@@ -177,7 +185,7 @@ namespace SocialMedia.Application.Services
         }
 
         // ── Delete Message ────────────────────────────────────────────────────
-        public async Task DeleteMessageAsync(Guid messageId, string userId)
+        public async Task<MessageDto> DeleteMessageAsync(Guid messageId, string userId)
         {
             var message = await _uow.Messages.GetMessageByIdAsync(messageId);
             
@@ -190,7 +198,12 @@ namespace SocialMedia.Application.Services
             if (message.IsDeleted)
                 throw new InvalidOperationException("Message is already deleted.");
 
+            // Store the message info before deletion
+            var messageDto = MapToDto(message, message.Sender);
+
             await _uow.Messages.DeleteMessageAsync(messageId);
+            
+            return messageDto;
         }
     }
 }

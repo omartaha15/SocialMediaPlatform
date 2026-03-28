@@ -15,6 +15,6 @@ namespace SocialMedia.Application.Interfaces.Services
         Task<IEnumerable<GroupMessageDto>> GetGroupHistoryAsync(Guid groupId, int page = 1, int pageSize = 20);
         Task<bool> IsGroupMemberAsync(Guid groupId, string userId);
         Task<GroupMessageDto> EditGroupMessageAsync(Guid messageId, string userId, string newContent);
-        Task DeleteGroupMessageAsync(Guid messageId, string userId);
+        Task<GroupMessageDto> DeleteGroupMessageAsync(Guid messageId, string userId);
     }
 }

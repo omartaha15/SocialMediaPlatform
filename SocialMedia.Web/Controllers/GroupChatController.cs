@@ -227,11 +227,12 @@ namespace SocialMedia.Web.Controllers
 
             try
             {
-                await _groupChatService.DeleteGroupMessageAsync(messageId, userId);
+                // Delete the message and get its info (service validates ownership)
+                var message = await _groupChatService.DeleteGroupMessageAsync(messageId, userId);
 
                 // Broadcast delete to all group members via SignalR
                 await _hubContext.Clients
-                    .Group($"group_{groupId}")
+                    .Group($"group_{message.GroupId}")
                     .SendAsync("MessageDeleted", new { messageId });
 
                 return Ok();

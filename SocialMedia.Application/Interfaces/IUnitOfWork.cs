@@ -13,6 +13,7 @@ namespace SocialMedia.Application.Interfaces
         
         IMessageRepository Messages { get; }
         IGroupChatRepository GroupChats { get; }
+        INotificationRepository Notifications { get; }
 
         // ── User lookup — ApplicationUser extends IdentityUser, not BaseEntity,
         //    so it cannot go through Repository<T>. This method handles it directly.

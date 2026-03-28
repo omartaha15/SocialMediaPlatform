@@ -8,6 +8,7 @@ using SocialMedia.Domain.Entities;
 using SocialMedia.Infrastructure.Data;
 using SocialMedia.Infrastructure.Repositories;
 using SocialMedia.Web.Hubs;
+using SocialMedia.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,8 @@ builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<INotificationRealtimeService, NotificationRealtimeService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSignalR();
 
 var app = builder.Build();

@@ -18,19 +18,4 @@ public class NotificationHub : Hub
 
         await base.OnConnectedAsync();
     }
-
-    /// <summary>
-    /// Push a notification to a specific user from a server-side service (via IHubContext).
-    /// Not typically called directly by clients.
-    /// </summary>
-    public async Task NotifyUser(string targetUserId, string type, string message, string? actionUrl = null)
-    {
-        await Clients.Group(targetUserId).SendAsync("ReceiveNotification", new
-        {
-            type,
-            message,
-            actionUrl,
-            createdAt = DateTime.UtcNow
-        });
-    }
 }

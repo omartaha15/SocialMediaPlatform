@@ -15,6 +15,7 @@ namespace SocialMedia.Infrastructure.Data
         // ── Dev4 custom repos — lazy-initialised ─────────────────────────────
         private IMessageRepository? _messages;
         private IGroupChatRepository? _groupChats;
+        private INotificationRepository? _notifications;
 
         public UnitOfWork(AppDbContext context)
         {
@@ -27,6 +28,9 @@ namespace SocialMedia.Infrastructure.Data
 
         public IGroupChatRepository GroupChats
             => _groupChats ??= new GroupChatRepository(_context);
+
+        public INotificationRepository Notifications
+            => _notifications ??= new NotificationRepository(_context);
 
         // ── Generic repo (BaseEntity descendants only) ────────────────────────
         public IGenericRepository<T> Repository<T>() where T : BaseEntity

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Domain.Entities;
 using SocialMedia.Domain.Enums;
@@ -19,12 +20,21 @@ namespace SocialMedia.Application.Services
         private readonly IFriendshipRepository _friendshipRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationRealtimeService _notificationRealtimeService;
+        private readonly ILogger<FriendshipService> _logger;
 
-        public FriendshipService(IFriendshipRepository friendshipRepository, IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
+        public FriendshipService(
+            IFriendshipRepository friendshipRepository,
+            IUnitOfWork unitOfWork,
+            UserManager<ApplicationUser> userManager,
+            INotificationRealtimeService notificationRealtimeService,
+            ILogger<FriendshipService> logger)
         {
             _friendshipRepository = friendshipRepository;
             _unitOfWork = unitOfWork;
             _userManager = userManager;
+            _notificationRealtimeService = notificationRealtimeService;
+            _logger = logger;
         }
 
         public async Task<bool> SendRequestAsync(string senderId, string receiverId)
@@ -44,7 +54,45 @@ namespace SocialMedia.Application.Services
             };
 
             await _friendshipRepository.AddAsync(friendship);
-            return await _unitOfWork.CompleteAsync() > 0;
+
+            var sender = await _unitOfWork.FindUserByIdAsync(senderId);
+            var senderName = sender?.UserName ?? "Someone";
+            var notificationMessage = $"{senderName} sent you a follow request.";
+
+            var notification = new Notification
+            {
+                UserId = receiverId,
+                SenderId = senderId,
+                Type = NotificationType.FriendRequest,
+                Content = notificationMessage
+            };
+
+            await _unitOfWork.Repository<Notification>().AddAsync(notification);
+
+            var saved = await _unitOfWork.CompleteAsync() > 0;
+            if (saved)
+            {
+                try
+                {
+                    var actionUrl = $"/Profile/Index?id={senderId}";
+                    await _notificationRealtimeService.PushAsync(
+                        receiverId,
+                        NotificationType.FriendRequest,
+                        notificationMessage,
+                        actionUrl: actionUrl,
+                        notificationId: notification.Id,
+                        createdAt: notification.CreatedAt);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to push realtime follow notification. TargetUserId: {TargetUserId}",
+                        receiverId);
+                }
+            }
+
+            return saved;
         }
 
         public async Task<bool> AcceptRequestAsync(string receiverId, string senderId)

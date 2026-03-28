@@ -1,18 +1,27 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SocialMedia.Application.DTOs.PostDtos.CommentDtos;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
+using SocialMedia.Domain.Enums;
 
 namespace SocialMedia.Application.Services
 {
     public class CommentService : ICommentService
     {
         private readonly IUnitOfWork _uow;
+        private readonly INotificationRealtimeService _notificationRealtimeService;
+        private readonly ILogger<CommentService> _logger;
 
-        public CommentService(IUnitOfWork uow)
+        public CommentService(
+            IUnitOfWork uow,
+            INotificationRealtimeService notificationRealtimeService,
+            ILogger<CommentService> logger)
         {
             _uow = uow;
+            _notificationRealtimeService = notificationRealtimeService;
+            _logger = logger;
         }
 
         public async Task<List<CommentDto>> GetPostCommentsAsync(Guid postId)
@@ -30,6 +39,9 @@ namespace SocialMedia.Application.Services
 
         public async Task<CommentDto> AddCommentAsync(CreateCommentDto dto, string userId)
         {
+            var post = await _uow.Repository<Post>().GetByIdAsync(dto.PostId)
+                ?? throw new KeyNotFoundException("Post not found.");
+
             var comment = new Comment
             {
                 Content = dto.Content,
@@ -39,7 +51,47 @@ namespace SocialMedia.Application.Services
             };
 
             await _uow.Repository<Comment>().AddAsync(comment);
-            await _uow.CompleteAsync();
+
+            if (post.UserId != userId)
+            {
+                var sender = await _uow.FindUserByIdAsync(userId);
+                var senderName = sender?.UserName ?? "Someone";
+                var message = $"{senderName} commented on your post.";
+
+                var notification = new Notification
+                {
+                    UserId = post.UserId,
+                    SenderId = userId,
+                    Type = NotificationType.Comment,
+                    Content = message
+                };
+
+                await _uow.Repository<Notification>().AddAsync(notification);
+
+                await _uow.CompleteAsync();
+                try
+                {
+                    var actionUrl = $"/Home/Index#post-{dto.PostId}";
+                    await _notificationRealtimeService.PushAsync(
+                        post.UserId,
+                        NotificationType.Comment,
+                        message,
+                        actionUrl: actionUrl,
+                        notificationId: notification.Id,
+                        createdAt: notification.CreatedAt);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to push realtime comment notification. TargetUserId: {TargetUserId}",
+                        post.UserId);
+                }
+            }
+            else
+            {
+                await _uow.CompleteAsync();
+            }
 
             // Re-query to eager-load User for the returned DTO
             var saved = await _uow.Repository<Comment>()

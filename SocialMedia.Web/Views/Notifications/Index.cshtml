@@ -1,0 +1,233 @@
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="container py-4">
+    <div class="card bg-dark border-secondary text-light">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Notifications</h4>
+            <button id="notifications-page-mark-all-btn" type="button" class="btn btn-sm btn-outline-light">Mark all as read</button>
+        </div>
+        <div id="notifications-page-list" class="card-body p-0">
+            <div class="px-3 py-3 text-muted small">Loading...</div>
+        </div>
+        <div class="card-footer border-secondary bg-dark">
+            <button id="notifications-page-load-more-btn" type="button" class="btn btn-outline-light w-100">Load more</button>
+        </div>
+    </div>
+</div>
+
+<form id="notificationsPageAntiForgeryForm" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        (() => {
+            const listEl = document.getElementById('notifications-page-list');
+            const loadMoreBtn = document.getElementById('notifications-page-load-more-btn');
+            const markAllBtn = document.getElementById('notifications-page-mark-all-btn');
+
+            let items = [];
+            let skip = 0;
+            const take = 20;
+            let hasMore = true;
+            let loading = false;
+
+            function escapeHtml(text) {
+                return String(text ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function relativeTime(dateInput) {
+                const date = new Date(dateInput);
+                const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+                if (Number.isNaN(seconds)) return '';
+                if (seconds < 60) return 'Just now';
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return `${minutes}m ago`;
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return `${hours}h ago`;
+                const days = Math.floor(hours / 24);
+                if (days < 7) return `${days}d ago`;
+                return date.toLocaleDateString();
+            }
+
+            function notificationTypeLabel(type) {
+                if (typeof type === 'string') return type;
+                const map = {
+                    1: 'FriendRequest',
+                    2: 'Message',
+                    3: 'PostReaction',
+                    4: 'Comment',
+                    5: 'GroupInvitation'
+                };
+                return map[type] ?? 'Notification';
+            }
+
+            function notificationIcon(type) {
+                const label = notificationTypeLabel(type);
+                switch (label) {
+                    case 'Message': return 'fa-envelope';
+                    case 'Comment': return 'fa-comment';
+                    case 'PostReaction': return 'fa-heart';
+                    case 'FriendRequest': return 'fa-user-plus';
+                    default: return 'fa-bell';
+                }
+            }
+
+            function unreadCount() {
+                return items.filter(n => !n.isRead).length;
+            }
+
+            function getAntiForgeryToken() {
+                return document.querySelector('#notificationsPageAntiForgeryForm input[name="__RequestVerificationToken"]')?.value
+                    || document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    || '';
+            }
+
+            function updateButtons() {
+                if (!loadMoreBtn || !markAllBtn) return;
+                loadMoreBtn.disabled = loading || !hasMore;
+                loadMoreBtn.textContent = loading ? 'Loading...' : 'Load more';
+                loadMoreBtn.style.display = hasMore && items.length > 0 ? 'inline-block' : 'none';
+
+                const unread = unreadCount();
+                markAllBtn.disabled = unread === 0;
+                markAllBtn.style.opacity = unread === 0 ? '0.6' : '1';
+            }
+
+            function render() {
+                if (!listEl) return;
+                if (!items.length) {
+                    listEl.innerHTML = '<div class="px-3 py-3 text-muted small">No notifications yet.</div>';
+                    updateButtons();
+                    return;
+                }
+
+                listEl.innerHTML = items.map(n => `
+                    <button type="button" class="w-100 text-start px-3 py-3 border-0 border-bottom border-secondary bg-transparent text-light notification-page-item ${n.isRead ? '' : 'bg-black'}" data-id="${n.id}" data-action-url="${escapeHtml(n.actionUrl ?? '')}">
+                        <div class="d-flex align-items-start gap-2">
+                            <div class="mt-1"><i class="fas ${notificationIcon(n.type)} text-primary"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="small fw-semibold">${escapeHtml(n.content)}</div>
+                                <div class="small text-muted">${relativeTime(n.createdAt)}</div>
+                            </div>
+                            ${n.isRead ? '' : '<span class="badge bg-primary rounded-pill" style="font-size:0.55rem;">new</span>'}
+                        </div>
+                    </button>
+                `).join('');
+
+                updateButtons();
+            }
+
+            async function loadNotifications() {
+                if (loading) return;
+                loading = true;
+                updateButtons();
+
+                try {
+                    const res = await fetch(`/Notifications/List?take=${take}&skip=${skip}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    if (skip === 0) {
+                        items = data;
+                    } else {
+                        const existing = new Set(items.map(n => String(n.id)));
+                        items = [...items, ...data.filter(n => !existing.has(String(n.id)))];
+                    }
+
+                    hasMore = data.length === take;
+                    render();
+                } catch {
+                    if (listEl) {
+                        listEl.innerHTML = '<div class="px-3 py-3 text-danger small">Failed to load notifications.</div>';
+                    }
+                } finally {
+                    loading = false;
+                    updateButtons();
+                }
+            }
+
+            async function markAsRead(id) {
+                if (!id) return false;
+                const item = items.find(n => String(n.id) === String(id));
+                if (!item) return false;
+                if (item.isRead) return true;
+
+                item.isRead = true;
+                render();
+
+                try {
+                    const token = getAntiForgeryToken();
+                    const fd = new FormData();
+                    fd.append('id', id);
+                    fd.append('__RequestVerificationToken', token);
+
+                    const res = await fetch('/Notifications/MarkAsRead', { method: 'POST', body: fd });
+                    if (!res.ok) {
+                        item.isRead = false;
+                        render();
+                        return false;
+                    }
+                    return true;
+                } catch {
+                    item.isRead = false;
+                    render();
+                    return false;
+                }
+            }
+
+            async function markAllAsRead() {
+                if (unreadCount() === 0) return;
+
+                const previous = items.map(n => ({ ...n }));
+                items = items.map(n => ({ ...n, isRead: true }));
+                render();
+
+                try {
+                    const token = getAntiForgeryToken();
+                    const fd = new FormData();
+                    fd.append('__RequestVerificationToken', token);
+
+                    const res = await fetch('/Notifications/MarkAllAsRead', { method: 'POST', body: fd });
+                    if (!res.ok) {
+                        items = previous;
+                        render();
+                    }
+                } catch {
+                    items = previous;
+                    render();
+                }
+            }
+
+            loadMoreBtn?.addEventListener('click', () => {
+                if (loading || !hasMore) return;
+                skip += take;
+                loadNotifications();
+            });
+
+            listEl?.addEventListener('click', async (e) => {
+                const target = e.target instanceof HTMLElement ? e.target.closest('.notification-page-item') : null;
+                if (!target) return;
+                const id = target.getAttribute('data-id');
+                const actionUrl = target.getAttribute('data-action-url');
+                if (id) {
+                    const ok = await markAsRead(id);
+                    if (ok && actionUrl) {
+                        window.location.href = actionUrl;
+                    }
+                }
+            });
+
+            markAllBtn?.addEventListener('click', markAllAsRead);
+
+            loadNotifications();
+        })();
+    </script>
+}

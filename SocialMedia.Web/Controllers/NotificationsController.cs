@@ -16,6 +16,12 @@ namespace SocialMedia.Web.Controllers
         }
 
         [HttpGet]
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        [HttpGet]
         public async Task<IActionResult> List(int take = 20, int skip = 0)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

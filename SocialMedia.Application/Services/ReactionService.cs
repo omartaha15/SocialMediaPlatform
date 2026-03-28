@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
@@ -13,10 +14,17 @@ namespace SocialMedia.Application.Services
     public class ReactionService : IReactionService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationRealtimeService _notificationRealtimeService;
+        private readonly ILogger<ReactionService> _logger;
 
-        public ReactionService(IUnitOfWork unitOfWork)
+        public ReactionService(
+            IUnitOfWork unitOfWork,
+            INotificationRealtimeService notificationRealtimeService,
+            ILogger<ReactionService> logger)
         {
             _unitOfWork = unitOfWork;
+            _notificationRealtimeService = notificationRealtimeService;
+            _logger = logger;
         }
 
         public async Task AddOrUpdateReactionAsync(Guid postId, string userId, MultiReaction reaction)
@@ -47,6 +55,44 @@ namespace SocialMedia.Application.Services
                 };
 
                 await repo.AddAsync(newReaction);
+
+                if (post.UserId != userId)
+                {
+                    var sender = await _unitOfWork.FindUserByIdAsync(userId);
+                    var senderName = sender?.UserName ?? "Someone";
+                    var message = $"{senderName} reacted to your post.";
+
+                    var notification = new Notification
+                    {
+                        UserId = post.UserId,
+                        SenderId = userId,
+                        Type = NotificationType.PostReaction,
+                        Content = message
+                    };
+
+                    await _unitOfWork.Repository<Notification>().AddAsync(notification);
+
+                    await _unitOfWork.CompleteAsync();
+                    try
+                    {
+                        var actionUrl = $"/Home/Index#post-{postId}";
+                        await _notificationRealtimeService.PushAsync(
+                            post.UserId,
+                            NotificationType.PostReaction,
+                            message,
+                            actionUrl: actionUrl,
+                            notificationId: notification.Id,
+                            createdAt: notification.CreatedAt);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(
+                            ex,
+                            "Failed to push realtime reaction notification. TargetUserId: {TargetUserId}",
+                            post.UserId);
+                    }
+                    return;
+                }
             }
 
             await _unitOfWork.CompleteAsync();

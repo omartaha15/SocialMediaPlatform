@@ -1,7 +1,9 @@
+using Microsoft.Extensions.Logging;
 using SocialMedia.Application.DTOs.ChatDTOs;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
+using SocialMedia.Domain.Enums;
 
 namespace SocialMedia.Application.Services
 {
@@ -12,10 +14,17 @@ namespace SocialMedia.Application.Services
     public class MessageService : IMessageService
     {
         private readonly IUnitOfWork _uow;
+        private readonly INotificationRealtimeService _notificationRealtimeService;
+        private readonly ILogger<MessageService> _logger;
 
-        public MessageService(IUnitOfWork uow)
+        public MessageService(
+            IUnitOfWork uow,
+            INotificationRealtimeService notificationRealtimeService,
+            ILogger<MessageService> logger)
         {
             _uow = uow;
+            _notificationRealtimeService = notificationRealtimeService;
+            _logger = logger;
         }
 
         // ── Send ──────────────────────────────────────────────────────────────
@@ -31,10 +40,49 @@ namespace SocialMedia.Application.Services
             };
 
             await _uow.Messages.AddAsync(message);
-            await _uow.CompleteAsync();
 
             // ApplicationUser is not a BaseEntity so we use FindUserByIdAsync, not Repository<T>
             var sender = await _uow.FindUserByIdAsync(senderId);
+            var senderName = sender?.UserName ?? "Someone";
+            var notificationMessage = $"{senderName} sent you a message.";
+            Notification? notification = null;
+
+            if (senderId != dto.ReceiverId)
+            {
+                notification = new Notification
+                {
+                    UserId = dto.ReceiverId,
+                    SenderId = senderId,
+                    Type = NotificationType.Message,
+                    Content = notificationMessage
+                };
+
+                await _uow.Repository<Notification>().AddAsync(notification);
+            }
+
+            await _uow.CompleteAsync();
+
+            if (senderId != dto.ReceiverId)
+            {
+                try
+                {
+                    var actionUrl = $"/Messaging/Chat?otherUserId={senderId}";
+                    await _notificationRealtimeService.PushAsync(
+                        dto.ReceiverId,
+                        NotificationType.Message,
+                        notificationMessage,
+                        actionUrl: actionUrl,
+                        notificationId: notification?.Id,
+                        createdAt: notification?.CreatedAt);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to push realtime message notification. TargetUserId: {TargetUserId}",
+                        dto.ReceiverId);
+                }
+            }
 
             return MapToDto(message, sender);
         }

@@ -243,10 +243,37 @@
                             var user = await userManager.FindByNameAsync(User.Identity.Name);
                             var profilePic = user?.ProfilePictureUrl ?? "/images/user.jpg";
 
+                            <li class="nav-item dropdown position-relative d-none d-lg-block">
+                                <a class="nav-circle-btn text-decoration-none" href="#" id="navbarNotificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                    <i class="fas fa-bell"></i>
+                                    <span id="notif-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 p-0" aria-labelledby="navbarNotificationsDropdown" style="width: 360px;">
+                                    <div class="px-3 py-2 border-bottom border-secondary d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Notifications</span>
+                                        <button id="notif-mark-all-btn" type="button" class="btn btn-link p-0 text-decoration-none small" style="color:#2d88ff;">Mark all as read</button>
+                                    </div>
+                                    <div id="notif-list-desktop" style="max-height: 360px; overflow-y: auto;">
+                                        <div class="px-3 py-3 text-muted small">Loading...</div>
+                                    </div>
+                                    <div class="px-3 py-2 border-top border-secondary text-center">
+                                        <button id="notif-load-more-btn" type="button" class="btn btn-sm btn-outline-light w-100">Load more</button>
+                                    </div>
+                                </div>
+                            </li>
+
                             <li class="nav-item position-relative d-none d-lg-block">
                                 <a class="nav-circle-btn text-decoration-none" asp-controller="Messaging" asp-action="Index" title="Messages">
                                     <i class="fas fa-envelope"></i>
                                     <span id="msg-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item d-lg-none">
+                                <a class="nav-icon-link" href="#" title="Notifications" data-bs-toggle="offcanvas" data-bs-target="#mobileNotificationsOffcanvas" aria-controls="mobileNotificationsOffcanvas">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="ms-3 fs-6">Notifications</span>
+                                    <span id="notif-badge-mobile" class="badge bg-danger ms-2 rounded-pill" style="display:none;">0</span>
                                 </a>
                             </li>
 
@@ -259,6 +286,9 @@
                             </li>
 
                             <li class="nav-item dropdown w-100 w-lg-auto border-top border-secondary d-lg-block pt-2 pt-lg-0 mt-2 mt-lg-0 pb-3 pb-lg-0">
+                                <form id="notificationsAntiForgeryForm" class="d-none">
+                                    @Html.AntiForgeryToken()
+                                </form>
                                 <a class="nav-link d-flex align-items-center gap-2 p-1 pe-2 rounded-pill hover-bg-dark text-decoration-none" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: transparent;">
                                     <img src="@profilePic" class="rounded-circle" style="width:36px; height:36px; object-fit:cover; border: 1px solid #393a3b;" />
                                     <span class="fw-bold text-light" style="font-size: 0.95rem;">@User.Identity.Name</span>
@@ -316,6 +346,29 @@
         </nav>
     </header>
 
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="mobileNotificationsOffcanvas" aria-labelledby="mobileNotificationsOffcanvasLabel">
+            <div class="offcanvas-header border-bottom border-secondary">
+                <h5 class="offcanvas-title" id="mobileNotificationsOffcanvasLabel">Notifications</h5>
+                <div class="d-flex align-items-center gap-3">
+                    <button id="notif-mark-all-mobile-btn" type="button" class="btn btn-link p-0 text-decoration-none small" style="color:#2d88ff;">Mark all as read</button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="offcanvas-body p-0">
+                <div id="notif-list-mobile" style="max-height: calc(100vh - 80px); overflow-y: auto;">
+                    <div class="px-3 py-3 text-muted small">Loading...</div>
+                </div>
+                <div class="px-3 py-2 border-top border-secondary text-center">
+                    <button id="notif-load-more-mobile-btn" type="button" class="btn btn-sm btn-outline-light w-100">Load more</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="notif-toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1200;"></div>
+    }
+
     <div class="container" style="padding-top: 80px;">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -325,6 +378,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/search.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
@@ -352,6 +406,367 @@
             }
             refreshMsgBadge();
             setInterval(refreshMsgBadge, 30000); // refresh every 30 seconds
+
+            // ── Notifications list + badge ────────────────────────────────────
+            const notifListDesktop = document.getElementById('notif-list-desktop');
+            const notifListMobile = document.getElementById('notif-list-mobile');
+            const notifBadgeDesktop = document.getElementById('notif-badge-desktop');
+            const notifBadgeMobile = document.getElementById('notif-badge-mobile');
+            const notifMarkAllBtn = document.getElementById('notif-mark-all-btn');
+            const notifMarkAllMobileBtn = document.getElementById('notif-mark-all-mobile-btn');
+            const notifLoadMoreBtn = document.getElementById('notif-load-more-btn');
+            const notifLoadMoreMobileBtn = document.getElementById('notif-load-more-mobile-btn');
+            const notifToastContainer = document.getElementById('notif-toast-container');
+            let notificationItems = [];
+            const notifTake = 5;
+            let notifLoading = false;
+
+            function escapeHtml(text) {
+                return String(text ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function relativeTime(dateInput) {
+                const date = new Date(dateInput);
+                const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+                if (Number.isNaN(seconds)) return '';
+                if (seconds < 60) return 'Just now';
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return `${minutes}m ago`;
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return `${hours}h ago`;
+                const days = Math.floor(hours / 24);
+                if (days < 7) return `${days}d ago`;
+                return date.toLocaleDateString();
+            }
+
+            function notificationTypeLabel(type) {
+                if (typeof type === 'string') return type;
+                const map = {
+                    1: 'FriendRequest',
+                    2: 'Message',
+                    3: 'PostReaction',
+                    4: 'Comment',
+                    5: 'GroupInvitation'
+                };
+                return map[type] ?? 'Notification';
+            }
+
+            function getAntiForgeryToken() {
+                return document.querySelector('#notificationsAntiForgeryForm input[name="__RequestVerificationToken"]')?.value
+                    || document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    || '';
+            }
+
+            function notificationIcon(type) {
+                const label = notificationTypeLabel(type);
+                switch (label) {
+                    case 'Message': return 'fa-envelope';
+                    case 'Comment': return 'fa-comment';
+                    case 'PostReaction': return 'fa-heart';
+                    case 'FriendRequest': return 'fa-user-plus';
+                    default: return 'fa-bell';
+                }
+            }
+
+            function applyUnreadCount(unread) {
+                if (notifBadgeDesktop) {
+                    notifBadgeDesktop.textContent = unread;
+                    notifBadgeDesktop.style.display = unread > 0 ? 'inline-block' : 'none';
+                }
+                if (notifBadgeMobile) {
+                    notifBadgeMobile.textContent = unread;
+                    notifBadgeMobile.style.display = unread > 0 ? 'inline-block' : 'none';
+                }
+
+                if (notifMarkAllBtn) {
+                    notifMarkAllBtn.disabled = unread === 0;
+                    notifMarkAllBtn.style.opacity = unread === 0 ? '0.5' : '1';
+                    notifMarkAllBtn.style.pointerEvents = unread === 0 ? 'none' : 'auto';
+                }
+
+                if (notifMarkAllMobileBtn) {
+                    notifMarkAllMobileBtn.disabled = unread === 0;
+                    notifMarkAllMobileBtn.style.opacity = unread === 0 ? '0.5' : '1';
+                    notifMarkAllMobileBtn.style.pointerEvents = unread === 0 ? 'none' : 'auto';
+                }
+            }
+
+            function updateNotificationBadges() {
+                const unread = notificationItems.filter(n => !n.isRead).length;
+                applyUnreadCount(unread);
+            }
+
+            function updateLoadMoreButtons() {
+                const show = notificationItems.length >= notifTake;
+
+                if (notifLoadMoreBtn) {
+                    notifLoadMoreBtn.disabled = false;
+                    notifLoadMoreBtn.style.display = show ? 'inline-block' : 'none';
+                }
+
+                if (notifLoadMoreMobileBtn) {
+                    notifLoadMoreMobileBtn.disabled = false;
+                    notifLoadMoreMobileBtn.style.display = show ? 'inline-block' : 'none';
+                }
+            }
+
+            function renderNotificationList() {
+                if (!notificationItems.length) {
+                    if (notifListDesktop) {
+                        notifListDesktop.innerHTML = '<div class="px-3 py-3 text-muted small">No notifications yet.</div>';
+                    }
+                    if (notifListMobile) {
+                        notifListMobile.innerHTML = '<div class="px-3 py-3 text-muted small">No notifications yet.</div>';
+                    }
+                    return;
+                }
+
+                const html = notificationItems.map(n => `
+                    <button type="button" class="w-100 text-start px-3 py-2 border-0 border-bottom border-secondary bg-transparent notification-item ${n.isRead ? '' : 'bg-dark'}" data-notification-id="${n.id}" data-action-url="${escapeHtml(n.actionUrl ?? '')}">
+                        <div class="d-flex align-items-start gap-2">
+                            <div class="mt-1"><i class="fas ${notificationIcon(n.type)} text-primary"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="small fw-semibold">${escapeHtml(n.content)}</div>
+                                <div class="small text-muted">${relativeTime(n.createdAt)}</div>
+                            </div>
+                            ${n.isRead ? '' : '<span class="badge bg-primary rounded-pill" style="font-size:0.55rem;">new</span>'}
+                        </div>
+                    </button>
+                `).join('');
+
+                if (notifListDesktop) {
+                    notifListDesktop.innerHTML = html;
+                }
+                if (notifListMobile) {
+                    notifListMobile.innerHTML = html;
+                }
+            }
+
+            async function loadNotifications() {
+                if (notifLoading) return;
+                notifLoading = true;
+                updateLoadMoreButtons();
+
+                try {
+                    const res = await fetch(`/Notifications/List?take=${notifTake}&skip=0`);
+                    if (!res.ok) return;
+
+                    const items = await res.json();
+                    notificationItems = items;
+                    renderNotificationList();
+                    updateNotificationBadges();
+                } catch {
+                    if (notifListDesktop) {
+                        notifListDesktop.innerHTML = '<div class="px-3 py-3 text-danger small">Failed to load notifications.</div>';
+                    }
+                    if (notifListMobile) {
+                        notifListMobile.innerHTML = '<div class="px-3 py-3 text-danger small">Failed to load notifications.</div>';
+                    }
+                } finally {
+                    notifLoading = false;
+                    updateLoadMoreButtons();
+                }
+            }
+
+            async function refreshNotificationBadgesLight() {
+                try {
+                    const res = await fetch('/Notifications/UnreadCount');
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    applyUnreadCount(data.count ?? 0);
+                } catch { /* ignore network errors */ }
+            }
+
+            function prependRealtimeNotification(payload) {
+                const item = {
+                    id: payload.id ?? (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+                    type: payload.type,
+                    content: payload.message,
+                    actionUrl: payload.actionUrl ?? '',
+                    isRead: false,
+                    createdAt: payload.createdAt ?? new Date().toISOString(),
+                    senderId: null,
+                    senderName: 'Unknown',
+                    senderProfilePictureUrl: null
+                };
+                notificationItems = [item, ...notificationItems].slice(0, notifTake);
+                renderNotificationList();
+                updateNotificationBadges();
+                showRealtimeNotificationToast(item);
+
+                if (!payload.id) {
+                    setTimeout(loadNotifications, 1000);
+                }
+            }
+
+            function showRealtimeNotificationToast(notification) {
+                if (!notifToastContainer || !window.bootstrap?.Toast) return;
+
+                const toastEl = document.createElement('div');
+                toastEl.className = 'toast text-bg-dark border border-secondary';
+                toastEl.setAttribute('role', 'alert');
+                toastEl.setAttribute('aria-live', 'assertive');
+                toastEl.setAttribute('aria-atomic', 'true');
+                toastEl.innerHTML = `
+                    <div class="toast-header bg-dark text-light border-secondary">
+                        <i class="fas ${notificationIcon(notification.type)} text-primary me-2"></i>
+                        <strong class="me-auto">New notification</strong>
+                        <small class="text-muted">now</small>
+                        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${escapeHtml(notification.content)}
+                    </div>
+                `;
+
+                notifToastContainer.appendChild(toastEl);
+                const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+                toast.show();
+            }
+
+            async function markNotificationAsRead(notificationId) {
+                if (!notificationId) return false;
+
+                const notification = notificationItems.find(n => String(n.id) === String(notificationId));
+                if (!notification) return false;
+                if (notification.isRead) return true;
+
+                notification.isRead = true;
+                renderNotificationList();
+                updateNotificationBadges();
+
+                try {
+                    const token = getAntiForgeryToken();
+                    const fd = new FormData();
+                    fd.append('id', notificationId);
+                    fd.append('__RequestVerificationToken', token);
+
+                    const res = await fetch('/Notifications/MarkAsRead', {
+                        method: 'POST',
+                        body: fd
+                    });
+
+                    if (!res.ok) {
+                        notification.isRead = false;
+                        renderNotificationList();
+                        updateNotificationBadges();
+                        return false;
+                    }
+                } catch {
+                    notification.isRead = false;
+                    renderNotificationList();
+                    updateNotificationBadges();
+                    return false;
+                }
+
+                return true;
+            }
+
+            async function markAllNotificationsAsRead() {
+                const unreadItems = notificationItems.filter(n => !n.isRead);
+                if (unreadItems.length === 0) return;
+
+                const prevState = notificationItems.map(n => ({ ...n }));
+                notificationItems = notificationItems.map(n => ({ ...n, isRead: true }));
+                renderNotificationList();
+                updateNotificationBadges();
+
+                try {
+                    const token = getAntiForgeryToken();
+                    const fd = new FormData();
+                    fd.append('__RequestVerificationToken', token);
+
+                    const res = await fetch('/Notifications/MarkAllAsRead', {
+                        method: 'POST',
+                        body: fd
+                    });
+
+                    if (!res.ok) {
+                        notificationItems = prevState;
+                        renderNotificationList();
+                        updateNotificationBadges();
+                    }
+                } catch {
+                    notificationItems = prevState;
+                    renderNotificationList();
+                    updateNotificationBadges();
+                }
+            }
+
+            loadNotifications();
+            refreshNotificationBadgesLight();
+            setInterval(refreshNotificationBadgesLight, 30000);
+
+            // ── NotificationHub realtime listener ─────────────────────────────
+            const notificationConnection = new signalR.HubConnectionBuilder()
+                .withUrl('/notificationhub')
+                .withAutomaticReconnect()
+                .build();
+
+            notificationConnection.on('ReceiveNotification', (payload) => {
+                if (!payload || !payload.message) return;
+                prependRealtimeNotification(payload);
+            });
+
+            notificationConnection.start().catch(() => {});
+
+            notifListDesktop?.addEventListener('click', async (e) => {
+                const target = e.target instanceof HTMLElement ? e.target.closest('.notification-item') : null;
+                if (!target) return;
+                const id = target.getAttribute('data-notification-id');
+                const actionUrl = target.getAttribute('data-action-url');
+                if (id) {
+                    const ok = await markNotificationAsRead(id);
+                    if (ok && actionUrl) {
+                        window.location.href = actionUrl;
+                    }
+                }
+            });
+
+            notifListMobile?.addEventListener('click', async (e) => {
+                const target = e.target instanceof HTMLElement ? e.target.closest('.notification-item') : null;
+                if (!target) return;
+                const id = target.getAttribute('data-notification-id');
+                const actionUrl = target.getAttribute('data-action-url');
+                if (id) {
+                    const ok = await markNotificationAsRead(id);
+                    if (ok && actionUrl) {
+                        window.location.href = actionUrl;
+                    }
+                }
+            });
+
+            notifMarkAllBtn?.addEventListener('click', () => {
+                markAllNotificationsAsRead();
+            });
+
+            notifMarkAllMobileBtn?.addEventListener('click', () => {
+                markAllNotificationsAsRead();
+            });
+
+            notifLoadMoreBtn?.addEventListener('click', () => {
+                window.location.href = '/Notifications';
+            });
+
+            notifLoadMoreMobileBtn?.addEventListener('click', () => {
+                window.location.href = '/Notifications';
+            });
+
+            const desktopDropdown = document.getElementById('navbarNotificationsDropdown');
+            desktopDropdown?.addEventListener('shown.bs.dropdown', () => {
+                loadNotifications();
+            });
+
+            const mobileOffcanvas = document.getElementById('mobileNotificationsOffcanvas');
+            mobileOffcanvas?.addEventListener('show.bs.offcanvas', () => {
+                loadNotifications();
+            });
         </script>
     }
 </body>

@@ -41,6 +41,11 @@ namespace SocialMedia.Web.Controllers
 
             await _postService.CreatePostAsync(dto);
 
+            string referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+            {
+                return Redirect(referer);
+            }
             return RedirectToAction("Index", "Home");
         }
 
@@ -60,6 +65,12 @@ namespace SocialMedia.Web.Controllers
                 return Forbid();
 
             await _postService.DeletePostAsync(postId);
+
+            string referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+            {
+                return Redirect(referer);
+            }
             return RedirectToAction("Index", "Home");
         }
 
@@ -115,6 +126,11 @@ namespace SocialMedia.Web.Controllers
 
             await _postService.UpdatePostAsync(dto);
 
+            string referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+            {
+                return Redirect(referer);
+            }
             return RedirectToAction("Index", "Home");
         }
     }

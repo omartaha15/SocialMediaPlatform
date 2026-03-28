@@ -1,0 +1,40 @@
+@using Microsoft.AspNetCore.Identity
+@using SocialMedia.Domain.Entities
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var userLocal = await UserManager.GetUserAsync(User);
+    var currentUserNameLocal = userLocal?.UserName ?? "User";
+    var currentUserPicLocal = string.IsNullOrEmpty(userLocal?.ProfilePictureUrl) ? "/images/user.jpg" : userLocal.ProfilePictureUrl;
+}
+
+<!-- COMPOSE CARD -->
+<div class="card-dark compose-card mb-3">
+    <div class="compose-top">
+        <div class="mini-avatar">
+            <img src="@currentUserPicLocal" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" />
+        </div>
+        <div class="compose-field-wrap" onclick="expandCompose()">
+            <span class="compose-placeholder">What's on your mind, @currentUserNameLocal.Split(' ')[0]?</span>
+        </div>
+    </div>
+    <div class="compose-form-wrap" id="compose-form-wrap" style="display:none;">
+        <form asp-controller="Post" asp-action="CreatePost" method="post" enctype="multipart/form-data">
+            <textarea id="compose-textarea" name="Content" placeholder="What's on your mind?" required></textarea>
+            <div class="compose-actions-row">
+                <label class="attach-label" for="compose-image">
+                    <i class="fas fa-image"></i> Photo
+                    <input type="file" id="compose-image" name="Image" accept="image/*" style="display:none;" onchange="document.getElementById('img-name').textContent = this.files[0]?.name || '';" />
+                </label>
+                <div id="img-name" class="img-name text-muted small ms-2"></div>
+                <button type="submit" class="post-btn ms-auto text-light fw-bold">
+                    <i class="fas fa-paper-plane me-1"></i> Post
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="compose-shortcuts mt-3 pt-3 border-top border-secondary d-flex gap-3 justify-content-center">
+        <button type="button" class="btn text-light flex-grow-1" onclick="expandCompose()" style="background:#3a3b3c;"><i class="fas fa-video text-danger me-2"></i> Live Video</button>
+        <button type="button" class="btn text-light flex-grow-1" onclick="expandCompose()" style="background:#3a3b3c;"><i class="fas fa-image text-success me-2"></i> Photo</button>
+        <button type="button" class="btn text-light flex-grow-1 d-none d-sm-block" onclick="expandCompose()" style="background:#3a3b3c;"><i class="fas fa-smile text-warning me-2"></i> Feeling</button>
+    </div>
+</div>

@@ -1,0 +1,383 @@
+<script>
+    const emojiMap = { Like:'👍', Love:'❤️', Haha:'😂', Wow:'😮', Sad:'😢', Angry:'😡' };
+
+    // ── Compose expand ─────────────────────────────────────────────────
+    function expandCompose() {
+        const wrap = document.getElementById('compose-form-wrap');
+        if (wrap.style.display === 'none') {
+            wrap.style.display = 'block';
+            document.getElementById('compose-textarea').focus();
+        }
+    }
+
+    document.getElementById('compose-image')?.addEventListener('change', function () {
+        document.getElementById('img-name').textContent = this.files[0]?.name ?? '';
+    });
+
+    // ── Dropdown menus ─────────────────────────────────────────────────
+    function toggleMenu(id) {
+        const dd = document.getElementById('menu-' + id);
+        const isOpen = dd.style.display !== 'none';
+        document.querySelectorAll('.post-dropdown').forEach(d => d.style.display = 'none');
+        dd.style.display = isOpen ? 'none' : 'block';
+    }
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.post-menu-wrap'))
+            document.querySelectorAll('.post-dropdown').forEach(d => d.style.display = 'none');
+    });
+
+    // ── Reaction picker ────────────────────────────────────────────────
+    function openReactions(event, postId) {
+        event.preventDefault();
+        const picker = document.getElementById('reactions-' + postId);
+        const isOpen = picker.style.display !== 'none';
+        document.querySelectorAll('.emoji-picker').forEach(p => p.style.display = 'none');
+        picker.style.display = isOpen ? 'none' : 'flex';
+        if (!isOpen) {
+            setTimeout(() => {
+                document.addEventListener('click', function handler(e) {
+                    if (!picker.contains(e.target) && !document.getElementById('react-btn-' + postId).contains(e.target)) {
+                        picker.style.display = 'none';
+                        document.removeEventListener('click', handler);
+                    }
+                });
+            }, 0);
+        }
+    }
+
+    // ── Send reaction ──────────────────────────────────────────────────
+    function sendReaction(postId, type, btn) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const params = new URLSearchParams({ postId, type });
+        fetch('/Reaction/React', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': token
+            },
+            body: params.toString()
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('reactions-' + postId).style.display = 'none';
+            updateUI(postId, data);
+        });
+    }
+
+    // ── Remove reaction ────────────────────────────────────────────────
+    function removeReaction(postId, btn) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const params = new URLSearchParams({ postId });
+        fetch('/Reaction/Remove', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': token
+            },
+            body: params.toString()
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('reactions-' + postId).style.display = 'none';
+            updateUI(postId, data);
+        });
+    }
+
+    // ── Update DOM after reaction change ───────────────────────────────
+    function updateUI(postId, data) {
+        const { counts = {}, userReaction = null, total = 0 } = data;
+        const summary = document.getElementById('summary-' + postId);
+        const commentSummary = document.getElementById('comment-summary-' + postId);
+
+        // Rebuild stats bar
+        summary.innerHTML = '';
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+        if (total > 0) {
+            // emoji stack
+            const stack = document.createElement('div');
+            stack.className = 'emoji-stack';
+            sorted.slice(0, 3).forEach(([t]) => {
+                const s = document.createElement('span');
+                s.className = 'stack-emoji';
+                s.textContent = emojiMap[t] || t;
+                stack.appendChild(s);
+            });
+            summary.appendChild(stack);
+
+            // count label
+            const lbl = document.createElement('span');
+            lbl.className = 'stats-label';
+            lbl.style.flex = '0 1 auto';
+            lbl.textContent = total;
+            summary.appendChild(lbl);
+        }
+
+        // re-append comment summary
+        if (commentSummary) {
+            summary.appendChild(commentSummary);
+        }
+
+        if (total > 0) {
+            // bubble row
+            const row = document.createElement('div');
+            row.className = 'bubble-row';
+            sorted.forEach(([t, c]) => {
+                const b = document.createElement('span');
+                b.className = 'react-bubble' + (t === userReaction ? ' mine' : '');
+                b.innerHTML = `${emojiMap[t] || t} <b>${c}</b>`;
+                row.appendChild(b);
+            });
+            summary.appendChild(row);
+        }
+
+        const hasComments = commentSummary && commentSummary.style.display !== 'none';
+        if (total > 0 || hasComments) {
+            summary.classList.remove('hidden');
+        } else {
+            summary.classList.add('hidden');
+        }
+
+        // React button
+        const btn       = document.getElementById('react-btn-' + postId);
+        const emojiSpan = btn.querySelector('.ab-emoji');
+        const labelSpan = btn.querySelector('.ab-label');
+        if (userReaction) {
+            btn.classList.add('active-reaction');
+            emojiSpan.textContent = emojiMap[userReaction] || '👍';
+            labelSpan.textContent = userReaction;
+        } else {
+            btn.classList.remove('active-reaction');
+            emojiSpan.textContent = '👍';
+            labelSpan.textContent = 'Like';
+        }
+
+        // Picker highlights
+        const picker = document.getElementById('reactions-' + postId);
+        picker.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('ep-active'));
+        if (userReaction) {
+            const active = [...picker.querySelectorAll('.ep-btn')].find(b => b.title === userReaction);
+            if (active) active.classList.add('ep-active');
+        }
+
+        // Remove button
+        let rmBtn = picker.querySelector('.ep-remove');
+        if (userReaction) {
+            if (!rmBtn) {
+                rmBtn = document.createElement('button');
+                rmBtn.type = 'button';
+                rmBtn.className = 'ep-btn ep-remove';
+                rmBtn.title = 'Remove';
+                rmBtn.title = 'Remove';
+                rmBtn.innerHTML = '<i class="fas fa-times"></i><span class="ep-label">Remove</span>';
+                rmBtn.onclick = () => removeReaction(postId, rmBtn);
+                picker.appendChild(rmBtn);
+            }
+        } else {
+            rmBtn?.remove();
+        }
+    }
+
+
+        // ── Avatar helpers (mirrors C# logic for JS-rendered comments) ──
+    const avatarPalette = [
+        'linear-gradient(135deg,#6c63ff,#a78bfa)',
+        'linear-gradient(135deg,#2d88ff,#56ccf2)',
+        'linear-gradient(135deg,#f953c6,#b91d73)',
+        'linear-gradient(135deg,#11998e,#38ef7d)',
+        'linear-gradient(135deg,#f7971e,#ffd200)',
+        'linear-gradient(135deg,#e74c3c,#f39c12)'
+    ];
+    function jsAvatarColor(name) {
+        name = name || 'U';
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return avatarPalette[Math.abs(hash) % avatarPalette.length];
+    }
+    function jsInitials(name) {
+        name = (name || 'U').trim();
+        const parts = name.split(/\s+/);
+        return parts.length >= 2
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : name.substring(0, 2).toUpperCase();
+    }
+
+    // ── Toggle comments panel ────────────────────────────────────────
+    function toggleComments(postId) {
+        const section = document.getElementById('comments-section-' + postId);
+        const isHidden = section.style.display === 'none';
+        section.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) loadComments(postId);
+    }
+
+    // ── Load comments from server ────────────────────────────────────
+    async function loadComments(postId) {
+        const list = document.getElementById('comments-list-' + postId);
+        list.innerHTML = '<div class="comments-loading"><i class="fas fa-spinner fa-spin me-1"></i>Loading…</div>';
+
+        try {
+            const res = await fetch(`/Comments/GetPostComments?postId=${postId}`);
+            const comments = await res.json();
+            list.innerHTML = '';
+            if (comments.length === 0) {
+                list.innerHTML = '<div class="comments-loading">No comments yet. Be the first!</div>';
+                return;
+            }
+            comments.forEach(c => list.appendChild(buildCommentEl(c)));
+        } catch {
+            list.innerHTML = '<div class="comments-loading text-danger">Failed to load comments.</div>';
+        }
+    }
+
+    // ── Build a comment DOM element ──────────────────────────────────
+    function buildCommentEl(c) {
+        const wrap = document.createElement('div');
+        wrap.className = 'comment-item';
+        wrap.id = 'comment-' + c.id;
+        wrap.innerHTML = `
+            <div class="comment-avatar">
+                <img src="${c.authorAvatarUrl || '/images/user.jpg'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" />
+            </div>
+            <div class="comment-content-wrap">
+                <div class="comment-bubble">
+                    <div class="c-name">${escapeHtml(c.authorName)}</div>
+                    <p class="c-text">${escapeHtml(c.content)}</p>
+                </div>
+                <div class="comment-meta">
+                    <span>${jsTimeAgo(c.createdAt)}</span>
+                    <button class="reply-btn" onclick="focusReply('${c.postId}', '${c.id}', '${escapeHtml(c.authorName)}')">
+                        Reply
+                    </button>
+                </div>
+                ${c.replies && c.replies.length
+                    ? `<div class="replies-list" id="replies-${c.id}">
+                         ${c.replies.map(r => buildCommentEl(r).outerHTML).join('')}
+                       </div>`
+                    : `<div class="replies-list" id="replies-${c.id}"></div>`
+                }
+            </div>`;
+        return wrap;
+    }
+
+    // ── Reply: focus input and tag it ────────────────────────────────
+    function focusReply(postId, parentId, parentUserName) {
+        const input = document.getElementById('comment-input-' + postId);
+        input.dataset.parentCommentId = parentId;
+        input.placeholder = `Replying to ${parentUserName}… (Esc to cancel)`;
+        input.focus();
+        input.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                delete input.dataset.parentCommentId;
+                input.placeholder = 'Write a comment…';
+                input.removeEventListener('keydown', escHandler);
+            }
+        });
+    }
+
+    // ── Enter key on input ───────────────────────────────────────────
+    function handleCommentKey(event, postId) {
+        if (event.key === 'Enter') submitComment(postId);
+    }
+
+    // ── Submit comment ───────────────────────────────────────────────
+    async function submitComment(postId) {
+        const input = document.getElementById('comment-input-' + postId);
+        const content = input.value.trim();
+        if (!content) return;
+
+        const parentCommentId = input.dataset.parentCommentId || null;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        try {
+            const res = await fetch('/Comments/Add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ content, postId, parentCommentId })
+            });
+
+            if (!res.ok) return;
+            const newComment = await res.json();
+
+            // Append to correct container
+            if (parentCommentId) {
+                const repliesContainer = document.getElementById('replies-' + parentCommentId);
+                if (repliesContainer) repliesContainer.appendChild(buildCommentEl(newComment));
+            } else {
+                const list = document.getElementById('comments-list-' + postId);
+                const empty = list.querySelector('.comments-loading');
+                if (empty) empty.remove();
+                list.appendChild(buildCommentEl(newComment));
+            }
+
+            // Bump count badge
+            const badge = document.getElementById('comment-count-' + postId);
+            if (badge) {
+                const newCount = parseInt(badge.textContent || '0') + 1;
+                badge.textContent = newCount.toString();
+                const summaryDiv = document.getElementById('comment-summary-' + postId);
+                if (summaryDiv) summaryDiv.style.display = 'block';
+                const reactionStats = document.getElementById('summary-' + postId);
+                if (reactionStats) reactionStats.classList.remove('hidden');
+            }
+
+            // Reset input
+           input.value = '';
+            delete input.dataset.parentCommentId;
+            input.placeholder = 'Write a comment…';
+
+        } catch {
+            console.error('Failed to post comment');
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function jsTimeAgo(dateStr) {
+        const diff = (Date.now() - new Date(dateStr)) / 1000;
+        if (diff < 60)    return 'just now';
+        if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
+    }
+
+    // ── Global Modal Triggers ─────────────────────────────
+    function openEditPostModal(postId, content) {
+        document.getElementById('editPostId').value = postId;
+        document.getElementById('editPostContent').value = content;
+        
+        // Hide the dropdown menu that triggered this
+        const menu = document.getElementById('menu-' + postId);
+        if (menu) menu.style.display = 'none';
+
+        const modal = new bootstrap.Modal(document.getElementById('editPostModal'));
+        modal.show();
+    }
+
+    function openDeletePostModal(postId) {
+        document.getElementById('deletePostId').value = postId;
+        
+        // Hide the dropdown menu that triggered this
+        const menu = document.getElementById('menu-' + postId);
+        if (menu) menu.style.display = 'none';
+
+        const modal = new bootstrap.Modal(document.getElementById('deletePostModal'));
+        modal.show();
+    }
+
+    // ── Compose expand ─────────────────────────────────────────────────
+    function expandCompose() {
+        const wrap = document.getElementById('compose-form-wrap');
+        if (wrap && wrap.style.display === 'none') {
+            wrap.style.display = 'block';
+            const textarea = document.getElementById('compose-textarea');
+            if (textarea) textarea.focus();
+        }
+    }
+</script>

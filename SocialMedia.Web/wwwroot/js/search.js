@@ -56,9 +56,9 @@
             const imageUrl = user.profileImage && user.profileImage.trim() !== "" ? user.profileImage : "/images/user.jpg";
             const safeName = escapeHtml(user.userName || "Unknown");
             return `
-                <a class="search-nav-result-item" href="/Search?query=${encodeURIComponent(query)}&page=1&pageSize=10">
-                    <img src="${imageUrl}" alt="${safeName}" class="rounded-circle" />
-                    <span>${safeName}</span>
+                <a class="search-nav-result-item d-flex align-items-center gap-2 p-2 text-decoration-none text-light" style="border-radius: 8px; transition: background 0.2s;" href="/Profile/Index/${user.id}" onmouseover="this.style.background='#3a3b3c'" onmouseout="this.style.background='transparent'">
+                    <img src="${imageUrl}" alt="${safeName}" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;" />
+                    <span class="fw-bold">${safeName}</span>
                 </a>
             `;
         }).join("");

@@ -1,0 +1,204 @@
+@model SocialMedia.Application.DTOs.PostDtos.PostDto
+@using System.Security.Claims
+@using SocialMedia.Domain.Enums
+@{
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var currentUserName = User.Identity.Name ?? "You";
+    var emojiMap = new Dictionary<string, string> {
+        {"Like", "👍"}, {"Love", "❤️"}, {"Haha", "😂"}, {"Wow", "😮"}, {"Sad", "😢"}, {"Angry", "😡"}
+    };
+    var avatarColors = new[] {
+        "linear-gradient(135deg,#6c63ff,#a78bfa)", "linear-gradient(135deg,#2d88ff,#56ccf2)",
+        "linear-gradient(135deg,#f953c6,#b91d73)", "linear-gradient(135deg,#11998e,#38ef7d)",
+        "linear-gradient(135deg,#f7971e,#ffd200)", "linear-gradient(135deg,#e74c3c,#f39c12)"
+    };
+    string AvatarColor(string name) => avatarColors[Math.Abs((name ?? "U").GetHashCode()) % avatarColors.Length];
+    string Initials(string name) {
+        name = name?.Trim() ?? "U";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpper() 
+            : name.Substring(0, Math.Min(2, name.Length)).ToUpper();
+    }
+    string TimeAgo(DateTime dt) {
+        var diff = DateTime.UtcNow - dt.ToUniversalTime();
+        if (diff.TotalMinutes < 1)  return "just now";
+        if (diff.TotalHours < 1)  return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalDays < 1)  return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7)  return $"{(int)diff.TotalDays}d ago";
+        return dt.ToString("MMM d");
+    }
+    var post = Model;
+    var reactionStr = post.CurrentUserReaction?.ToString() ?? "";
+    var reactionEmoji = reactionStr != "" && emojiMap.ContainsKey(reactionStr) ? emojiMap[reactionStr] : "👍";
+    var hasReaction   = reactionStr != "";
+    var isOwner       = currentUserId != null && post.userId == currentUserId;
+    var avatarUrl = !string.IsNullOrEmpty(post.UserAvatarUrl) ? post.UserAvatarUrl : "/images/user.jpg";
+}
+
+<article class="card-dark post-card" id="post-@post.Id">
+
+                    <!-- POST HEADER -->
+                    <div class="post-header">
+                        <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="post-avatar-wrap" style="text-decoration: none; display: block;">
+                            <div class="post-avatar"><img src="@avatarUrl" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" /></div>
+                            @if (SocialMedia.Web.Hubs.ChatHub.IsUserOnline(post.userId))
+                            {
+                                <div class="online-dot"></div>
+                            }
+                        </a>
+                        <div class="post-meta">
+                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="post-author text-decoration-none hover-underline">
+                                @post.UserName
+                            </a>
+                            <span class="post-time">
+                                <i class="fas fa-clock me-1"></i>@TimeAgo(post.CreatedAt)
+                                <span class="globe-icon" title="Public"><i class="fas fa-globe-americas ms-1"></i></span>
+                            </span>
+                        </div>
+
+                        @if (isOwner)
+                        {
+                            <div class="post-menu-wrap dropdown">
+                                <button class="menu-trigger" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Options">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end p-0 border-0 shadow" style="background:transparent; min-width:170px;">
+                                    <div class="post-dropdown d-block position-relative m-0 shadow">
+                                        <button type="button" class="dd-item" onclick="openEditPostModal('@post.Id', '@System.Web.HttpUtility.JavaScriptStringEncode(post.Content)')">
+                                            <i class="fas fa-pen me-2"></i> Edit Post
+                                        </button>
+                                        <button type="button" class="dd-item dd-danger" onclick="openDeletePostModal('@post.Id')">
+                                            <i class="fas fa-trash-alt me-2"></i> Delete Post
+                                        </button>
+                                    </div>
+                                </ul>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- POST BODY -->
+                    <div class="post-body">
+                        <p class="post-text">@post.Content</p>
+                        @if (!string.IsNullOrEmpty(post.ImageUrl))
+                        {
+                            <div class="post-img-wrap">
+                                <img src="@post.ImageUrl" class="post-img" loading="lazy" alt="Post image" />
+                            </div>
+                        }
+                    </div>
+
+                    <!-- REACTION STATS -->
+                    @{
+                        bool hasReactions = post.ReactionCounts.Any();
+                        bool hasComments = post.CommentCount > 0;
+                        bool hasStats = hasReactions || hasComments;
+                    }
+                    <div class="reaction-stats @(!hasStats ? "hidden" : "")" id="summary-@post.Id">
+                        @if (hasReactions)
+                        {
+                            <!-- Top 3 emojis stacked -->
+                            <div class="emoji-stack">
+                                @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value).Take(3))
+                                {
+                                    <span class="stack-emoji">@(emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍")</span>
+                                }
+                            </div>
+                            <span class="stats-label" style="flex: 0 1 auto;">@post.ReactionCount</span>
+                        }
+                        
+                        <div class="ms-auto" style="font-size: 13px; color: #b0b3b8; cursor: pointer; @(!hasComments ? "display:none;" : "")" id="comment-summary-@post.Id" onclick="toggleComments('@post.Id')">
+                            <span id="comment-count-@post.Id">@post.CommentCount</span> comments
+                        </div>
+
+                        @if (hasReactions)
+                        {
+                            <!-- Per-type bubbles -->
+                            <div class="bubble-row">
+                                @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value))
+                                {
+                                    var e = emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍";
+                                    <span class="react-bubble @(kv.Key.ToString() == reactionStr ? "mine" : "")">
+                                        @e <b>@kv.Value</b>
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ACTION BAR -->
+                    <div class="action-bar">
+                        <!-- LIKE / REACT -->
+                        <div class="action-react-wrap">
+                            <button id="react-btn-@post.Id"
+                                    class="action-btn @(hasReaction ? "active-reaction" : "")"
+                                    onmousedown="openReactions(event,'@post.Id')"
+                                    title="React">
+                                <span class="ab-emoji">@(hasReaction ? reactionEmoji : "👍")</span>
+                                <span class="ab-label">@(hasReaction ? reactionStr : "Like")</span>
+                            </button>
+
+                            <!-- PICKER POPUP -->
+                            <div id="reactions-@post.Id" class="emoji-picker" style="display:none;">
+                                @foreach (var kv in emojiMap)
+                                {
+                                    <button type="button"
+                                            class="ep-btn @(kv.Key == reactionStr ? "ep-active" : "")"
+                                            title="@kv.Key"
+                                            onclick="sendReaction('@post.Id','@kv.Key',this)">
+                                        @kv.Value
+                                        <span class="ep-label">@kv.Key</span>
+                                    </button>
+                                }
+                                @if (hasReaction)
+                                {
+                                    <button type="button" class="ep-btn ep-remove" title="Remove"
+                                            onclick="removeReaction('@post.Id',this)">
+                                        <i class="fas fa-times"></i>
+                                        <span class="ep-label">Remove</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- COMMENT -->
+                        <!-- COMMENT -->
+                        <button class="action-btn" onclick="toggleComments('@post.Id')">
+                            <i class="far fa-comment-alt me-1"></i>
+                            <span class="ab-label">Comment</span>
+                            @* <span class="comment-count-badge" id="comment-count-@post.Id">
+                                @(post.CommentCount > 0 ? post.CommentCount.ToString() : "")
+                            </span> *@
+                        </button>
+
+                        <!-- SHARE -->
+                        <button class="action-btn">
+                            <i class="fas fa-share me-1"></i>
+                            <span class="ab-label">Share</span>
+                        </button>
+                    </div>
+                    <!-- COMMENTS SECTION -->
+                    <div class="comments-section" id="comments-section-@post.Id" style="display:none;">
+                        <div class="comments-list" id="comments-list-@post.Id">
+                            <!-- loaded dynamically -->
+                        </div>
+                        <div class="comment-input-row">
+                            <div class="mini-avatar" style="background:@AvatarColor(currentUserName)">
+                                @Initials(currentUserName)
+                            </div>
+                            <div class="comment-input-wrap">
+                                <input type="text"
+                                       class="comment-input"
+                                       id="comment-input-@post.Id"
+                                       placeholder="Write a comment…"
+                                       data-post-id="@post.Id"
+                                       onkeydown="handleCommentKey(event, '@post.Id')" />
+                                <button class="comment-send-btn"
+                                        onclick="submitComment('@post.Id')">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </article>

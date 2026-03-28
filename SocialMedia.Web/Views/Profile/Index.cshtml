@@ -9,14 +9,15 @@
 }
 
 
+<partial name="_PostStylesPartial" />
 
 <style>
     body {
-        background-color: #f0f2f5;
+        background-color: transparent;
     }
 
     .profile-header-container {
-        background: #fff;
+        background: #242526; border: 1px solid #393a3b;
         border-bottom-left-radius: 8px;
         border-bottom-right-radius: 8px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -66,10 +67,10 @@
     .profile-photo {
         width: 168px;
         height: 168px;
-        border: 4px solid #fff;
+        border: 4px solid #242526;
         border-radius: 50%;
         object-fit: cover;
-        background-color: #fff;
+        background-color: #242526;
         cursor: pointer;
     }
 
@@ -85,7 +86,7 @@
     }
 
     .info-card {
-        background: #fff;
+        background: #242526; border: 1px solid #393a3b;
         border-radius: 8px;
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
@@ -95,7 +96,7 @@
         align-items: center;
         margin-bottom: 15px;
         font-size: 15px;
-        color: #050505;
+        color: #e4e6eb;
     }
 
     .info-icon {
@@ -113,7 +114,7 @@
 
     .modal-content input.form-control,
     .modal-content select.form-select {
-        color: #050505 !important;
+        color: #e4e6eb !important;
         background-color: #f0f2f5 !important;
         border: 1px solid #ccd0d5;
         font-weight: 500;
@@ -124,7 +125,7 @@
             background-color: #ffffff !important;
             border-color: #1877f2;
             box-shadow: 0 0 0 0.2rem rgba(24, 119, 242, 0.25);
-            color: #050505 !important;
+            color: #e4e6eb !important;
         }
 
     ::-webkit-calendar-picker-indicator {
@@ -175,7 +176,7 @@
 
                 <!-- NAME & BIO -->
                 <div class="pb-2">
-                    <h1 class="fw-bold mb-0 text-dark">@Model.UserName</h1>
+                    <h1 class="fw-bold mb-0 text-light">@Model.UserName</h1>
                     <a asp-controller="Friendship" asp-action="Index" class="text-decoration-none text-muted fw-bold mt-1 mb-2 d-inline-block">
                         @ViewBag.FriendsCount Friends
                     </a>
@@ -252,7 +253,7 @@
                 {
                     <hr />
                     <!-- Edit Actions inside Details Card -->
-                    <button class="btn w-100 fw-bold mt-2 d-flex align-items-center justify-content-center" style="background-color:#e4e6eb; color: #050505;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <button class="btn w-100 fw-bold mt-2 d-flex align-items-center justify-content-center" style="background-color:#e4e6eb; color: #e4e6eb;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                         <i class="bi bi-person-lines-fill me-2 fs-5"></i> Edit Details
                     </button>
                     <!-- Change Password Button -->
@@ -265,41 +266,34 @@
 
         <!-- RIGHT COLUMN (POSTS AREA) -->
         <div class="col-md-7 pe-0">
-            <div class="info-card p-4 text-center text-muted border border-light">
-                <i class="bi bi-card-text fs-1 mb-2 text-secondary"></i>
-                <h5 class="fw-bold text-dark">Posts</h5>
-                @{
-                    var userPosts = ViewBag.UserPosts as IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>;
-                }
+            @if (ViewBag.IsOwner == true)
+            {
+                <partial name="_ComposePostPartial" />
+            }
 
-                @if (userPosts != null && userPosts.Any())
-                {
-                    @foreach (var post in userPosts)
-                    {
-                        <div class="post-card mb-3 p-3 border rounded">
-
-                            <div class="d-flex justify-content-between">
-                                <strong>@post.UserName</strong>
-                                <small>@post.CreatedAt.ToString("MMM dd")</small>
-                            </div>
-
-                            <p>@post.Content</p>
-
-                            @if (!string.IsNullOrEmpty(post.ImageUrl))
-                            {
-                                <img src="@post.ImageUrl" style="max-width:100%; border-radius:8px;" />
-                            }
-
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="text-center text-muted">
-                        <p>No posts yet.</p>
-                    </div>
-                }
+            <div class="d-flex align-items-center mb-3 mt-4">
+                <i class="bi bi-card-text fs-4 text-secondary me-2"></i>
+                <h5 class="fw-bold text-light m-0">Timeline</h5>
             </div>
+
+            @{
+                var userPosts = ViewBag.UserPosts as IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>;
+            }
+
+            @if (userPosts != null && userPosts.Any())
+            {
+                @foreach (var post in userPosts)
+                {
+                    <partial name="_PostPartial" model="post" />
+                }
+            }
+            else
+            {
+                <div class="info-card p-4 border-0 text-center text-muted">
+                    <div class="empty-icon text-secondary mb-2" style="font-size: 40px;"><i class="bi bi-image"></i></div>
+                    <p class="mb-0 fw-bold">No posts yet.</p>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -311,7 +305,7 @@
         <form asp-action="ChangePassword" asp-controller="Profile" method="post" class="modal-content">
             @Html.AntiForgeryToken()
             <div class="modal-header border-bottom-0">
-                <h5 class="modal-title fw-bold text-dark">Change Password</h5>
+                <h5 class="modal-title fw-bold text-light">Change Password</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -343,7 +337,7 @@
         <form asp-action="Update" asp-controller="Profile" method="post" class="modal-content">
             @Html.AntiForgeryToken()
             <div class="modal-header border-bottom-0">
-                <h5 class="modal-title fw-bold text-dark">Edit Personal Details</h5>
+                <h5 class="modal-title fw-bold text-light">Edit Personal Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -394,7 +388,7 @@
 <div class="modal fade" id="profileImageModal" tabindex="-1">
     <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content p-3 text-center">
-            <h5 class="fw-bold mb-3 text-dark">Profile Picture</h5>
+            <h5 class="fw-bold mb-3 text-light">Profile Picture</h5>
             <form asp-action="UploadProfileImage" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <input type="file" name="image" class="form-control mb-2" required />
@@ -414,7 +408,7 @@
 <div class="modal fade" id="coverModal" tabindex="-1">
     <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content p-3 text-center">
-            <h5 class="fw-bold mb-3 text-dark">Cover Photo</h5>
+            <h5 class="fw-bold mb-3 text-light">Cover Photo</h5>
             <form asp-action="UploadCover" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <input type="file" name="image" class="form-control mb-2" required />
@@ -432,6 +426,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_PostScriptsPartial" />
 
     <script>
 

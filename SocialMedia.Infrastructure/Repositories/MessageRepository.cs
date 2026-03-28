@@ -77,5 +77,37 @@ namespace SocialMedia.Infrastructure.Repositories
                 .Select(g => new { SenderId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.SenderId, x => x.Count);
         }
+
+        /// <inheritdoc/>
+        public async Task<Message?> GetMessageByIdAsync(Guid messageId)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .Include(m => m.Sender)
+                .FirstOrDefaultAsync(m => m.Id == messageId);
+        }
+
+        /// <inheritdoc/>
+        public async Task EditMessageAsync(Guid messageId, string newContent)
+        {
+            await _dbSet
+                .Where(m => m.Id == messageId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(m => m.Content, newContent)
+                    .SetProperty(m => m.IsEdited, true)
+                    .SetProperty(m => m.EditedAt, DateTime.UtcNow)
+                    .SetProperty(m => m.UpdatedAt, DateTime.UtcNow));
+        }
+
+        /// <inheritdoc/>
+        public async Task DeleteMessageAsync(Guid messageId)
+        {
+            await _dbSet
+                .Where(m => m.Id == messageId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(m => m.IsDeleted, true)
+                    .SetProperty(m => m.DeletedAt, DateTime.UtcNow)
+                    .SetProperty(m => m.UpdatedAt, DateTime.UtcNow));
+        }
     }
 }

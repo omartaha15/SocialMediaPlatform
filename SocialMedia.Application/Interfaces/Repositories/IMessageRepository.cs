@@ -28,5 +28,14 @@ namespace SocialMedia.Application.Interfaces.Repositories
         /// received by userId. Used to show per-conversation unread badges.
         /// </summary>
         Task<Dictionary<string, int>> GetUnreadCountPerSenderAsync(string userId);
+
+        /// <summary>Gets a single message by ID with sender info.</summary>
+        Task<Message?> GetMessageByIdAsync(Guid messageId);
+
+        /// <summary>Edits a message's content and marks it as edited.</summary>
+        Task EditMessageAsync(Guid messageId, string newContent);
+
+        /// <summary>Soft deletes a message by marking it as deleted.</summary>
+        Task DeleteMessageAsync(Guid messageId);
     }
 }

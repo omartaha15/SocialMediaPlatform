@@ -91,5 +91,37 @@ namespace SocialMedia.Infrastructure.Repositories
                 .OrderBy(m => m.CreatedAt)
                 .ToListAsync();
         }
+
+        /// <inheritdoc/>
+        public async Task<GroupMessages?> GetGroupMessageByIdAsync(Guid messageId)
+        {
+            return await _context.GroupMessages
+                .AsNoTracking()
+                .Include(m => m.Sender)
+                .FirstOrDefaultAsync(m => m.Id == messageId);
+        }
+
+        /// <inheritdoc/>
+        public async Task EditGroupMessageAsync(Guid messageId, string newContent)
+        {
+            await _context.GroupMessages
+                .Where(m => m.Id == messageId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(m => m.Content, newContent)
+                    .SetProperty(m => m.IsEdited, true)
+                    .SetProperty(m => m.EditedAt, DateTime.UtcNow)
+                    .SetProperty(m => m.UpdatedAt, DateTime.UtcNow));
+        }
+
+        /// <inheritdoc/>
+        public async Task DeleteGroupMessageAsync(Guid messageId)
+        {
+            await _context.GroupMessages
+                .Where(m => m.Id == messageId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(m => m.IsDeleted, true)
+                    .SetProperty(m => m.DeletedAt, DateTime.UtcNow)
+                    .SetProperty(m => m.UpdatedAt, DateTime.UtcNow));
+        }
     }
 }

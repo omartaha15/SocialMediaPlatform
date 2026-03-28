@@ -121,6 +121,7 @@ namespace SocialMedia.Web.Controllers
                 .Group($"group_{groupId}")
                 .SendAsync("ReceiveGroupMessage", new
                 {
+                    messageId = message.Id,
                     groupId = message.GroupId,
                     senderId = message.SenderId,
                     senderName = message.SenderName,
@@ -179,6 +180,70 @@ namespace SocialMedia.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
             catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        }
+
+        // ── Edit a group message ──────────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditMessage(Guid messageId, string content)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                var message = await _groupChatService.EditGroupMessageAsync(messageId, userId, content);
+
+                // Broadcast edit to all group members via SignalR
+                await _hubContext.Clients
+                    .Group($"group_{message.GroupId}")
+                    .SendAsync("MessageEdited", new
+                    {
+                        messageId = message.Id,
+                        content = message.Content,
+                        isEdited = message.IsEdited,
+                        editedAt = message.EditedAt
+                    });
+
+                return Json(message);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // ── Delete a group message ────────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMessage(Guid messageId, Guid groupId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                await _groupChatService.DeleteGroupMessageAsync(messageId, userId);
+
+                // Broadcast delete to all group members via SignalR
+                await _hubContext.Clients
+                    .Group($"group_{groupId}")
+                    .SendAsync("MessageDeleted", new { messageId });
+
+                return Ok();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 }

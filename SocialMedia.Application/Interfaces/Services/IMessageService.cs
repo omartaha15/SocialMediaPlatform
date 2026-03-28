@@ -9,5 +9,7 @@ namespace SocialMedia.Application.Interfaces.Services
         Task<IEnumerable<ConversationSummaryDto>> GetConversationsAsync(string userId);
         Task MarkAsReadAsync(string currentUserId, string otherUserId);
         Task<int> GetUnreadCountAsync(string userId);
+        Task<MessageDto> EditMessageAsync(Guid messageId, string userId, string newContent);
+        Task DeleteMessageAsync(Guid messageId, string userId);
     }
 }

@@ -160,6 +160,9 @@ namespace SocialMedia.Application.Services
             {
                 Id = m.Id,
                 Content = m.Content,
+                IsEdited = m.IsEdited,
+                EditedAt = m.EditedAt,
+                IsDeleted = m.IsDeleted,
                 CreatedAt = m.CreatedAt,
                 SenderId = m.SenderId,
                 SenderName = m.Sender?.UserName ?? "Unknown",
@@ -171,6 +174,61 @@ namespace SocialMedia.Application.Services
         // ── Is Member ─────────────────────────────────────────────────────────
         public async Task<bool> IsGroupMemberAsync(Guid groupId, string userId)
             => await _uow.GroupChats.IsMemberAsync(groupId, userId);
+
+        // ── Edit Group Message ────────────────────────────────────────────────
+        public async Task<GroupMessageDto> EditGroupMessageAsync(Guid messageId, string userId, string newContent)
+        {
+            var message = await _uow.GroupChats.GetGroupMessageByIdAsync(messageId);
+            
+            if (message == null)
+                throw new InvalidOperationException("Message not found.");
+            
+            if (message.SenderId != userId)
+                throw new UnauthorizedAccessException("You can only edit your own messages.");
+            
+            if (message.IsDeleted)
+                throw new InvalidOperationException("Cannot edit a deleted message.");
+
+            if (string.IsNullOrWhiteSpace(newContent))
+                throw new ArgumentException("Message content cannot be empty.");
+
+            await _uow.GroupChats.EditGroupMessageAsync(messageId, newContent.Trim());
+            await _uow.CompleteAsync();
+            
+            // Fetch updated message to return
+            var updatedMessage = await _uow.GroupChats.GetGroupMessageByIdAsync(messageId);
+            return new GroupMessageDto
+            {
+                Id = updatedMessage!.Id,
+                Content = updatedMessage.Content,
+                IsEdited = updatedMessage.IsEdited,
+                EditedAt = updatedMessage.EditedAt,
+                IsDeleted = updatedMessage.IsDeleted,
+                CreatedAt = updatedMessage.CreatedAt,
+                SenderId = updatedMessage.SenderId,
+                SenderName = updatedMessage.Sender?.UserName ?? "Unknown",
+                SenderProfilePicture = updatedMessage.Sender?.ProfilePictureUrl,
+                GroupId = updatedMessage.GroupId
+            };
+        }
+
+        // ── Delete Group Message ──────────────────────────────────────────────
+        public async Task DeleteGroupMessageAsync(Guid messageId, string userId)
+        {
+            var message = await _uow.GroupChats.GetGroupMessageByIdAsync(messageId);
+            
+            if (message == null)
+                throw new InvalidOperationException("Message not found.");
+            
+            if (message.SenderId != userId)
+                throw new UnauthorizedAccessException("You can only delete your own messages.");
+            
+            if (message.IsDeleted)
+                throw new InvalidOperationException("Message is already deleted.");
+
+            await _uow.GroupChats.DeleteGroupMessageAsync(messageId);
+            await _uow.CompleteAsync();
+        }
 
         // ── Mapper ────────────────────────────────────────────────────────────
         private static GroupDto MapToGroupDto(Group g, int memberCount) => new()

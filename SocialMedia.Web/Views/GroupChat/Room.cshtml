@@ -61,7 +61,7 @@
         gap: 0.6rem;
     }
 
-    .bubble-row { display: flex; align-items: flex-end; gap: 0.5rem; }
+    .bubble-row { display: flex; align-items: flex-end; gap: 0.5rem; position: relative; }
     .bubble-row.sent { flex-direction: row-reverse; }
 
     .bubble-stack {
@@ -85,12 +85,63 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         word-break: normal;
+        position: relative;
     }
     .bubble.sent     { background: var(--gradient-primary); color: white; border-bottom-right-radius: 4px; }
     .bubble.received { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
+    .bubble.deleted  { opacity: 0.6; font-style: italic; color: var(--text-muted); }
 
     .bubble-sender { font-size: 0.72rem; color: var(--accent); font-weight: 600; margin-bottom: 2px; }
     .bubble-time   { font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; margin-bottom: 4px; }
+    .bubble-edited {
+        font-size: 0.68rem;
+        color: rgba(255,255,255,0.7);
+        margin-left: 0.4rem;
+        font-style: italic;
+    }
+    .bubble.received .bubble-edited { color: var(--text-muted); }
+
+    .message-menu {
+        position: absolute;
+        top: -8px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .bubble-row.sent .message-menu { right: -30px; }
+    .bubble-row.received .message-menu { left: -30px; }
+    .bubble-row:hover .message-menu { opacity: 1; }
+
+    .menu-btn {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        transition: var(--transition);
+    }
+    .menu-btn:hover {
+        background: var(--bg-glass);
+        color: var(--text-primary);
+    }
+
+    .dropdown-menu {
+        min-width: 120px;
+        font-size: 0.85rem;
+    }
+    .dropdown-item {
+        padding: 0.4rem 0.8rem;
+        cursor: pointer;
+    }
+    .dropdown-item i {
+        width: 16px;
+        margin-right: 0.5rem;
+    }
 
     .chat-input-area {
         background: var(--bg-card);
@@ -252,15 +303,43 @@
             @foreach (var msg in Model.History)
             {
                 var isSent = msg.SenderId == currentUserId;
-                <div class="bubble-row @(isSent ? "sent" : "received")">
+                var bubbleClass = isSent ? "sent" : "received";
+                if (msg.IsDeleted) { bubbleClass += " deleted"; }
+                
+                <div class="bubble-row @(isSent ? "sent" : "received")" data-message-id="@msg.Id">
                     <span class="bubble-time">@msg.CreatedAt.ToString("HH:mm")</span>
                     <div class="bubble-stack">
                         @if (!isSent)
                         {
                             <div class="bubble-sender">@msg.SenderName</div>
                         }
-                        <div class="bubble @(isSent ? "sent" : "received")">@msg.Content</div>
+                        <div class="bubble @bubbleClass">
+                            @if (msg.IsDeleted)
+                            {
+                                <text>Message deleted</text>
+                            }
+                            else
+                            {
+                                @msg.Content
+                                @if (msg.IsEdited)
+                                {
+                                    <span class="bubble-edited">(edited)</span>
+                                }
+                            }
+                        </div>
                     </div>
+                    @if (isSent && !msg.IsDeleted)
+                    {
+                        <div class="message-menu dropdown">
+                            <button class="menu-btn" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" onclick="editMessage('@msg.Id', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(msg.Content))'); event.stopPropagation();"><i class="fas fa-edit"></i>Edit</a></li>
+                                <li><a class="dropdown-item text-danger" onclick="deleteMessage('@msg.Id'); event.stopPropagation();"><i class="fas fa-trash"></i>Delete</a></li>
+                            </ul>
+                        </div>
+                    }
                 </div>
             }
         </div>
@@ -353,17 +432,34 @@
         return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     }
 
-    function appendBubble(senderId, senderDisplayName, content, sentAt) {
+    function appendBubble(senderId, senderDisplayName, content, sentAt, messageId) {
         const isSent = senderId === currentUserId;
         const time   = new Date(sentAt).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
         const row    = document.createElement("div");
         row.className = `bubble-row ${isSent ? "sent" : "received"}`;
+        row.setAttribute('data-message-id', messageId || '');
+        
+        let menuHtml = '';
+        if (isSent && messageId) {
+            menuHtml = `
+                <div class="message-menu dropdown">
+                    <button class="menu-btn" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" onclick="editMessage('${messageId}', '${escapeHtml(content).replace(/'/g, "\\'")}'); event.stopPropagation();"><i class="fas fa-edit"></i>Edit</a></li>
+                        <li><a class="dropdown-item text-danger" onclick="deleteMessage('${messageId}'); event.stopPropagation();"><i class="fas fa-trash"></i>Delete</a></li>
+                    </ul>
+                </div>`;
+        }
+        
         row.innerHTML = `
             <span class="bubble-time">${time}</span>
             <div class="bubble-stack">
                 ${!isSent ? `<div class="bubble-sender">${escapeHtml(senderDisplayName)}</div>` : ""}
                 <div class="bubble ${isSent ? "sent" : "received"}">${escapeHtml(content)}</div>
-            </div>`;
+            </div>
+            ${menuHtml}`;
         container.appendChild(row);
         scrollToBottom();
     }
@@ -376,7 +472,40 @@
 
     connection.on("ReceiveGroupMessage", (data) => {
         if (data.groupId.toString() === groupId) {
-            appendBubble(data.senderId, data.senderName, data.content, data.sentAt);
+            appendBubble(data.senderId, data.senderName, data.content, data.sentAt, data.messageId);
+        }
+    });
+
+    // Message edited event
+    connection.on("MessageEdited", (data) => {
+        console.log("MessageEdited received:", data);
+        const row = document.querySelector(`[data-message-id="${data.messageId}"]`);
+        console.log("Found row:", row);
+        if (row) {
+            const bubble = row.querySelector('.bubble');
+            console.log("Found bubble:", bubble);
+            if (bubble) {
+                // Remove deleted class if present
+                bubble.classList.remove('deleted');
+                bubble.innerHTML = escapeHtml(data.content) + '<span class="bubble-edited">(edited)</span>';
+                console.log("Bubble updated with content:", data.content);
+            }
+        } else {
+            console.warn("Could not find message row with ID:", data.messageId);
+        }
+    });
+
+    // Message deleted event
+    connection.on("MessageDeleted", (data) => {
+        const row = document.querySelector(`[data-message-id="${data.messageId}"]`);
+        if (row) {
+            const bubble = row.querySelector('.bubble');
+            const menu = row.querySelector('.message-menu');
+            if (bubble) {
+                bubble.classList.add('deleted');
+                bubble.innerHTML = 'Message deleted';
+            }
+            if (menu) menu.remove();
         }
     });
 
@@ -396,6 +525,13 @@
     async function sendMessage() {
         const content = input.value.trim();
         if (!content) return;
+        
+        // If we're editing a message, save the edit instead
+        if (editingMessageId) {
+            await saveEdit(editingMessageId, content);
+            return;
+        }
+        
         input.value = "";
 
         const fd = new FormData();
@@ -406,6 +542,66 @@
         const res = await fetch("/GroupChat/SendMessage", { method: "POST", body: fd });
         if (!res.ok) {
             console.error("Send group message failed", res.status);
+        }
+    }
+
+    // ── Edit message ──────────────────────────────────────────────────────────
+    let editingMessageId = null;
+    
+    function editMessage(messageId, currentContent) {
+        const decoded = currentContent.replace(/\\'/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
+        input.value = decoded;
+        input.focus();
+        editingMessageId = messageId;
+        sendBtn.innerHTML = '<i class="fas fa-check"></i>';
+        sendBtn.title = "Save Edit";
+    }
+
+    function cancelEdit() {
+        editingMessageId = null;
+        input.value = "";
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        sendBtn.title = "Send";
+    }
+
+    async function saveEdit(messageId, content) {
+        const fd = new FormData();
+        fd.append("messageId", messageId);
+        fd.append("content", content);
+        fd.append("__RequestVerificationToken", getToken());
+        
+        try {
+            const res = await fetch("/GroupChat/EditMessage", { method: "POST", body: fd });
+            if (!res.ok) {
+                const error = await res.json();
+                alert(error.error || "Failed to edit message");
+            }
+        } catch (err) {
+            console.error("Edit error:", err);
+            alert("Failed to edit message");
+        }
+        
+        cancelEdit();
+    }
+
+    // ── Delete message ────────────────────────────────────────────────────────
+    async function deleteMessage(messageId) {
+        if (!confirm("Delete this message?")) return;
+        
+        const fd = new FormData();
+        fd.append("messageId", messageId);
+        fd.append("groupId", groupId);
+        fd.append("__RequestVerificationToken", getToken());
+        
+        try {
+            const res = await fetch("/GroupChat/DeleteMessage", { method: "POST", body: fd });
+            if (!res.ok) {
+                const error = await res.json();
+                alert(error.error || "Failed to delete message");
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
+            alert("Failed to delete message");
         }
     }
 

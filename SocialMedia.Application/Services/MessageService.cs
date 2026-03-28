@@ -94,11 +94,55 @@ namespace SocialMedia.Application.Services
             Id                   = m.Id,
             Content              = m.Content,
             IsRead               = m.IsRead,
+            IsEdited             = m.IsEdited,
+            EditedAt             = m.EditedAt,
+            IsDeleted            = m.IsDeleted,
             CreatedAt            = m.CreatedAt,
             SenderId             = m.SenderId,
             SenderName           = sender?.UserName ?? "Unknown",
             SenderProfilePicture = sender?.ProfilePictureUrl,
             ReceiverId           = m.ReceiverId
         };
+
+        // ── Edit Message ──────────────────────────────────────────────────────
+        public async Task<MessageDto> EditMessageAsync(Guid messageId, string userId, string newContent)
+        {
+            var message = await _uow.Messages.GetMessageByIdAsync(messageId);
+            
+            if (message == null)
+                throw new InvalidOperationException("Message not found.");
+            
+            if (message.SenderId != userId)
+                throw new UnauthorizedAccessException("You can only edit your own messages.");
+            
+            if (message.IsDeleted)
+                throw new InvalidOperationException("Cannot edit a deleted message.");
+
+            if (string.IsNullOrWhiteSpace(newContent))
+                throw new ArgumentException("Message content cannot be empty.");
+
+            await _uow.Messages.EditMessageAsync(messageId, newContent.Trim());
+            
+            // Fetch updated message to return
+            var updatedMessage = await _uow.Messages.GetMessageByIdAsync(messageId);
+            return MapToDto(updatedMessage!, updatedMessage!.Sender);
+        }
+
+        // ── Delete Message ────────────────────────────────────────────────────
+        public async Task DeleteMessageAsync(Guid messageId, string userId)
+        {
+            var message = await _uow.Messages.GetMessageByIdAsync(messageId);
+            
+            if (message == null)
+                throw new InvalidOperationException("Message not found.");
+            
+            if (message.SenderId != userId)
+                throw new UnauthorizedAccessException("You can only delete your own messages.");
+            
+            if (message.IsDeleted)
+                throw new InvalidOperationException("Message is already deleted.");
+
+            await _uow.Messages.DeleteMessageAsync(messageId);
+        }
     }
 }

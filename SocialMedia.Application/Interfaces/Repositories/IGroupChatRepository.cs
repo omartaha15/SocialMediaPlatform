@@ -17,5 +17,14 @@ namespace SocialMedia.Application.Interfaces.Repositories
         void RemoveMember(GroupMember member);
         Task AddGroupMessageAsync(GroupMessages message);
         Task<IEnumerable<GroupMessages>> GetGroupHistoryAsync(Guid groupId, int page, int pageSize);
+        
+        /// <summary>Gets a single group message by ID with sender info.</summary>
+        Task<GroupMessages?> GetGroupMessageByIdAsync(Guid messageId);
+
+        /// <summary>Edits a group message's content and marks it as edited.</summary>
+        Task EditGroupMessageAsync(Guid messageId, string newContent);
+
+        /// <summary>Soft deletes a group message by marking it as deleted.</summary>
+        Task DeleteGroupMessageAsync(Guid messageId);
     }
 }

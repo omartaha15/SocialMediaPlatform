@@ -372,6 +372,83 @@
     }
 
     <div class="container" style="padding-top: 80px;">
+
+        @if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
+        {
+            <style>
+                .zuvo-toast {
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    z-index: 1100;
+                    min-width: 320px;
+                    max-width: 460px;
+                    padding: 16px 20px;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+                    animation: toastSlideIn .35s ease both;
+                    cursor: pointer;
+                }
+                .zuvo-toast.success {
+                    background: #1a3a2a;
+                    border: 1px solid #2d7a4f;
+                    color: #45bd62;
+                }
+                .zuvo-toast.error {
+                    background: #3a1a1a;
+                    border: 1px solid #7a2d2d;
+                    color: #f85149;
+                }
+                .zuvo-toast i { font-size: 18px; flex-shrink: 0; }
+                .zuvo-toast .toast-msg { flex: 1; color: #e4e6eb; }
+                .zuvo-toast .toast-close {
+                    background: none; border: none; color: #b0b3b8;
+                    font-size: 16px; cursor: pointer; padding: 0 4px;
+                    transition: color .15s;
+                }
+                .zuvo-toast .toast-close:hover { color: #e4e6eb; }
+                @@keyframes toastSlideIn {
+                    from { opacity: 0; transform: translateX(40px); }
+                    to   { opacity: 1; transform: translateX(0); }
+                }
+                @@keyframes toastSlideOut {
+                    from { opacity: 1; transform: translateX(0); }
+                    to   { opacity: 0; transform: translateX(40px); }
+                }
+            </style>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="zuvo-toast success" id="zuvo-success-toast" onclick="this.style.animation='toastSlideOut .3s ease forwards'; setTimeout(()=>this.remove(), 300);">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="toast-msg">@TempData["SuccessMessage"]</span>
+                    <button class="toast-close" type="button">&times;</button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="zuvo-toast error" id="zuvo-error-toast" onclick="this.style.animation='toastSlideOut .3s ease forwards'; setTimeout(()=>this.remove(), 300);">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span class="toast-msg">@TempData["ErrorMessage"]</span>
+                    <button class="toast-close" type="button">&times;</button>
+                </div>
+            }
+
+            <script>
+                setTimeout(function() {
+                    document.querySelectorAll('.zuvo-toast').forEach(function(t) {
+                        t.style.animation = 'toastSlideOut .3s ease forwards';
+                        setTimeout(function() { t.remove(); }, 300);
+                    });
+                }, 5000);
+            </script>
+        }
+
         <main role="main" class="pb-3">
             @RenderBody()
         </main>

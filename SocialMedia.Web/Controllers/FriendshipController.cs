@@ -35,6 +35,7 @@ namespace SocialMedia.Web.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendRequest ( string receiverId )
         {
             var senderId = GetUserId();
@@ -49,13 +50,19 @@ namespace SocialMedia.Web.Controllers
                 TempData [ "ErrorMessage" ] = "Could not send friend request. You may already be friends or have a pending request.";
             }
 
-            if ( Request.Headers.ContainsKey( "Referer" ) )
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer) && Uri.TryCreate(referer, UriKind.Absolute, out var refererUri))
             {
-                return Redirect( Request.Headers [ "Referer" ].ToString() );
+                var localPath = refererUri.PathAndQuery;
+                if (Url.IsLocalUrl(localPath))
+                {
+                    return Redirect(localPath);
+                }
             }
             return RedirectToAction( nameof( Suggestions ) );
         }
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AcceptRequest(string senderId)
         {
             var receiverId = GetUserId();
@@ -74,6 +81,7 @@ namespace SocialMedia.Web.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveFriend(string friendId)
         {
             var userId = GetUserId();

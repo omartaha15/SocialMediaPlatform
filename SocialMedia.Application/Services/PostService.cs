@@ -46,11 +46,14 @@ namespace SocialMedia.Application.Services
 
         public async Task DeletePostAsync(Guid id)
         {
-
-            var post =  _unitOfWork.Repository<Post>().GetByIdAsync(id).Result;
+            var post = await _unitOfWork.Repository<Post>().GetByIdAsync(id);
 
             if (post == null)
-                throw new Exception("Post not found");
+                throw new KeyNotFoundException("Post not found");
+
+            // Delete the post image from disk if it exists
+            if (!string.IsNullOrEmpty(post.ImageUrl))
+                _imageService.DeleteImageAsync(post.ImageUrl);
 
             _unitOfWork.Repository<Post>().Delete(post);
             await _unitOfWork.CompleteAsync();
@@ -64,8 +67,9 @@ namespace SocialMedia.Application.Services
             var posts = await _unitOfWork.Repository<Post>()
                 .Query()
                 .Include(p => p.Creator)
-.OrderByDescending(p => p.CreatedAt)
-    .ToListAsync();
+                .Include(p => p.Comments)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
    
 
             return posts.Select(p => new PostDto
@@ -125,24 +129,20 @@ namespace SocialMedia.Application.Services
         }
 
     
-        public  async Task UpdatePostAsync(UpdatePostDto dto)
+        public async Task UpdatePostAsync(UpdatePostDto dto)
         {
-            var post = _unitOfWork.Repository<Post>().GetByIdAsync(dto.Id).Result;
+            var post = await _unitOfWork.Repository<Post>().GetByIdAsync(dto.Id);
 
-            if(post == null)
-                throw new Exception("Post not found");
+            if (post == null)
+                throw new KeyNotFoundException("Post not found");
 
             post.Content = dto.Content;
-            if (!string.IsNullOrEmpty(dto.ImageUrl))
-                post.ImageUrl = dto.ImageUrl;
 
             if (!string.IsNullOrEmpty(dto.ImageUrl))
                 post.ImageUrl = dto.ImageUrl;
+
             _unitOfWork.Repository<Post>().Update(post);
-
             await _unitOfWork.CompleteAsync();
-
-
         }
 
 

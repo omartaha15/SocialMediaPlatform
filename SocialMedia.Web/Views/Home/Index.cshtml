@@ -821,10 +821,14 @@
 
     // ── Send reaction ──────────────────────────────────────────────────
     function sendReaction(postId, type, btn) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
         const params = new URLSearchParams({ postId, type });
         fetch('/Reaction/React', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': token
+            },
             body: params.toString()
         })
         .then(r => r.json())
@@ -836,10 +840,14 @@
 
     // ── Remove reaction ────────────────────────────────────────────────
     function removeReaction(postId, btn) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
         const params = new URLSearchParams({ postId });
         fetch('/Reaction/Remove', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': token
+            },
             body: params.toString()
         })
         .then(r => r.json())

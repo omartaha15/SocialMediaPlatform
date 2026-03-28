@@ -17,6 +17,7 @@ namespace SocialMedia.Web.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> React(Guid postId, MultiReaction type)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -34,6 +35,7 @@ namespace SocialMedia.Web.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Remove(Guid postId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;

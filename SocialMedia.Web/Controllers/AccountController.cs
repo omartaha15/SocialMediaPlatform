@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SocialMedia.Application.DTOs.AuthenticationDTOs;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Web.ViewModels;
@@ -60,7 +60,7 @@ namespace SocialMedia.Web.Controllers
                 var result = await _userService.RegisterAsync(dto);
 
                 if (result.Succeeded)
-                    return RedirectToAction("Login", "Account");
+                    return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {

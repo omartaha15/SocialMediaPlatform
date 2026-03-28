@@ -378,47 +378,49 @@
             <style>
                 .zuvo-toast {
                     position: fixed;
-                    top: 80px;
-                    right: 20px;
-                    z-index: 1100;
+                    top: 90px;
+                    right: 24px;
+                    z-index: 9999;
                     min-width: 320px;
                     max-width: 460px;
                     padding: 16px 20px;
-                    border-radius: 10px;
-                    font-size: 14px;
-                    font-weight: 500;
+                    border-radius: 12px;
+                    font-size: 15px;
+                    font-weight: 600;
                     display: flex;
                     align-items: center;
-                    gap: 12px;
-                    box-shadow: 0 8px 32px rgba(0,0,0,.5);
-                    animation: toastSlideIn .35s ease both;
+                    gap: 14px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+                    animation: toastSlideIn .4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
                     cursor: pointer;
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
                 }
                 .zuvo-toast.success {
-                    background: #1a3a2a;
-                    border: 1px solid #2d7a4f;
-                    color: #45bd62;
+                    background: rgba(45, 184, 77, 0.95);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: #fff;
                 }
                 .zuvo-toast.error {
-                    background: #3a1a1a;
-                    border: 1px solid #7a2d2d;
-                    color: #f85149;
+                    background: rgba(232, 63, 56, 0.95);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: #fff;
                 }
-                .zuvo-toast i { font-size: 18px; flex-shrink: 0; }
-                .zuvo-toast .toast-msg { flex: 1; color: #e4e6eb; }
+                .zuvo-toast i { font-size: 22px; flex-shrink: 0; }
+                .zuvo-toast .toast-msg { flex: 1; color: #fff; }
                 .zuvo-toast .toast-close {
-                    background: none; border: none; color: #b0b3b8;
-                    font-size: 16px; cursor: pointer; padding: 0 4px;
+                    background: none; border: none; color: rgba(255,255,255,0.75);
+                    font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px;
                     transition: color .15s;
                 }
-                .zuvo-toast .toast-close:hover { color: #e4e6eb; }
+                .zuvo-toast .toast-close:hover { color: #fff; }
                 @@keyframes toastSlideIn {
-                    from { opacity: 0; transform: translateX(40px); }
-                    to   { opacity: 1; transform: translateX(0); }
+                    from { opacity: 0; transform: translateX(60px) scale(0.95); }
+                    to   { opacity: 1; transform: translateX(0) scale(1); }
                 }
                 @@keyframes toastSlideOut {
-                    from { opacity: 1; transform: translateX(0); }
-                    to   { opacity: 0; transform: translateX(40px); }
+                    from { opacity: 1; transform: translateX(0) scale(1); }
+                    to   { opacity: 0; transform: translateX(60px) scale(0.95); }
                 }
             </style>
 
@@ -606,11 +608,11 @@
                 }
 
                 const html = notificationItems.map(n => `
-                    <button type="button" class="w-100 text-start px-3 py-2 border-0 border-bottom border-secondary bg-transparent notification-item ${n.isRead ? '' : 'bg-dark'}" data-notification-id="${n.id}" data-action-url="${escapeHtml(n.actionUrl ?? '')}">
+                    <button type="button" class="w-100 text-start px-3 py-2 border-0 border-bottom border-secondary notification-item ${n.isRead ? 'bg-transparent text-light' : 'bg-dark text-white'}" data-notification-id="${n.id}" data-action-url="${escapeHtml(n.actionUrl ?? '')}" style="transition: background-color 0.2s;">
                         <div class="d-flex align-items-start gap-2">
                             <div class="mt-1"><i class="fas ${notificationIcon(n.type)} text-primary"></i></div>
                             <div class="flex-grow-1">
-                                <div class="small fw-semibold">${escapeHtml(n.content)}</div>
+                                <div class="small fw-semibold" style="color: #e4e6eb;">${escapeHtml(n.content)}</div>
                                 <div class="small text-muted">${relativeTime(n.createdAt)}</div>
                             </div>
                             ${n.isRead ? '' : '<span class="badge bg-primary rounded-pill" style="font-size:0.55rem;">new</span>'}

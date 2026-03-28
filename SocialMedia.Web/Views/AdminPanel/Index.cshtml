@@ -7,53 +7,51 @@
 <div class="container mt-4">
     <h2 class="mb-4 text-light"><i class="fas fa-chart-pie me-2 text-danger"></i> Platform Analytics</h2>
 
-   
     <div class="row g-4 mb-5">
         <div class="col-md-4 col-sm-6">
             <div class="fb-card p-4 text-center border-top border-4 border-primary shadow-sm" style="border-top-color: #2d88ff !important;">
                 <i class="fas fa-users fa-2x mb-2" style="color: #2d88ff;"></i>
-                <h3 class="text-light fw-bold">@Model.TotalUsers</h3>
+                <h3 class="text-light fw-bold" id="totalUsers">@Model.TotalUsers</h3>
                 <p class="text-fb-muted mb-0">Total Users</p>
             </div>
         </div>
         <div class="col-md-4 col-sm-6">
             <div class="fb-card p-4 text-center border-top border-4 shadow-sm" style="border-top-color: #28a745 !important;">
                 <i class="fas fa-pen-alt fa-2x mb-2 text-success"></i>
-                <h3 class="text-light fw-bold">@Model.TotalPosts</h3>
+                <h3 class="text-light fw-bold" id="totalPosts">@Model.TotalPosts</h3>
                 <p class="text-fb-muted mb-0">Total Posts</p>
             </div>
         </div>
         <div class="col-md-4 col-sm-6">
             <div class="fb-card p-4 text-center border-top border-4 shadow-sm" style="border-top-color: #ffc107 !important;">
                 <i class="fas fa-comments fa-2x mb-2 text-warning"></i>
-                <h3 class="text-light fw-bold">@Model.TotalComments</h3>
+                <h3 class="text-light fw-bold" id="totalComments">@Model.TotalComments</h3>
                 <p class="text-fb-muted mb-0">Total Comments</p>
             </div>
         </div>
         <div class="col-md-4 col-sm-6">
             <div class="fb-card p-4 text-center border-top border-4 shadow-sm" style="border-top-color: #e83e8c !important;">
                 <i class="fas fa-heart fa-2x mb-2" style="color: #e83e8c;"></i>
-                <h3 class="text-light fw-bold">@Model.TotalReactions</h3>
+                <h3 class="text-light fw-bold" id="totalReactions">@Model.TotalReactions</h3>
                 <p class="text-fb-muted mb-0">Total Reactions</p>
             </div>
         </div>
         <div class="col-md-4 col-sm-6">
             <div class="fb-card p-4 text-center border-top border-4 shadow-sm" style="border-top-color: #17a2b8 !important;">
                 <i class="fas fa-envelope fa-2x mb-2 text-info"></i>
-                <h3 class="text-light fw-bold">@Model.TotalMessages</h3>
+                <h3 class="text-light fw-bold" id="totalMessages">@Model.TotalMessages</h3>
                 <p class="text-fb-muted mb-0">Total Messages</p>
             </div>
         </div>
         <div class="col-md-4 col-sm-6">
             <div class="fb-card p-4 text-center border-top border-4 shadow-sm" style="border-top-color: #dc3545 !important;">
                 <i class="fas fa-users-cog fa-2x mb-2 text-danger"></i>
-                <h3 class="text-light fw-bold">@Model.TotalGroups</h3>
+                <h3 class="text-light fw-bold" id="totalGroups">@Model.TotalGroups</h3>
                 <p class="text-fb-muted mb-0">Total Groups</p>
             </div>
         </div>
     </div>
 
-   
     <div class="row">
         <div class="col-md-8 mx-auto">
             <div class="fb-card p-4">
@@ -65,33 +63,30 @@
 </div>
 
 @section Scripts {
-  
+ 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+         
             const ctx = document.getElementById('analyticsChart').getContext('2d');
-
             const data = {
                 labels: ['Users', 'Posts', 'Comments', 'Reactions', 'Messages', 'Groups'],
                 datasets: [{
                     label: 'Counts',
                     data: [@Model.TotalUsers, @Model.TotalPosts, @Model.TotalComments, @Model.TotalReactions, @Model.TotalMessages, @Model.TotalGroups],
                     backgroundColor: [
-                        'rgba(45, 136, 255, 0.6)',  
-                        'rgba(40, 167, 69, 0.6)',   
-                        'rgba(255, 193, 7, 0.6)',   
-                        'rgba(232, 62, 140, 0.6)',  
-                        'rgba(23, 162, 184, 0.6)',  
-                        'rgba(220, 53, 69, 0.6)'    
+                        'rgba(45, 136, 255, 0.6)',
+                        'rgba(40, 167, 69, 0.6)',
+                        'rgba(255, 193, 7, 0.6)',
+                        'rgba(232, 62, 140, 0.6)',
+                        'rgba(23, 162, 184, 0.6)',
+                        'rgba(220, 53, 69, 0.6)'
                     ],
-                    borderColor: [
-                        '#2d88ff',
-                        '#28a745',
-                        '#ffc107',
-                        '#e83e8c',
-                        '#17a2b8',
-                        '#dc3545'
-                    ],
+                    borderColor: ['#2d88ff', '#28a745', '#ffc107', '#e83e8c', '#17a2b8', '#dc3545'],
                     borderWidth: 1
                 }]
             };
@@ -101,26 +96,47 @@
                 data: data,
                 options: {
                     responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: { color: '#e4e6eb' }
-                        }
-                    },
+                    plugins: { legend: { labels: { color: '#e4e6eb' } } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: '#b0b3b8' },
-                            grid: { color: '#393a3b' }
-                        },
-                        x: {
-                            ticks: { color: '#b0b3b8' },
-                            grid: { display: false }
-                        }
+                        y: { beginAtZero: true, ticks: { color: '#b0b3b8' }, grid: { color: '#393a3b' } },
+                        x: { ticks: { color: '#b0b3b8' }, grid: { display: false } }
                     }
                 }
             };
 
-            new Chart(ctx, config);
+            let myChart = new Chart(ctx, config);
+
+           
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/adminDashboardHub")
+                .build();
+
+
+            connection.on("UpdateDashboard", function (updatedData) {
+
+              
+                document.getElementById("totalUsers").innerText = updatedData.totalUsers;
+                document.getElementById("totalPosts").innerText = updatedData.totalPosts;
+                document.getElementById("totalComments").innerText = updatedData.totalComments;
+                document.getElementById("totalReactions").innerText = updatedData.totalReactions;
+                document.getElementById("totalMessages").innerText = updatedData.totalMessages;
+                document.getElementById("totalGroups").innerText = updatedData.totalGroups;
+
+             
+                myChart.data.datasets[0].data = [
+                    updatedData.totalUsers,
+                    updatedData.totalPosts,
+                    updatedData.totalComments,
+                    updatedData.totalReactions,
+                    updatedData.totalMessages,
+                    updatedData.totalGroups
+                ];
+                myChart.update(); 
+            });
+
+            connection.start()
+                .then(function () { console.log("Dashboard SignalR Connected."); })
+                .catch(function (err) { return console.error(err.toString()); });
         });
     </script>
 }

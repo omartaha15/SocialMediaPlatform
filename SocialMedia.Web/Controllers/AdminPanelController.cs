@@ -12,6 +12,7 @@ namespace SocialMedia.Web.Controllers
         {
             _dashboardService = dashboardService;
         }
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             var analytics = await _dashboardService.GetAnalyticsSummaryAsync();

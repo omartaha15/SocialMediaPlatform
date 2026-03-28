@@ -16,15 +16,17 @@ namespace SocialMedia.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotificationRealtimeService _notificationRealtimeService;
         private readonly ILogger<ReactionService> _logger;
-
+        private readonly IDashboardNotifierService _dashboardNotifier;
         public ReactionService(
             IUnitOfWork unitOfWork,
             INotificationRealtimeService notificationRealtimeService,
-            ILogger<ReactionService> logger)
+            ILogger<ReactionService> logger,
+            IDashboardNotifierService dashboardNotifier)
         {
             _unitOfWork = unitOfWork;
             _notificationRealtimeService = notificationRealtimeService;
             _logger = logger;
+            _dashboardNotifier = dashboardNotifier;
         }
 
         public async Task AddOrUpdateReactionAsync(Guid postId, string userId, MultiReaction reaction)
@@ -55,6 +57,11 @@ namespace SocialMedia.Application.Services
                 };
 
                 await repo.AddAsync(newReaction);
+
+
+                await _unitOfWork.CompleteAsync();
+                await _dashboardNotifier.NotifyDashboardUpdatedAsync();
+
 
                 if (post.UserId != userId)
                 {
@@ -95,6 +102,7 @@ namespace SocialMedia.Application.Services
                 }
             }
 
+
             await _unitOfWork.CompleteAsync();
         }
         public async Task RemoveReactionAsync(Guid postId, string userId)
@@ -109,7 +117,9 @@ namespace SocialMedia.Application.Services
             {
                 repo.Delete(reaction);
                 await _unitOfWork.CompleteAsync();
+                await _dashboardNotifier.NotifyDashboardUpdatedAsync();
             }
+         
         }
 
         public async Task<Dictionary<MultiReaction, int>> GetReactionsCountAsync(Guid postId)

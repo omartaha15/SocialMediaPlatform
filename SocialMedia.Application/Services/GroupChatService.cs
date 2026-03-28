@@ -13,10 +13,12 @@ namespace SocialMedia.Application.Services
     public class GroupChatService : IGroupChatService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IDashboardNotifierService _dashboardNotifier;
 
-        public GroupChatService(IUnitOfWork uow)
+        public GroupChatService(IUnitOfWork uow, IDashboardNotifierService dashboardNotifier)
         {
             _uow = uow;
+            _dashboardNotifier = dashboardNotifier;
         }
 
         // ── Create Group ──────────────────────────────────────────────────────
@@ -28,6 +30,7 @@ namespace SocialMedia.Application.Services
                 Description = dto.Description,
                 CreatedAt = DateTime.UtcNow
             };
+          
 
             await _uow.GroupChats.AddAsync(group);
 
@@ -40,7 +43,7 @@ namespace SocialMedia.Application.Services
             });
 
             await _uow.CompleteAsync();     // group + creator member in one transaction
-
+            await _dashboardNotifier.NotifyDashboardUpdatedAsync();
             return MapToGroupDto(group, 1);
         }
 
@@ -242,8 +245,11 @@ namespace SocialMedia.Application.Services
             };
 
             await _uow.GroupChats.DeleteGroupMessageAsync(messageId);
+
             await _uow.CompleteAsync();
             
+
+
             return messageDto;
         }
 

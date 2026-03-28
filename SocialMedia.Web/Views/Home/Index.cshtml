@@ -133,7 +133,10 @@
                     <div class="post-header">
                         <div class="post-avatar-wrap">
                             <div class="post-avatar"><img src="@avatarUrl" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" /></div>
-                            <div class="online-dot"></div>
+                            @if (SocialMedia.Web.Hubs.ChatHub.IsUserOnline(post.userId))
+                            {
+                                <div class="online-dot"></div>
+                            }
                         </div>
                         <div class="post-meta">
                             <span class="post-author">@post.UserName</span>

@@ -16,11 +16,12 @@ namespace SocialMedia.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IImageService _imageService;
-
-        public PostService(IUnitOfWork unitOfWork, IImageService imageService)
+        private readonly IDashboardNotifierService _dashboardNotifier;
+        public PostService(IUnitOfWork unitOfWork, IImageService imageService, IDashboardNotifierService dashboardNotifier)
         {
             _unitOfWork = unitOfWork;
             _imageService = imageService;
+            _dashboardNotifier = dashboardNotifier;
         }
 
         public async Task CreatePostAsync(CreatePostDto dto)
@@ -38,11 +39,12 @@ namespace SocialMedia.Application.Services
 
             await _unitOfWork.Repository<Post>().AddAsync(post);
             await _unitOfWork.CompleteAsync();
+            await _dashboardNotifier.NotifyDashboardUpdatedAsync();
         }
 
       
 
-        public Task DeletePostAsync(Guid id)
+        public async Task DeletePostAsync(Guid id)
         {
 
             var post =  _unitOfWork.Repository<Post>().GetByIdAsync(id).Result;
@@ -51,8 +53,8 @@ namespace SocialMedia.Application.Services
                 throw new Exception("Post not found");
 
             _unitOfWork.Repository<Post>().Delete(post);
-
-            return _unitOfWork.CompleteAsync();
+            await _unitOfWork.CompleteAsync();
+            await _dashboardNotifier.NotifyDashboardUpdatedAsync();
         }
 
        

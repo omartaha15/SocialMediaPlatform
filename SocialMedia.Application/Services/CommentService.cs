@@ -13,15 +13,17 @@ namespace SocialMedia.Application.Services
         private readonly IUnitOfWork _uow;
         private readonly INotificationRealtimeService _notificationRealtimeService;
         private readonly ILogger<CommentService> _logger;
-
+        private readonly IDashboardNotifierService _dashboardNotifier;
         public CommentService(
             IUnitOfWork uow,
             INotificationRealtimeService notificationRealtimeService,
-            ILogger<CommentService> logger)
+            ILogger<CommentService> logger,
+            IDashboardNotifierService dashboardNotifier)
         {
             _uow = uow;
             _notificationRealtimeService = notificationRealtimeService;
             _logger = logger;
+            _dashboardNotifier = dashboardNotifier;
         }
 
         public async Task<List<CommentDto>> GetPostCommentsAsync(Guid postId)
@@ -98,7 +100,7 @@ namespace SocialMedia.Application.Services
                 .Query()
                 .Include(c => c.Author)                              // ✅ was Author
                 .FirstAsync(c => c.Id == comment.Id);
-
+            await _dashboardNotifier.NotifyDashboardUpdatedAsync();
             return MapToDto(saved);
         }
 
@@ -114,6 +116,8 @@ namespace SocialMedia.Application.Services
 
             _uow.Repository<Comment>().Delete(comment);
             await _uow.CompleteAsync();
+            await _dashboardNotifier.NotifyDashboardUpdatedAsync();
+
         }
 
         private static CommentDto MapToDto(Comment c) => new()
@@ -128,5 +132,6 @@ namespace SocialMedia.Application.Services
             CreatedAt = c.CreatedAt,
             Replies = c.Replies?.Select(MapToDto).ToList() ?? new()
         };
+  
     }
 }       

@@ -17,16 +17,18 @@ namespace SocialMedia.Application.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IImageService _imageService;
-        
+        private readonly IDashboardNotifierService _dashboardNotifier;
         public UserService(UserManager<ApplicationUser> userManager,
                            SignInManager<ApplicationUser> signInManager,
-                           IImageService imageService
+                           IImageService imageService,
+                            IDashboardNotifierService dashboardNotifier
                             )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _imageService = imageService;
-           
+            _dashboardNotifier = dashboardNotifier;
+
         }
         #region register
         public async Task<IdentityResult> RegisterAsync(RegisterDto dto)
@@ -55,7 +57,7 @@ namespace SocialMedia.Application.Services
             {
                 throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
             }
-
+            await _dashboardNotifier.NotifyDashboardUpdatedAsync();
             return result;
 
         }

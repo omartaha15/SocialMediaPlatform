@@ -710,7 +710,7 @@
                 .withUrl('/notificationhub')
                 .withAutomaticReconnect()
                 .build();
-
+          
             notificationConnection.on('ReceiveNotification', (payload) => {
                 if (!payload || !payload.message) return;
                 prependRealtimeNotification(payload);
@@ -718,6 +718,16 @@
 
             notificationConnection.start().catch(() => {});
 
+            const chatConnection = new signalR.HubConnectionBuilder()
+                .withUrl('/chathub')
+                .withAutomaticReconnect()
+                .build();
+
+            chatConnection.on('UserOnlineStatus', (userId, isOnline) => {
+
+            });
+
+            chatConnection.start().catch((err) => console.error("ChatHub Connection Error: ", err));
             notifListDesktop?.addEventListener('click', async (e) => {
                 const target = e.target instanceof HTMLElement ? e.target.closest('.notification-item') : null;
                 if (!target) return;

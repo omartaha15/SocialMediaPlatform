@@ -51,6 +51,7 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<INotificationRealtimeService, NotificationRealtimeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IDashboardNotifierService, DashboardNotifierService>();
 builder.Services.AddSignalR();
 
 var app = builder.Build();
@@ -87,5 +88,6 @@ app.MapControllerRoute(
 
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<NotificationHub>("/notificationhub");
+app.MapHub<AdminDashboardHub>("/adminDashboardHub");
 
 app.Run();

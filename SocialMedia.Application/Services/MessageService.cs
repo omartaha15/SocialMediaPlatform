@@ -16,15 +16,17 @@ namespace SocialMedia.Application.Services
         private readonly IUnitOfWork _uow;
         private readonly INotificationRealtimeService _notificationRealtimeService;
         private readonly ILogger<MessageService> _logger;
-
+        private readonly IDashboardNotifierService _dashboardNotifier;
         public MessageService(
             IUnitOfWork uow,
             INotificationRealtimeService notificationRealtimeService,
-            ILogger<MessageService> logger)
+            ILogger<MessageService> logger,
+            IDashboardNotifierService dashboardNotifier)
         {
             _uow = uow;
             _notificationRealtimeService = notificationRealtimeService;
             _logger = logger;
+            _dashboardNotifier = dashboardNotifier;
         }
 
         // ── Send ──────────────────────────────────────────────────────────────
@@ -61,7 +63,7 @@ namespace SocialMedia.Application.Services
             }
 
             await _uow.CompleteAsync();
-
+            await _dashboardNotifier.NotifyDashboardUpdatedAsync();
             if (senderId != dto.ReceiverId)
             {
                 try
@@ -202,7 +204,7 @@ namespace SocialMedia.Application.Services
             var messageDto = MapToDto(message, message.Sender);
 
             await _uow.Messages.DeleteMessageAsync(messageId);
-            
+            await _dashboardNotifier.NotifyDashboardUpdatedAsync();
             return messageDto;
         }
     }

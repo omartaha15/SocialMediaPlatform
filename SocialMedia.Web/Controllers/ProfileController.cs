@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SocialMedia.Application.DTOs.ProfileDTOs;
 using SocialMedia.Application.Interfaces.Services;
+using SocialMedia.Domain.Entities;
 using SocialMedia.Web.ViewModels;
 using System.Security.Claims;
 
@@ -13,18 +15,23 @@ namespace SocialMedia.Web.Controllers
         private readonly IProfileService _profileService;
         private readonly IFriendshipService _friendshipService;
         private readonly IPostService _postService;
-
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         public ProfileController(
             IProfileService profileService,
             IFriendshipService friendshipService,
-            IPostService postService) 
+            IPostService postService,
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager) 
         {
             _profileService = profileService;
             _friendshipService = friendshipService;
-            _postService = postService; 
+            _postService = postService;
+            _signInManager = signInManager;
+            _userManager = userManager;
         }
 
-        [HttpGet]
+       
         [HttpGet]
         public async Task<IActionResult> Index(string id = null)
         {
@@ -62,7 +69,7 @@ namespace SocialMedia.Web.Controllers
 
             try
             {
-               
+
                 await _profileService.UpdateProfileAsync(userId, new EditProfileDto
                 {
                     UserName = model.UserName,
@@ -72,24 +79,31 @@ namespace SocialMedia.Web.Controllers
                     Gender = model.Gender
                 });
 
-          
+       
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user != null)
+                {
+                    await _signInManager.RefreshSignInAsync(user);
+                }
+
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-               
+
                 ModelState.AddModelError("UserName", ex.Message);
 
-  
-                var profile = await _profileService.GetProfileAsync(userId);
-                profile.UserName = model.UserName; 
 
-              
+                var profile = await _profileService.GetProfileAsync(userId);
+                profile.UserName = model.UserName;
+
+
                 ViewBag.ShowEditModal = true;
 
                 return View("Index", profile);
             }
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -173,6 +187,53 @@ namespace SocialMedia.Web.Controllers
 
             await _profileService.RemoveCoverAsync(userId);
             return RedirectToAction("Index");
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.ShowChangePasswordModal = true;
+                var currentProfile = await _profileService.GetProfileAsync(userId);
+                return View("Index", currentProfile);
+            }
+
+            try
+            {
+                var dto = new ChangePasswordDto
+                {
+                    CurrentPassword = model.CurrentPassword,
+                    NewPassword = model.NewPassword
+                };
+
+                var result = await _profileService.ChangePasswordAsync(userId, dto);
+
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    ViewBag.ShowChangePasswordModal = true;
+                    var currentProfile = await _profileService.GetProfileAsync(userId);
+                    return View("Index", currentProfile);
+                }
+
+                TempData["SuccessMessage"] = "Password updated successfully.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "An error occurred while changing the password.");
+                ViewBag.ShowChangePasswordModal = true;
+                var currentProfile = await _profileService.GetProfileAsync(userId);
+                return View("Index", currentProfile);
+            }
         }
     }
 }

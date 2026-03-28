@@ -118,5 +118,15 @@ namespace SocialMedia.Application.Services
 
             await _userManager.UpdateAsync(user);
         }
+        public async Task<IdentityResult> ChangePasswordAsync(string userId, ChangePasswordDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "User not found." });
+            }
+
+            return await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+        }
     }
 }

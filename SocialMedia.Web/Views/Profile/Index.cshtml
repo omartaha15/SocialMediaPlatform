@@ -48,19 +48,19 @@
         z-index: 2;
     }
 
-  
+
     .profile-meta-container {
         display: flex;
-        align-items: flex-end; 
+        align-items: flex-end;
         padding-left: 30px;
         padding-right: 30px;
-        margin-top: -40px; 
+        margin-top: -40px;
     }
 
     .profile-photo-wrapper {
         position: relative;
         z-index: 3;
-        margin-right: 20px; 
+        margin-right: 20px;
     }
 
     .profile-photo {
@@ -107,7 +107,7 @@
     }
 
     .details-title {
-        color: #1877f2; 
+        color: #1877f2;
     }
 
 
@@ -131,8 +131,15 @@
         filter: invert(0);
         cursor: pointer;
     }
-   
 </style>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show text-center m-0" role="alert" style="border-radius: 0;">
+        <strong>Success!</strong> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <div class="container mt-4 mb-5">
 
@@ -153,13 +160,16 @@
         <div class="profile-meta-container d-flex justify-content-between">
             <div class="d-flex align-items-end mb-3">
                 <!-- PROFILE IMAGE -->
-                <div class="profile-photo-wrapper" @if(ViewBag.IsOwner == true) { <text>data-bs-toggle="modal" data-bs-target="#profileImageModal"</text> }>
+                <div class="profile-photo-wrapper" @if(ViewBag.IsOwner == true) {
+                <text>data-bs-toggle="modal" data-bs-target="#profileImageModal"</text>
+                                }
+>
                     <img src="@profileImg" alt="Profile" class="profile-photo shadow-sm" />
                     @if (ViewBag.IsOwner == true)
                     {
-                        <div class="profile-camera-icon shadow-sm">
-                            <i class="bi bi-camera-fill fs-5"></i>
-                        </div>
+                            <div class="profile-camera-icon shadow-sm">
+                                <i class="bi bi-camera-fill fs-5"></i>
+                            </div>
                     }
                 </div>
 
@@ -240,9 +250,14 @@
 
                 @if (ViewBag.IsOwner == true)
                 {
-                    <!--  Info -->
-                    <button class="btn w-100 fw-bold mt-2" style="background-color:#e4e6eb; color: #050505;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                        Edit Details
+                    <hr />
+                    <!-- Edit Actions inside Details Card -->
+                    <button class="btn w-100 fw-bold mt-2 d-flex align-items-center justify-content-center" style="background-color:#e4e6eb; color: #050505;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="bi bi-person-lines-fill me-2 fs-5"></i> Edit Details
+                    </button>
+                    <!-- Change Password Button -->
+                    <button class="btn w-100 fw-bold mt-2 btn-dark d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        <i class="bi bi-shield-lock-fill me-2 fs-5"></i> Change Password
                     </button>
                 }
             </div>
@@ -290,9 +305,40 @@
 </div>
 
 <!-- ================= MODALS ================= -->
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog border-0 shadow-lg modal-dialog-centered">
+        <form asp-action="ChangePassword" asp-controller="Profile" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                @Html.ValidationSummary(true, "", new { @class = "text-danger small mb-3 fw-bold" })
+
+                <label class="form-label text-muted small fw-bold">Current Password</label>
+                <input name="CurrentPassword" type="password" class="form-control mb-1" placeholder="Enter current password"  />
+                @Html.ValidationMessage("CurrentPassword", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
+
+                <label class="form-label text-muted small fw-bold">New Password</label>
+                <input name="NewPassword" type="password" class="form-control mb-1" placeholder="Enter new password"  />
+                @Html.ValidationMessage("NewPassword", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
+
+                <label class="form-label text-muted small fw-bold">Confirm New Password</label>
+                <input name="ConfirmNewPassword" type="password" class="form-control mb-1" placeholder="Confirm new password"  />
+                @Html.ValidationMessage("ConfirmNewPassword", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="submit" class="btn btn-dark w-100 fw-bold">Update Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- EDIT PROFILE MODAL -->
 <div class="modal fade" id="editProfileModal" tabindex="-1">
-    <div class="modal-dialog border-0 shadow-lg">
+    <div class="modal-dialog border-0 shadow-lg modal-dialog-centered">
         <!--  asp-controller="Profile"  -->
         <form asp-action="Update" asp-controller="Profile" method="post" class="modal-content">
             @Html.AntiForgeryToken()
@@ -301,10 +347,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-               
+
                 <label class="form-label text-muted small fw-bold">Name</label>
                 <input name="UserName" value="@Model.UserName" class="form-control mb-1" placeholder="Your Name" required />
-  
+
                 @Html.ValidationMessage("UserName", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
 
                 <label class="form-label text-muted small fw-bold">Bio</label>
@@ -346,7 +392,7 @@
 
 <!-- PROFILE IMAGE MODAL -->
 <div class="modal fade" id="profileImageModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content p-3 text-center">
             <h5 class="fw-bold mb-3 text-dark">Profile Picture</h5>
             <form asp-action="UploadProfileImage" method="post" enctype="multipart/form-data">
@@ -366,7 +412,7 @@
 
 <!-- COVER IMAGE MODAL -->
 <div class="modal fade" id="coverModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content p-3 text-center">
             <h5 class="fw-bold mb-3 text-dark">Cover Photo</h5>
             <form asp-action="UploadCover" method="post" enctype="multipart/form-data">
@@ -383,27 +429,28 @@
         </div>
     </div>
 </div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-   
+
         document.addEventListener("DOMContentLoaded", function() {
-            
+
             @if (ViewBag.ShowEditModal == true)
             {
-                <text>
-                var editModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
-                editModal.show();
-                </text>
+                    <text>
+                    var editModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+                    editModal.show();
+                    </text>
             }
 
             @if (ViewBag.ShowProfileImageModal == true)
             {
-                <text>
-                var profileImgModal = new bootstrap.Modal(document.getElementById('profileImageModal'));
-                profileImgModal.show();
-                </text>
+                    <text>
+                    var profileImgModal = new bootstrap.Modal(document.getElementById('profileImageModal'));
+                    profileImgModal.show();
+                    </text>
             }
 
             @if (ViewBag.ShowCoverModal == true)
@@ -411,6 +458,14 @@
                     <text>
                     var coverModal = new bootstrap.Modal(document.getElementById('coverModal'));
                     coverModal.show();
+                    </text>
+            }
+
+            @if (ViewBag.ShowChangePasswordModal == true)
+            {
+                    <text>
+                    var changePwdModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+                    changePwdModal.show();
                     </text>
             }
 

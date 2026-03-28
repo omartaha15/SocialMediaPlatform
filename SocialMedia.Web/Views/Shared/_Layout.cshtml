@@ -240,8 +240,9 @@
                         else
                         {
                             var userManager = Context.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
-                            var user = await userManager.FindByNameAsync(User.Identity.Name);
+                            var user = await userManager.GetUserAsync(User);
                             var profilePic = user?.ProfilePictureUrl ?? "/images/user.jpg";
+                            var displayUserName = user?.UserName ?? User.Identity.Name;
 
                             <li class="nav-item dropdown position-relative d-none d-lg-block">
                                 <a class="nav-circle-btn text-decoration-none" href="#" id="navbarNotificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
@@ -291,7 +292,8 @@
                                 </form>
                                 <a class="nav-link d-flex align-items-center gap-2 p-1 pe-2 rounded-pill hover-bg-dark text-decoration-none" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: transparent;">
                                     <img src="@profilePic" class="rounded-circle" style="width:36px; height:36px; object-fit:cover; border: 1px solid #393a3b;" />
-                                    <span class="fw-bold text-light" style="font-size: 0.95rem;">@User.Identity.Name</span>
+
+                                    <span class="fw-bold text-light" style="font-size: 0.95rem;">@displayUserName</span>
                                     <i class="fas fa-chevron-down ms-1 d-none d-lg-inline" style="font-size: 0.8rem; color: #b0b3b8;"></i>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 border-0 shadow-lg p-2" aria-labelledby="navbarProfileDropdown" style="width: 320px;">
@@ -299,7 +301,7 @@
                                         <a asp-controller="Profile" asp-action="Index" class="dropdown-item d-flex align-items-center p-2 rounded shadow-sm hover-bg-dark text-decoration-none" style="border: 1px solid rgba(255,255,255,0.1);">
                                             <img src="@profilePic" class="rounded-circle me-3" style="width: 48px; height: 48px; object-fit: cover;" />
                                             <div>
-                                                <div class="fw-bold text-light" style="font-size: 1.05rem;">@User.Identity.Name</div>
+                                                <div class="fw-bold text-light" style="font-size: 1.05rem;">@displayUserName</div>
                                                 <div class="text-muted small">See your profile</div>
                                             </div>
                                         </a>

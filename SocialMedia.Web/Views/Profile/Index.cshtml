@@ -78,12 +78,27 @@
         position: absolute;
         bottom: 10px;
         right: 10px;
-        background: #e4e6eb;
+        background: linear-gradient(135deg, #2d88ff 60%, #1877f2 100%);
         border-radius: 50%;
-        padding: 8px;
+        padding: 10px;
         cursor: pointer;
-        border: 1px solid #ced0d4;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(24,119,242,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: box-shadow 0.2s, background 0.2s;
     }
+
+        .profile-camera-icon i {
+            color: #fff;
+            font-size: 1.3rem;
+        }
+
+        .profile-camera-icon:hover {
+            box-shadow: 0 4px 16px rgba(24,119,242,0.25);
+            background: linear-gradient(135deg, #1877f2 80%, #2d88ff 100%);
+        }
 
     .info-card {
         background: #242526; border: 1px solid #393a3b;
@@ -112,20 +127,49 @@
     }
 
 
-    .modal-content input.form-control,
-    .modal-content select.form-select {
-        color: #e4e6eb !important;
-        background-color: #f0f2f5 !important;
-        border: 1px solid #ccd0d5;
-        font-weight: 500;
+    .modal-content {
+        background-color: #242526;
+        border: 1px solid #393a3b;
     }
 
-        .modal-content input.form-control:focus,
-        .modal-content select.form-select:focus {
-            background-color: #ffffff !important;
-            border-color: #1877f2;
-            box-shadow: 0 0 0 0.2rem rgba(24, 119, 242, 0.25);
+        .modal-content input.form-control,
+        .modal-content select.form-select {
             color: #e4e6eb !important;
+            background-color: #3a3b3c !important;
+            border: 1px solid #4a4b4c;
+            font-weight: 500;
+        }
+
+            .modal-content input.form-control:focus,
+            .modal-content select.form-select:focus {
+                background-color: #4e4f50 !important;
+                border-color: #2d88ff;
+                color: #fff !important;
+            }
+
+    .btn-light, .btn-secondary, .btn-primary {
+        color: #18191a !important;
+        font-weight: 700;
+    }
+
+    .btn-secondary {
+        background-color: #3a3b3c !important;
+        color: #e4e6eb !important;
+        border: 1px solid #393a3b !important;
+    }
+
+        .btn-secondary:hover {
+            background-color: #4e4f50 !important;
+        }
+
+    .btn-primary {
+        background-color: #2d88ff !important;
+        color: #fff !important;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background-color: #1475eb !important;
         }
 
     ::-webkit-calendar-picker-indicator {
@@ -177,7 +221,7 @@
                 <!-- NAME & BIO -->
                 <div class="pb-2">
                     <h1 class="fw-bold mb-0 text-light">@Model.UserName</h1>
-                    <a asp-controller="Friendship" asp-action="Index" class="text-decoration-none text-muted fw-bold mt-1 mb-2 d-inline-block">
+                    <a asp-controller="Friendship" asp-action="Index" class="text-decoration-none fw-bold mt-1 mb-2 d-inline-block" style="color: #b0b3b8;">
                         @ViewBag.FriendsCount Friends
                     </a>
                     @if (!string.IsNullOrEmpty(Model.Bio))
@@ -191,7 +235,7 @@
             <div class="pb-4">
                 @if (ViewBag.IsOwner == true)
                 {
-                    <button class="btn btn-light fw-bold shadow-sm" style="background-color:#e4e6eb;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <button class="btn btn-light fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                         <i class="bi bi-pencil-fill me-1"></i> Edit Profile
                     </button>
                 }
@@ -253,11 +297,11 @@
                 {
                     <hr />
                     <!-- Edit Actions inside Details Card -->
-                    <button class="btn w-100 fw-bold mt-2 d-flex align-items-center justify-content-center" style="background-color:#e4e6eb; color: #e4e6eb;" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                        <i class="bi bi-person-lines-fill me-2 fs-5"></i> Edit Details
-                    </button>
+                 <button class="btn btn-light w-100 fw-bold mt-2 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+      <i class="bi bi-person-lines-fill me-2 fs-5"></i> Edit Details
+  </button>
                     <!-- Change Password Button -->
-                    <button class="btn w-100 fw-bold mt-2 btn-dark d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                    <button class="btn btn-secondary w-100 fw-bold mt-2 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
                         <i class="bi bi-shield-lock-fill me-2 fs-5"></i> Change Password
                     </button>
                 }
@@ -311,16 +355,16 @@
             <div class="modal-body">
                 @Html.ValidationSummary(true, "", new { @class = "text-danger small mb-3 fw-bold" })
 
-                <label class="form-label text-muted small fw-bold">Current Password</label>
-                <input name="CurrentPassword" type="password" class="form-control mb-1" placeholder="Enter current password"  />
+                <label class="form-label text-light small fw-bold">Current Password</label>
+                <input name="CurrentPassword" type="password" class="form-control mb-1" placeholder="Enter current password" />
                 @Html.ValidationMessage("CurrentPassword", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
 
-                <label class="form-label text-muted small fw-bold">New Password</label>
-                <input name="NewPassword" type="password" class="form-control mb-1" placeholder="Enter new password"  />
+                <label class="form-label text-light small fw-bold">New Password</label>
+                <input name="NewPassword" type="password" class="form-control mb-1" placeholder="Enter new password" />
                 @Html.ValidationMessage("NewPassword", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
 
-                <label class="form-label text-muted small fw-bold">Confirm New Password</label>
-                <input name="ConfirmNewPassword" type="password" class="form-control mb-1" placeholder="Confirm new password"  />
+                <label class="form-label text-light small fw-bold">Confirm New Password</label>
+                <input name="ConfirmNewPassword" type="password" class="form-control mb-1" placeholder="Confirm new password" />
                 @Html.ValidationMessage("ConfirmNewPassword", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
             </div>
             <div class="modal-footer border-top-0">
@@ -340,24 +384,25 @@
                 <h5 class="modal-title fw-bold text-light">Edit Personal Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
             <div class="modal-body">
 
-                <label class="form-label text-muted small fw-bold">Name</label>
+                <label class="form-label text-light small fw-bold">Name</label>
                 <input name="UserName" value="@Model.UserName" class="form-control mb-1" placeholder="Your Name" required />
 
                 @Html.ValidationMessage("UserName", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
 
-                <label class="form-label text-muted small fw-bold">Bio</label>
+                <label class="form-label text-light small fw-bold">Bio</label>
                 <input name="Bio" value="@Model.Bio" class="form-control mb-3" placeholder="Describe yourself..." />
 
-                <label class="form-label text-muted small fw-bold">Location</label>
+                <label class="form-label text-light small fw-bold">Location</label>
                 <input name="Location" value="@Model.Location" class="form-control mb-3" placeholder="Your City" />
 
-                <label class="form-label text-muted small fw-bold">Birthday</label>
+                <label class="form-label text-light small fw-bold">Birthday</label>
                 <!-- yyyy-MM-dd -->
                 <input name="DateOfBirth" value="@(Model.DateOfBirth?.ToString("yyyy-MM-dd"))" type="date" class="form-control mb-3" />
 
-                <label class="form-label text-muted small fw-bold">Gender</label>
+                <label class="form-label text-light small fw-bold">Gender</label>
                 <select name="Gender" class="form-select mb-2">
                     <option value="">Select Gender</option>
                     @if (Model.Gender == SocialMedia.Domain.Enums.Gender.Male)
@@ -391,14 +436,14 @@
             <h5 class="fw-bold mb-3 text-light">Profile Picture</h5>
             <form asp-action="UploadProfileImage" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
-                <input type="file" name="image" class="form-control mb-2" required />
+                <input type="file" name="image" class="form-control mb-2"  />
                 @Html.ValidationMessage("ProfileImage", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
 
                 <button type="submit" class="btn btn-primary w-100 fw-bold mb-2">Upload New Picture</button>
             </form>
             <form asp-action="RemoveProfileImage" method="post">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-light text-danger fw-bold w-100 border">Remove Picture</button>
+                <button type="submit" class="btn btn-outline-danger fw-bold w-100 border mt-1">Remove Picture</button>
             </form>
         </div>
     </div>
@@ -411,14 +456,14 @@
             <h5 class="fw-bold mb-3 text-light">Cover Photo</h5>
             <form asp-action="UploadCover" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
-                <input type="file" name="image" class="form-control mb-2" required />
+                <input type="file" name="image" class="form-control mb-2"  />
                 @Html.ValidationMessage("CoverImage", "", new { @class = "text-danger small mb-3 d-block", style = "font-weight: 500;" })
 
                 <button type="submit" class="btn btn-primary w-100 fw-bold mb-2">Upload New Cover</button>
             </form>
             <form asp-action="RemoveCover" method="post">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-light text-danger fw-bold w-100 border">Remove Cover</button>
+                <button type="submit" class="btn btn-outline-danger fw-bold w-100 border mt-1">Remove Cover</button>
             </form>
         </div>
     </div>
@@ -465,5 +510,7 @@
             }
 
         });
+            
+       
     </script>
 }

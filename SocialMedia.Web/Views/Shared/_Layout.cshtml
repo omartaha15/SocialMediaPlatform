@@ -155,16 +155,16 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark fixed-top navbar-fb px-2 px-md-3 py-1">
             <div class="container-fluid d-flex justify-content-between align-items-center">
-                
+
                 <!-- Left: Brand and Search -->
-                <div class="d-flex align-items-center" style="flex: 1;">
+                <div class="d-flex align-items-center me-3">
                     <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
                         <i class="fas fa-bolt me-1 text-primary"></i> <span class="d-none d-xl-inline">Zuvo</span>
                     </a>
-                    
+
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
-                        <div class="search-nav-wrapper ms-2 d-none d-md-block">
+                        <div class="search-nav-wrapper ms-3 d-none d-md-block">
                             <div class="search-inner">
                                 <i class="fas fa-search"></i>
                                 <input id="navbarSearchInput" class="form-control search-nav-input" type="text" placeholder="Search Zuvo..." autocomplete="off" />
@@ -179,74 +179,44 @@
                 </div>
 
                 <!-- Toggler -->
-                <button class="navbar-toggler border-0 px-1 py-1" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler border-0 px-1 py-1 ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- Center: Navigation Tabs && Right: Profile / Auth -->
-                <div class="collapse navbar-collapse justify-content-between" id="mainNavbar" style="flex: 2;">
-                    
-                    <!-- Center Links -->
+                <!-- Navigation Tabs & Right: Profile / Auth -->
+                <div class="collapse navbar-collapse justify-content-end" id="mainNavbar">
+
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
-                        <ul class="navbar-nav mx-auto mb-2 mb-lg-0 d-flex flex-lg-row flex-column justify-content-center gap-1 gap-lg-1 mt-3 mt-lg-0" style="flex: 1; justify-content: center;">
-                            <li class="nav-item">
-                                <a class="nav-icon-link" asp-area="" asp-controller="Home" asp-action="Index" title="Home">
-                                    <i class="fas fa-home"></i>
-                                    <span class="d-lg-none ms-3 fs-6">Home</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-icon-link" asp-area="" asp-controller="Friendship" asp-action="Index" title="Friends">
-                                    <i class="fas fa-user-friends"></i>
-                                    <span class="d-lg-none ms-3 fs-6">Friends</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-icon-link" asp-area="" asp-controller="GroupChat" asp-action="Index" title="Groups">
-                                    <i class="fas fa-users"></i>
-                                    <span class="d-lg-none ms-3 fs-6">Groups</span>
-                                </a>
-                            </li>
-                            <li class="nav-item d-md-none">
-                                <a class="nav-icon-link" asp-area="" asp-controller="Search" asp-action="Index" title="Search">
-                                    <i class="fas fa-search"></i>
-                                    <span class="d-lg-none ms-3 fs-6">Search People</span>
-                                </a>
-                            </li>
-                         
-                        </ul>
-                    }
-                    else
-                    {
-                        <ul class="navbar-nav mx-auto mt-3 mt-lg-0"></ul>
-                    }
+                        var userManager = Context.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+                        var user = await userManager.GetUserAsync(User);
+                        var profilePic = user?.ProfilePictureUrl ?? "/images/user.jpg";
+                        var displayUserName = user?.UserName ?? User.Identity.Name;
 
-                    <!-- Right Links -->
-                    <ul class="navbar-nav align-items-lg-center align-items-start mb-2 mb-lg-0 gap-2 gap-lg-3 mt-2 mt-lg-0" style="flex: 1; justify-content: flex-end;">
-                        @if (User.Identity == null || !User.Identity.IsAuthenticated)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login">
-                                    <i class="fas fa-sign-in-alt me-1"></i> Login
+                        <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row flex-wrap align-items-center mt-3 mt-lg-0" style="gap: 10px;">
+
+                            <!-- Desktop Icons -->
+                            <li class="nav-item d-none d-lg-block">
+                                <a class="nav-circle-btn text-decoration-none" asp-area="" asp-controller="Home" asp-action="Index" title="Home">
+                                    <i class="fas fa-home fs-5"></i>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="btn btn-fb-primary px-3 py-1 ms-lg-2" asp-area="" asp-controller="Account" asp-action="Register">
-                                    <i class="fas fa-user-plus me-1"></i> Sign Up
+
+                            <li class="nav-item d-none d-lg-block">
+                                <a class="nav-circle-btn text-decoration-none" asp-area="" asp-controller="Friendship" asp-action="Index" title="Friends">
+                                    <i class="fas fa-user-friends fs-5"></i>
                                 </a>
                             </li>
-                        }
-                        else
-                        {
-                            var userManager = Context.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
-                            var user = await userManager.GetUserAsync(User);
-                            var profilePic = user?.ProfilePictureUrl ?? "/images/user.jpg";
-                            var displayUserName = user?.UserName ?? User.Identity.Name;
+
+                            <li class="nav-item d-none d-lg-block">
+                                <a class="nav-circle-btn text-decoration-none" asp-area="" asp-controller="GroupChat" asp-action="Index" title="Groups">
+                                    <i class="fas fa-users fs-5"></i>
+                                </a>
+                            </li>
 
                             <li class="nav-item dropdown position-relative d-none d-lg-block">
                                 <a class="nav-circle-btn text-decoration-none" href="#" id="navbarNotificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
-                                    <i class="fas fa-bell"></i>
+                                    <i class="fas fa-bell fs-5"></i>
                                     <span id="notif-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 p-0" aria-labelledby="navbarNotificationsDropdown" style="width: 360px;">
@@ -265,44 +235,25 @@
 
                             <li class="nav-item position-relative d-none d-lg-block">
                                 <a class="nav-circle-btn text-decoration-none" asp-controller="Messaging" asp-action="Index" title="Messages">
-                                    <i class="fas fa-envelope"></i>
+                                    <i class="fas fa-envelope fs-5"></i>
                                     <span id="msg-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
                                 </a>
                             </li>
 
-                            <li class="nav-item d-lg-none">
-                                <a class="nav-icon-link" href="#" title="Notifications" data-bs-toggle="offcanvas" data-bs-target="#mobileNotificationsOffcanvas" aria-controls="mobileNotificationsOffcanvas">
-                                    <i class="fas fa-bell"></i>
-                                    <span class="ms-3 fs-6">Notifications</span>
-                                    <span id="notif-badge-mobile" class="badge bg-danger ms-2 rounded-pill" style="display:none;">0</span>
-                                </a>
-                            </li>
-
-                            <li class="nav-item d-lg-none">
-                                <a class="nav-icon-link" asp-controller="Messaging" asp-action="Index" title="Messages">
-                                    <i class="fas fa-envelope"></i>
-                                    <span class="ms-3 fs-6">Messages</span>
-                                    <span id="msg-badge-mobile" class="badge bg-danger ms-2 rounded-pill" style="display:none;">0</span>
-                                </a>
-                            </li>
-
-                            <li class="nav-item dropdown w-100 w-lg-auto border-top border-secondary d-lg-block pt-2 pt-lg-0 mt-2 mt-lg-0 pb-3 pb-lg-0">
+                            <li class="nav-item dropdown d-none d-lg-block ms-1">
                                 <form id="notificationsAntiForgeryForm" class="d-none">
                                     @Html.AntiForgeryToken()
                                 </form>
-                                <a class="nav-link d-flex align-items-center gap-2 p-1 pe-2 rounded-pill hover-bg-dark text-decoration-none" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: transparent;">
-                                    <img src="@profilePic" class="rounded-circle" style="width:36px; height:36px; object-fit:cover; border: 1px solid #393a3b;" />
-
-                                    <span class="fw-bold text-light" style="font-size: 0.95rem;">@displayUserName</span>
-                                    <i class="fas fa-chevron-down ms-1 d-none d-lg-inline" style="font-size: 0.8rem; color: #b0b3b8;"></i>
+                                <a class="nav-link p-0 d-flex align-items-center text-decoration-none" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="outline: none;">
+                                    <img src="@profilePic" class="rounded-circle" style="width:40px; height:40px; object-fit:cover; border: 1px solid #393a3b;" title="Profile" />
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 border-0 shadow-lg p-2" aria-labelledby="navbarProfileDropdown" style="width: 320px;">
+                                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 border-0 shadow-lg p-2 position-absolute" aria-labelledby="navbarProfileDropdown" style="width: 320px;">
                                     <li class="mb-2">
                                         <a asp-controller="Profile" asp-action="Index" class="dropdown-item d-flex align-items-center p-2 rounded shadow-sm hover-bg-dark text-decoration-none" style="border: 1px solid rgba(255,255,255,0.1);">
                                             <img src="@profilePic" class="rounded-circle me-3" style="width: 48px; height: 48px; object-fit: cover;" />
                                             <div>
                                                 <div class="fw-bold text-light" style="font-size: 1.05rem;">@displayUserName</div>
-                                                <div class="text-muted small">See your profile</div>
+                                                <div class="small" style="color: #b0b3b8;">See your profile</div>
                                             </div>
                                         </a>
                                     </li>
@@ -341,13 +292,73 @@
                                     </li>
                                 </ul>
                             </li>
-                        }
-                    </ul>
+
+                            <!-- Mobile Menu Links -->
+                            <li class="nav-item d-lg-none mt-1 w-100">
+                                <a class="nav-icon-link px-2 justify-content-start" asp-area="" asp-controller="Home" asp-action="Index">
+                                    <i class="fas fa-home"></i>
+                                    <span class="ms-3 fs-6">Home</span>
+                                </a>
+                            </li>
+                            <li class="nav-item d-lg-none mt-1 w-100">
+                                <a class="nav-icon-link px-2 justify-content-start" asp-area="" asp-controller="Friendship" asp-action="Index">
+                                    <i class="fas fa-user-friends"></i>
+                                    <span class="ms-3 fs-6">Friends</span>
+                                </a>
+                            </li>
+                            <li class="nav-item d-lg-none mt-1 w-100">
+                                <a class="nav-icon-link px-2 justify-content-start" asp-area="" asp-controller="GroupChat" asp-action="Index">
+                                    <i class="fas fa-users"></i>
+                                    <span class="ms-3 fs-6">Groups</span>
+                                </a>
+                            </li>
+                            <li class="nav-item d-lg-none mt-1 w-100">
+                                <a class="nav-icon-link px-2 justify-content-start" asp-area="" asp-controller="Search" asp-action="Index">
+                                    <i class="fas fa-search"></i>
+                                    <span class="ms-3 fs-6">Search People</span>
+                                </a>
+                            </li>
+                            <li class="nav-item d-lg-none mt-1 w-100">
+                                <a class="nav-icon-link px-2 justify-content-start" href="#" data-bs-toggle="offcanvas" data-bs-target="#mobileNotificationsOffcanvas">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="ms-3 fs-6">Notifications</span>
+                                    <span id="notif-badge-mobile" class="badge bg-danger ms-2 rounded-pill" style="display:none;">0</span>
+                                </a>
+                            </li>
+                            <li class="nav-item d-lg-none mt-1 w-100">
+                                <a class="nav-icon-link px-2 justify-content-start" asp-controller="Messaging" asp-action="Index">
+                                    <i class="fas fa-envelope"></i>
+                                    <span class="ms-3 fs-6">Messages</span>
+                                    <span id="msg-badge-mobile" class="badge bg-danger ms-2 rounded-pill" style="display:none;">0</span>
+                                </a>
+                            </li>
+                            <li class="nav-item d-lg-none mt-1 border-top border-secondary pt-2 w-100">
+                                <a class="nav-icon-link px-2 justify-content-start" asp-controller="Profile" asp-action="Index">
+                                    <img src="@profilePic" class="rounded-circle me-3" style="width:30px; height:30px; object-fit:cover;" />
+                                    <span class="fs-6">Profile</span>
+                                </a>
+                            </li>
+                        </ul>
+                    }
+                    else
+                    {
+                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 mt-2 mt-lg-0 d-flex flex-row align-items-center gap-2">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i> Login
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-fb-primary px-3 py-1" asp-area="" asp-controller="Account" asp-action="Register">
+                                    <i class="fas fa-user-plus me-1"></i> Sign Up
+                                </a>
+                            </li>
+                        </ul>
+                    }
                 </div>
             </div>
         </nav>
     </header>
-
     @if (User.Identity != null && User.Identity.IsAuthenticated)
     {
         <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="mobileNotificationsOffcanvas" aria-labelledby="mobileNotificationsOffcanvasLabel">

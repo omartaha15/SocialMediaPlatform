@@ -118,6 +118,9 @@ namespace SocialMedia.Web.Controllers
                 ModelState.AddModelError("ProfileImage", "Please select an image.");
                 var profile = await _profileService.GetProfileAsync(userId);
                 ViewBag.ShowProfileImageModal = true;
+                ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(userId);
+                ViewBag.IsOwner = true;
+                ViewBag.UserPosts = await _postService.GetPostsByUserIdAsync(Guid.Parse(userId));
                 return View("Index", profile);
             }
 
@@ -130,7 +133,10 @@ namespace SocialMedia.Web.Controllers
             {
                 ModelState.AddModelError("ProfileImage", ex.Message);
                 var profile = await _profileService.GetProfileAsync(userId);
-                ViewBag.ShowProfileImageModal = true; 
+                ViewBag.ShowProfileImageModal = true;
+                ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(userId);
+                ViewBag.IsOwner = true;
+                ViewBag.UserPosts = await _postService.GetPostsByUserIdAsync(Guid.Parse(userId));
                 return View("Index", profile);
             }
         }
@@ -148,6 +154,9 @@ namespace SocialMedia.Web.Controllers
                 ModelState.AddModelError("CoverImage", "Please select an image.");
                 var profile = await _profileService.GetProfileAsync(userId);
                 ViewBag.ShowCoverModal = true;
+                ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(userId);
+                ViewBag.IsOwner = true;
+                ViewBag.UserPosts = await _postService.GetPostsByUserIdAsync(Guid.Parse(userId));
                 return View("Index", profile);
             }
 
@@ -161,6 +170,9 @@ namespace SocialMedia.Web.Controllers
                 ModelState.AddModelError("CoverImage", ex.Message);
                 var profile = await _profileService.GetProfileAsync(userId);
                 ViewBag.ShowCoverModal = true;
+                ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(userId);
+                ViewBag.IsOwner = true;
+                ViewBag.UserPosts = await _postService.GetPostsByUserIdAsync(Guid.Parse(userId));
                 return View("Index", profile);
             }
         }
@@ -200,6 +212,9 @@ namespace SocialMedia.Web.Controllers
             {
                 ViewBag.ShowChangePasswordModal = true;
                 var currentProfile = await _profileService.GetProfileAsync(userId);
+                ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(userId);
+                ViewBag.IsOwner = true;
+                ViewBag.UserPosts = await _postService.GetPostsByUserIdAsync(Guid.Parse(userId));
                 return View("Index", currentProfile);
             }
 
@@ -221,6 +236,9 @@ namespace SocialMedia.Web.Controllers
                     }
                     ViewBag.ShowChangePasswordModal = true;
                     var currentProfile = await _profileService.GetProfileAsync(userId);
+                    ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(userId);
+                    ViewBag.IsOwner = true;
+                    ViewBag.UserPosts = await _postService.GetPostsByUserIdAsync(Guid.Parse(userId));
                     return View("Index", currentProfile);
                 }
 
@@ -232,6 +250,9 @@ namespace SocialMedia.Web.Controllers
                 ModelState.AddModelError(string.Empty, "An error occurred while changing the password.");
                 ViewBag.ShowChangePasswordModal = true;
                 var currentProfile = await _profileService.GetProfileAsync(userId);
+                ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(userId);
+                ViewBag.IsOwner = true;
+                ViewBag.UserPosts = await _postService.GetPostsByUserIdAsync(Guid.Parse(userId));
                 return View("Index", currentProfile);
             }
         }

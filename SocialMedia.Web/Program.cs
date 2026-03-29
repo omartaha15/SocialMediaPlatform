@@ -52,6 +52,8 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<INotificationRealtimeService, NotificationRealtimeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDashboardNotifierService, DashboardNotifierService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddSignalR();
 
 var app = builder.Build();

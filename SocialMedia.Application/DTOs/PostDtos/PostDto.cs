@@ -28,5 +28,9 @@ namespace SocialMedia.Application.DTOs.PostDtos
 
         /// <summary>List of users who reacted to this post.</summary>
         public List<ReactorDto> Reactors { get; set; } = new();
+
+        // GitHub Integration
+        public bool IsGitHubUpdate { get; set; }
+        public string? GitHubUrl { get; set; }
     }
 }

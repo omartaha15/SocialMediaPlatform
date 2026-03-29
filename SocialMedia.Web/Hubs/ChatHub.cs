@@ -133,5 +133,8 @@ public class ChatHub : Hub
     }
     // ── Utility ─────────────────────────────────────────────────────────────
     public static bool IsUserOnline(string userId)
-        => _userConnections.ContainsKey(userId) && _userConnections[userId].Count > 0;
+    {
+        if (string.IsNullOrEmpty(userId)) return false;
+        return _userConnections.ContainsKey(userId) && _userConnections[userId].Count > 0;
+    }
 }

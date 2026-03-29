@@ -42,15 +42,23 @@
                     <div class="post-header">
                         <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="post-avatar-wrap" style="text-decoration: none; display: block;">
                             <div class="post-avatar"><img src="@avatarUrl" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" /></div>
-                            @if (SocialMedia.Web.Hubs.ChatHub.IsUserOnline(post.userId))
+                            @if (!string.IsNullOrEmpty(post.userId) && SocialMedia.Web.Hubs.ChatHub.IsUserOnline(post.userId))
                             {
                                 <div class="online-dot"></div>
                             }
                         </a>
                         <div class="post-meta">
-                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="post-author text-decoration-none hover-underline">
-                                @post.UserName
-                            </a>
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="post-author text-decoration-none hover-underline">
+                                    @post.UserName
+                                </a>
+                                @if (Model.IsGitHubUpdate)
+                                {
+                                    <span class="badge rounded-pill bg-dark border border-secondary" style="font-size: 0.65rem; color: #b0b3b8; padding: 3px 8px; margin-top: -3px;">
+                                        <i class="fab fa-github me-1"></i> GitHub Update
+                                    </span>
+                                }
+                            </div>
                             <span class="post-time">
                                 <i class="fas fa-clock me-1"></i>@TimeAgo(post.CreatedAt)
                                 <span class="globe-icon" title="Public"><i class="fas fa-globe-americas ms-1"></i></span>
@@ -80,6 +88,14 @@
                     <!-- POST BODY -->
                     <div class="post-body">
                         <p class="post-text">@post.Content</p>
+                        @if (Model.IsGitHubUpdate && !string.IsNullOrEmpty(Model.GitHubUrl))
+                        {
+                            <div class="mt-2 mb-3 px-3">
+                                <a href="@Model.GitHubUrl" target="_blank" class="btn btn-dark btn-sm rounded-pill fw-bold border border-secondary" style="background:#3a3b3c; transition: all 0.2s;">
+                                    <i class="fas fa-external-link-alt me-1"></i> View on GitHub
+                                </a>
+                            </div>
+                        }
                         @if (!string.IsNullOrEmpty(post.ImageUrl))
                         {
                             <div class="post-img-wrap">
@@ -94,107 +110,110 @@
                         bool hasComments = post.CommentCount > 0;
                         bool hasStats = hasReactions || hasComments;
                     }
-                    <div class="reaction-stats @(!hasStats ? "hidden" : "")" id="summary-@post.Id">
-                        @if (hasReactions)
-                        {
-                            <div class="emoji-stack-group" title="View all reactions" onclick="showReactorsModal('@post.Id')" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                <div class="emoji-stack">
-                                    @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value).Take(3))
+                    @if (!Model.IsGitHubUpdate)
+                    {
+                        <div class="reaction-stats @(!hasStats ? "hidden" : "")" id="summary-@post.Id">
+                            @if (hasReactions)
+                            {
+                                <div class="emoji-stack-group" title="View all reactions" onclick="showReactorsModal('@post.Id')" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    <div class="emoji-stack">
+                                        @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value).Take(3))
+                                        {
+                                            <span class="stack-emoji">@(emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍")</span>
+                                        }
+                                    </div>
+                                    <span class="stats-label" style="flex: 0 1 auto; color: #b0b3b8; font-size: 14px;">@post.ReactionCount</span>
+                                </div>
+                            }
+                            
+                            <div class="ms-auto" id="comment-summary-@post.Id" onclick="toggleComments('@post.Id')" style="font-size: 13px; color: #b0b3b8; cursor: pointer; @(!hasComments ? "display:none;" : "display:flex; align-items:center; gap:4px;")">
+                                <span id="comment-count-@post.Id">@post.CommentCount</span> 
+                                <span>comments</span>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!Model.IsGitHubUpdate)
+                    {
+                        <!-- ACTION BAR -->
+                        <div class="action-bar">
+                            <!-- LIKE / REACT -->
+                            <div class="action-react-wrap">
+                                <button id="react-btn-@post.Id"
+                                        class="action-btn @(hasReaction ? "active-reaction" : "")"
+                                        onmousedown="openReactions(event,'@post.Id')"
+                                        title="React">
+                                    <span class="ab-emoji">@(hasReaction ? reactionEmoji : "👍")</span>
+                                    <span class="ab-label">@(hasReaction ? reactionStr : "Like")</span>
+                                </button>
+
+                                <!-- PICKER POPUP -->
+                                <div id="reactions-@post.Id" class="emoji-picker" style="display:none;">
+                                    @foreach (var kv in emojiMap)
                                     {
-                                        <span class="stack-emoji">@(emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍")</span>
+                                        <button type="button"
+                                                class="ep-btn @(kv.Key == reactionStr ? "ep-active" : "")"
+                                                title="@kv.Key"
+                                                onclick="sendReaction('@post.Id','@kv.Key',this)">
+                                            @kv.Value
+                                            <span class="ep-label">@kv.Key</span>
+                                        </button>
+                                    }
+                                    @if (hasReaction)
+                                    {
+                                        <button type="button" class="ep-btn ep-remove" title="Remove"
+                                                onclick="removeReaction('@post.Id',this)">
+                                            <i class="fas fa-times"></i>
+                                            <span class="ep-label">Remove</span>
+                                        </button>
                                     }
                                 </div>
-                                <span class="stats-label" style="flex: 0 1 auto; color: #b0b3b8; font-size: 14px;">@post.ReactionCount</span>
                             </div>
-                        }
-                        
-                        <div class="ms-auto" id="comment-summary-@post.Id" onclick="toggleComments('@post.Id')" style="font-size: 13px; color: #b0b3b8; cursor: pointer; @(!hasComments ? "display:none;" : "display:flex; align-items:center; gap:4px;")">
-                            <span id="comment-count-@post.Id">@post.CommentCount</span> 
-                            <span>comments</span>
-                        </div>
-                    </div>
 
-                    <!-- ACTION BAR -->
-                    <div class="action-bar">
-                        <!-- LIKE / REACT -->
-                        <div class="action-react-wrap">
-                            <button id="react-btn-@post.Id"
-                                    class="action-btn @(hasReaction ? "active-reaction" : "")"
-                                    onmousedown="openReactions(event,'@post.Id')"
-                                    title="React">
-                                <span class="ab-emoji">@(hasReaction ? reactionEmoji : "👍")</span>
-                                <span class="ab-label">@(hasReaction ? reactionStr : "Like")</span>
+                            <!-- COMMENT -->
+                            <button class="action-btn" onclick="toggleComments('@post.Id')" title="Comment">
+                                <i class="far fa-comment-alt me-1"></i>
+                                <span class="ab-label">Comment</span>
                             </button>
 
-                            <!-- PICKER POPUP -->
-                            <div id="reactions-@post.Id" class="emoji-picker" style="display:none;">
-                                @foreach (var kv in emojiMap)
-                                {
-                                    <button type="button"
-                                            class="ep-btn @(kv.Key == reactionStr ? "ep-active" : "")"
-                                            title="@kv.Key"
-                                            onclick="sendReaction('@post.Id','@kv.Key',this)">
-                                        @kv.Value
-                                        <span class="ep-label">@kv.Key</span>
-                                    </button>
-                                }
-                                @if (hasReaction)
-                                {
-                                    <button type="button" class="ep-btn ep-remove" title="Remove"
-                                            onclick="removeReaction('@post.Id',this)">
-                                        <i class="fas fa-times"></i>
-                                        <span class="ep-label">Remove</span>
-                                    </button>
-                                }
-                            </div>
+                            <!-- SHARE -->
+                            <button class="action-btn" title="Share" onclick="alert('Shared!')">
+                                <i class="fas fa-share me-1"></i>
+                                <span class="ab-label">Share</span>
+                            </button>
                         </div>
 
-                        <!-- COMMENT -->
-                        <!-- COMMENT -->
-                        <button class="action-btn" onclick="toggleComments('@post.Id')">
-                            <i class="far fa-comment-alt me-1"></i>
-                            <span class="ab-label">Comment</span>
-                            @* <span class="comment-count-badge" id="comment-count-@post.Id">
-                                @(post.CommentCount > 0 ? post.CommentCount.ToString() : "")
-                            </span> *@
-                        </button>
-
-                        <!-- SHARE -->
-                        <button class="action-btn">
-                            <i class="fas fa-share me-1"></i>
-                            <span class="ab-label">Share</span>
-                        </button>
-                    </div>
-                    <!-- COMMENTS SECTION -->
-                    <div class="comments-section" id="comments-section-@post.Id" style="display:none;">
-                        <div class="comments-list" id="comments-list-@post.Id">
-                            <!-- loaded dynamically -->
-                        </div>
-                        <div class="comment-input-row">
-                            <div class="mini-avatar" style="background:@AvatarColor(currentUserName)">
-                                @Initials(currentUserName)
+                        <!-- COMMENTS SECTION -->
+                        <div class="comments-section" id="comments-section-@post.Id" style="display:none;">
+                            <div class="comments-list" id="comments-list-@post.Id">
+                                <!-- loaded dynamically -->
                             </div>
-                            <div class="comment-input-wrap">
-                                <div class="emoji-picker-container me-2">
-                                    <button type="button" class="emoji-trigger-btn" onclick="toggleEmojiPicker(this, 'comment-input-@post.Id')">
-                                        <i class="fas fa-smile"></i>
-                                    </button>
-                                    <div class="emoji-dropdown">
-                                        <!-- Loaded by JS -->
-                                    </div>
+                            <div class="comment-input-row">
+                                <div class="mini-avatar" style="background:@AvatarColor(currentUserName)">
+                                    @Initials(currentUserName)
                                 </div>
-                                <input type="text"
-                                       class="comment-input"
-                                       id="comment-input-@post.Id"
-                                       placeholder="Write a comment…"
-                                       data-post-id="@post.Id"
-                                       onkeydown="handleCommentKey(event, '@post.Id')" />
-                                <button class="comment-send-btn"
-                                        onclick="submitComment('@post.Id')">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
+                                <div class="comment-input-wrap">
+                                    <div class="emoji-picker-container me-2">
+                                        <button type="button" class="emoji-trigger-btn" onclick="toggleEmojiPicker(this, 'comment-input-@post.Id')">
+                                            <i class="fas fa-smile"></i>
+                                        </button>
+                                        <div class="emoji-dropdown">
+                                            <!-- Loaded by JS -->
+                                        </div>
+                                    </div>
+                                    <input type="text"
+                                           class="comment-input"
+                                           id="comment-input-@post.Id"
+                                           placeholder="Write a comment…"
+                                           data-post-id="@post.Id"
+                                           onkeydown="handleCommentKey(event, '@post.Id')" />
+                                    <button class="comment-send-btn"
+                                            onclick="submitComment('@post.Id')">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    }
 
                 </article>

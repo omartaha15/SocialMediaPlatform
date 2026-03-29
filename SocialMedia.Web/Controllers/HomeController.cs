@@ -16,16 +16,22 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly IPostService _postService;
     private readonly IReactionService _reactionService;
+    private readonly IGitHubService _githubService;
     private readonly ICompositeViewEngine _viewEngine;
 
     private const int PageSize = 5;
 
-    public HomeController(ILogger<HomeController> logger, IPostService postService, IReactionService reactionService, ICompositeViewEngine viewEngine)
+    public HomeController(ILogger<HomeController> logger, 
+        IPostService postService, 
+        IReactionService reactionService, 
+        ICompositeViewEngine viewEngine,
+        IGitHubService githubService)
     {
         _logger = logger;
         _postService = postService;
         _reactionService = reactionService;
         _viewEngine = viewEngine;
+        _githubService = githubService;
     }
 
     public async Task<IActionResult> Index()
@@ -35,7 +41,27 @@ public class HomeController : Controller
         var (posts, hasMore) = await _postService.GetPagedPostsAsync(1, PageSize);
         var postList = posts.ToList();
 
-        foreach (var post in postList)
+        // Integrate GitHub Updates
+        try
+        {
+            var commits = await _githubService.GetRecentCommitsAsync("omartaha15", "SocialMediaPlatform", 3);
+            foreach (var commit in commits)
+            {
+                postList.Add(new Application.DTOs.PostDtos.PostDto
+                {
+                    Id = Guid.NewGuid(),
+                    Content = $"🛠️ GitHub Commit: {commit.Message}",
+                    UserName = commit.AuthorName,
+                    UserAvatarUrl = commit.AuthorAvatarUrl,
+                    CreatedAt = commit.CommittedAt,
+                    IsGitHubUpdate = true,
+                    GitHubUrl = commit.HtmlUrl
+                });
+            }
+        }
+        catch { /* Fallback */ }
+
+        foreach (var post in postList.Where(p => !p.IsGitHubUpdate))
         {
             var (counts, userReaction) = await _reactionService.GetReactionSummaryAsync(post.Id, userId);
             post.ReactionCounts = counts;
@@ -45,7 +71,8 @@ public class HomeController : Controller
 
         ViewBag.HasMorePosts = hasMore;
         ViewBag.CurrentPage = 1;
-        return View(postList);
+        
+        return View(postList.OrderByDescending(p => p.CreatedAt).ToList());
     }
 
     [HttpGet]

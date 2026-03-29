@@ -51,5 +51,21 @@ namespace SocialMedia.Web.Controllers
                 counts = counts.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value)
             });
         }
+
+        /// <summary>
+        /// Returns list of users who reacted to a post (for the reactors modal).
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetReactors(Guid postId)
+        {
+            var reactors = await _reactionService.GetReactorsAsync(postId);
+            return Json(reactors.Select(r => new
+            {
+                userId = r.UserId,
+                userName = r.UserName,
+                avatarUrl = r.AvatarUrl ?? "/images/user.jpg",
+                reactionType = r.ReactionType.ToString()
+            }));
+        }
     }
 }

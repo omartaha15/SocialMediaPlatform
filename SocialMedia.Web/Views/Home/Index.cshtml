@@ -65,7 +65,27 @@
                 </div>
             }
         </div>
+        
+        <!-- LOADING MORE INDICATOR -->
+        <div id="feed-loading" style="display: none; text-align: center; padding: 20px; color: #b0b3b8;">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
     </main>
+
+    <!-- Modal for who reacted -->
+    <div class="modal fade" id="reactorsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background:#242526; border:1px solid #393a3b; border-radius:12px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-light fw-bold">Reactions</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2" id="reactorsList">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- RIGHT SIDEBAR -->
     <aside class="sidebar-right d-none d-xl-block">
@@ -158,13 +178,87 @@
     }
     .feed-title { margin: 0; color: #e4e6eb; font-size: 15px; font-weight: 700; }
     .feed-sort  { font-size: 12px; color: #6e7073; }
+
+    /* Reactors modal */
+    .reactor-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        gap: 12px;
+    }
+    .reactor-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .reactor-name { color: #e4e6eb; font-weight: 600; text-decoration: none; }
+    .reactor-name:hover { text-decoration: underline; }
+    .reactor-emoji { font-size: 18px; position: absolute; bottom: 0; right: 0; background: #242526; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
 </style>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <partial name="_PostScriptsPartial" />
     <script>
-        // Ensure that openEditPostModal acts reliably by exposing it globally if it isn't
-        console.log("Feed loaded smoothly.");
+        let currentPage = 1;
+        let hasMore = @(ViewBag.HasMorePosts != null ? ViewBag.HasMorePosts.ToString().ToLower() : "false");
+        let isLoading = false;
+
+        window.onscroll = function() {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                loadMorePosts();
+            }
+        };
+
+        async function loadMorePosts() {
+            if (isLoading || !hasMore) return;
+            isLoading = true;
+            document.getElementById("feed-loading").style.display = "block";
+
+            currentPage++;
+            try {
+                const response = await fetch(`/Home/LoadMorePosts?page=${currentPage}`);
+                const data = await response.json();
+                
+                if (data.html) {
+                    const container = document.getElementById("feed-posts-container");
+                    container.insertAdjacentHTML('beforeend', data.html);
+                    hasMore = data.hasMore;
+                } else {
+                    hasMore = false;
+                }
+            } catch (err) {
+                console.error("Error loading posts:", err);
+            } finally {
+                isLoading = false;
+                document.getElementById("feed-loading").style.display = "none";
+            }
+        }
+
+        async function showReactorsModal(postId) {
+            const list = document.getElementById("reactorsList");
+            list.innerHTML = `<div class="text-center py-3 text-secondary"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</div>`;
+            const modal = new bootstrap.Modal(document.getElementById("reactorsModal"));
+            modal.show();
+
+            try {
+                const response = await fetch(`/Reaction/GetReactors?postId=${postId}`);
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    list.innerHTML = `<div class="text-center py-3 text-secondary">No reactions yet.</div>`;
+                    return;
+                }
+
+                list.innerHTML = data.map(r => `
+                    <div class="reactor-item">
+                        <div style="position: relative;">
+                            <img src="${r.avatarUrl}" class="reactor-avatar" onerror="this.src='/images/user.jpg';" />
+                            <span class="reactor-emoji">${emojiMap[r.reactionType] || '👍'}</span>
+                        </div>
+                        <a href="/Profile/Index/${r.userId}" class="reactor-name text-decoration-none">${r.userName}</a>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<div class="text-center py-3 text-danger">Failed to load reactions.</div>`;
+            }
+        }
     </script>
 }
+

@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SocialMedia.Application.DTOs.PostDtos.ReactionDtos;
 using SocialMedia.Application.Interfaces;
 using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Domain.Entities;
@@ -6,7 +8,6 @@ using SocialMedia.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SocialMedia.Application.Services
@@ -17,6 +18,7 @@ namespace SocialMedia.Application.Services
         private readonly INotificationRealtimeService _notificationRealtimeService;
         private readonly ILogger<ReactionService> _logger;
         private readonly IDashboardNotifierService _dashboardNotifier;
+
         public ReactionService(
             IUnitOfWork unitOfWork,
             INotificationRealtimeService notificationRealtimeService,
@@ -57,11 +59,8 @@ namespace SocialMedia.Application.Services
                 };
 
                 await repo.AddAsync(newReaction);
-
-
                 await _unitOfWork.CompleteAsync();
                 await _dashboardNotifier.NotifyDashboardUpdatedAsync();
-
 
                 if (post.UserId != userId)
                 {
@@ -78,8 +77,8 @@ namespace SocialMedia.Application.Services
                     };
 
                     await _unitOfWork.Repository<Notification>().AddAsync(notification);
-
                     await _unitOfWork.CompleteAsync();
+
                     try
                     {
                         var actionUrl = $"/Home/Index#post-{postId}";
@@ -102,9 +101,9 @@ namespace SocialMedia.Application.Services
                 }
             }
 
-
             await _unitOfWork.CompleteAsync();
         }
+
         public async Task RemoveReactionAsync(Guid postId, string userId)
         {
             var repo = _unitOfWork.Repository<Reaction>();
@@ -119,7 +118,6 @@ namespace SocialMedia.Application.Services
                 await _unitOfWork.CompleteAsync();
                 await _dashboardNotifier.NotifyDashboardUpdatedAsync();
             }
-         
         }
 
         public async Task<Dictionary<MultiReaction, int>> GetReactionsCountAsync(Guid postId)
@@ -146,6 +144,23 @@ namespace SocialMedia.Application.Services
                 .FirstOrDefault(r => r.UserId == userId)?.MultiReaction;
 
             return (counts, userReaction);
+        }
+
+        public async Task<List<ReactorDto>> GetReactorsAsync(Guid postId)
+        {
+            var reactions = await _unitOfWork.Repository<Reaction>()
+                .Query()
+                .Where(r => r.PostId == postId)
+                .Include(r => r.User)
+                .ToListAsync();
+
+            return reactions.Select(r => new ReactorDto
+            {
+                UserId = r.UserId,
+                UserName = r.User?.UserName ?? "Unknown",
+                AvatarUrl = r.User?.ProfilePictureUrl,
+                ReactionType = r.MultiReaction
+            }).ToList();
         }
     }
 }

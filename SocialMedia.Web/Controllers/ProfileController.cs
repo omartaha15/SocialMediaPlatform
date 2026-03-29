@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SocialMedia.Application.DTOs.ProfileDTOs;
@@ -15,18 +15,21 @@ namespace SocialMedia.Web.Controllers
         private readonly IProfileService _profileService;
         private readonly IFriendshipService _friendshipService;
         private readonly IPostService _postService;
+        private readonly IReactionService _reactionService;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         public ProfileController(
             IProfileService profileService,
             IFriendshipService friendshipService,
             IPostService postService,
+            IReactionService reactionService,
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager) 
         {
             _profileService = profileService;
             _friendshipService = friendshipService;
             _postService = postService;
+            _reactionService = reactionService;
             _signInManager = signInManager;
             _userManager = userManager;
         }
@@ -45,7 +48,17 @@ namespace SocialMedia.Web.Controllers
             if (profile == null) return NotFound();
 
 
-            var posts = await _postService.GetPostsByUserIdAsync(Guid.Parse(targetUserId)); ViewBag.UserPosts = posts;
+            var posts = (await _postService.GetPostsByUserIdAsync(Guid.Parse(targetUserId))).ToList();
+
+            foreach (var post in posts)
+            {
+                var (counts, userReaction) = await _reactionService.GetReactionSummaryAsync(post.Id, loggedInUserId);
+                post.ReactionCounts = counts;
+                post.CurrentUserReaction = userReaction;
+                post.ReactionCount = counts.Values.Sum();
+            }
+
+            ViewBag.UserPosts = posts;
 
             ViewBag.FriendsCount = await _friendshipService.GetFriendsCountAsync(targetUserId);
             ViewBag.IsOwner = (loggedInUserId == targetUserId);

@@ -1,3 +1,4 @@
+using SocialMedia.Application.DTOs.PostDtos.ReactionDtos;
 using SocialMedia.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -18,5 +19,11 @@ namespace SocialMedia.Application.Interfaces.Services
         /// </summary>
         Task<(Dictionary<MultiReaction, int> Counts, MultiReaction? UserReaction)>
             GetReactionSummaryAsync(Guid postId, string userId);
+
+        /// <summary>
+        /// Returns all users who reacted to a post, with their reaction type.
+        /// </summary>
+        Task<List<ReactorDto>> GetReactorsAsync(Guid postId);
     }
 }
+

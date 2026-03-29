@@ -380,4 +380,54 @@
             if (textarea) textarea.focus();
         }
     }
+    // ── Emoji Picker Logic ──────────────────────────────────────────
+    const commonEmojis = [
+        '😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','🤨','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','👻','💀','☠️','👽','👾','🤖','💩','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🙈','🙉','🙊','💋','💌','💘','💝','💖','💗','💓','💞','💕','💟','❣️','💔','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💯','💢','💥','💫','💦','💨','🕳️','💣','💬','👁️‍🗨️','🗨️','🗯️','💭','💤'
+    ];
+
+    function toggleEmojiPicker(btn, targetId) {
+        const picker = btn.nextElementSibling;
+        const isOpen = picker.style.display === 'flex';
+        
+        // Close all other emoji pickers
+        document.querySelectorAll('.emoji-dropdown').forEach(d => d.style.display = 'none');
+        
+        if (!isOpen) {
+            if (picker.innerHTML.trim().length < 100) {
+                picker.style.display = 'flex'; // Set display flex before reading dimensions if needed
+                picker.innerHTML = `
+                    <div class="emoji-picker-header">
+                        <span>Express Yourself</span>
+                    </div>
+                    <div class="emoji-grid">
+                        ${commonEmojis.map(e => `<span class="emoji-item" onclick="insertEmoji('${targetId}', '${e}')">${e}</span>`).join('')}
+                    </div>
+                `;
+            }
+            picker.style.display = 'flex';
+            
+            // Auto close when click outside
+            setTimeout(() => {
+                const handler = (e) => {
+                    if (!picker.contains(e.target) && !btn.contains(e.target)) {
+                        picker.style.display = 'none';
+                        document.removeEventListener('click', handler);
+                    }
+                };
+                document.addEventListener('click', handler);
+            }, 0);
+        } else {
+            picker.style.display = 'none';
+        }
+    }
+
+    function insertEmoji(targetId, emoji) {
+        const input = document.getElementById(targetId);
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        input.value = text.substring(0, start) + emoji + text.substring(end);
+        input.focus();
+        input.selectionStart = input.selectionEnd = start + emoji.length;
+    }
 </script>

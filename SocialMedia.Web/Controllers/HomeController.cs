@@ -4,29 +4,38 @@ using SocialMedia.Application.Interfaces.Services;
 using SocialMedia.Web.Models;
 using System.Diagnostics;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace SocialMedia.Web.Controllers;
+
 [Authorize]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly IPostService _postService;
     private readonly IReactionService _reactionService;
+    private readonly ICompositeViewEngine _viewEngine;
 
-    public HomeController(ILogger<HomeController> logger, IPostService postService, IReactionService reactionService)
+    private const int PageSize = 5;
+
+    public HomeController(ILogger<HomeController> logger, IPostService postService, IReactionService reactionService, ICompositeViewEngine viewEngine)
     {
         _logger = logger;
         _postService = postService;
         _reactionService = reactionService;
+        _viewEngine = viewEngine;
     }
 
     public async Task<IActionResult> Index()
     {
-        var posts = (await _postService.GetAllPostsAsync()).ToList();
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
-        // Sequential: DbContext is NOT thread-safe, never use Task.WhenAll here
-        foreach (var post in posts)
+        var (posts, hasMore) = await _postService.GetPagedPostsAsync(1, PageSize);
+        var postList = posts.ToList();
+
+        foreach (var post in postList)
         {
             var (counts, userReaction) = await _reactionService.GetReactionSummaryAsync(post.Id, userId);
             post.ReactionCounts = counts;
@@ -34,7 +43,63 @@ public class HomeController : Controller
             post.ReactionCount = counts.Values.Sum();
         }
 
-        return View(posts);
+        ViewBag.HasMorePosts = hasMore;
+        ViewBag.CurrentPage = 1;
+        return View(postList);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> LoadMorePosts(int page = 2)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+        var (posts, hasMore) = await _postService.GetPagedPostsAsync(page, PageSize);
+        var postList = posts.ToList();
+
+        var htmlResults = new List<string>();
+        foreach (var post in postList)
+        {
+            var (counts, userReaction) = await _reactionService.GetReactionSummaryAsync(post.Id, userId);
+            post.ReactionCounts = counts;
+            post.CurrentUserReaction = userReaction;
+            post.ReactionCount = counts.Values.Sum();
+            
+            htmlResults.Add(await RenderPartialViewToString("_PostPartial", post));
+        }
+
+        return Json(new
+        {
+            hasMore,
+            page,
+            html = string.Join("", htmlResults)
+        });
+    }
+
+    private async Task<string> RenderPartialViewToString(string viewName, object model)
+    {
+        ViewData.Model = model;
+        using (var sw = new StringWriter())
+        {
+            var viewResult = _viewEngine.FindView(ControllerContext, viewName, false);
+
+            if (viewResult.View == null)
+            {
+                // Try fallback for shared
+                viewResult = _viewEngine.GetView(null, $"~/Views/Shared/{viewName}.cshtml", false);
+            }
+
+            var viewContext = new ViewContext(
+                ControllerContext,
+                viewResult.View,
+                ViewData,
+                TempData,
+                sw,
+                new HtmlHelperOptions()
+            );
+
+            await viewResult.View.RenderAsync(viewContext);
+            return sw.GetStringBuilder().ToString();
+        }
     }
 
     public IActionResult Privacy()

@@ -63,14 +63,12 @@ namespace SocialMedia.Application.Services
        
         public async Task<IEnumerable<PostDto>> GetAllPostsAsync()
         {
-
             var posts = await _unitOfWork.Repository<Post>()
                 .Query()
                 .Include(p => p.Creator)
                 .Include(p => p.Comments)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
-   
 
             return posts.Select(p => new PostDto
             {
@@ -85,11 +83,43 @@ namespace SocialMedia.Application.Services
             });
         }
 
+        public async Task<(IEnumerable<PostDto> Posts, bool HasMore)> GetPagedPostsAsync(int page, int pageSize)
+        {
+            var skip = (page - 1) * pageSize;
+
+            var totalCount = await _unitOfWork.Repository<Post>().Query().CountAsync();
+
+            var posts = await _unitOfWork.Repository<Post>()
+                .Query()
+                .Include(p => p.Creator)
+                .Include(p => p.Comments)
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var dtos = posts.Select(p => new PostDto
+            {
+                Id = p.Id,
+                Content = p.Content,
+                userId = p.UserId,
+                CommentCount = p.Comments.Count,
+                UserName = p.Creator?.UserName ?? "Unknown",
+                UserAvatarUrl = p.Creator?.ProfilePictureUrl,
+                CreatedAt = p.CreatedAt,
+                ImageUrl = p.ImageUrl
+            });
+
+            bool hasMore = skip + pageSize < totalCount;
+            return (dtos, hasMore);
+        }
+
         public async Task<PostDto?> GetPostByIdAsync(Guid id)
         {
             var post = await _unitOfWork.Repository<Post>()
                 .Query()
                 .Include(p => p.Creator)
+                .Include(p => p.Comments)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (post == null) return null;
@@ -99,6 +129,7 @@ namespace SocialMedia.Application.Services
                 Id        = post.Id,
                 Content   = post.Content,
                 userId    = post.UserId,
+                CommentCount = post.Comments.Count,
                 UserName  = post.Creator?.UserName ?? "Unknown",
                 UserAvatarUrl = post.Creator?.ProfilePictureUrl,
                 CreatedAt = post.CreatedAt,
@@ -112,6 +143,7 @@ namespace SocialMedia.Application.Services
             var posts = await _unitOfWork.Repository<Post>()
                 .Query()
                 .Include(p => p.Creator)
+                .Include(p => p.Comments)
                 .Where(p => p.UserId == userIdStr)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
@@ -123,6 +155,7 @@ namespace SocialMedia.Application.Services
                 ImageUrl  = p.ImageUrl,
                 CreatedAt = p.CreatedAt,
                 userId    = p.UserId,
+                CommentCount = p.Comments.Count,
                 UserName  = p.Creator?.UserName ?? "Unknown",
                 UserAvatarUrl = p.Creator?.ProfilePictureUrl
             });

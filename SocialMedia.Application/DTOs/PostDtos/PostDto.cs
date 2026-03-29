@@ -1,3 +1,4 @@
+using SocialMedia.Application.DTOs.PostDtos.ReactionDtos;
 using SocialMedia.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -24,5 +25,8 @@ namespace SocialMedia.Application.DTOs.PostDtos
 
         /// <summary>The logged-in user's reaction on this post (null = no reaction).</summary>
         public MultiReaction? CurrentUserReaction { get; set; }
+
+        /// <summary>List of users who reacted to this post.</summary>
+        public List<ReactorDto> Reactors { get; set; } = new();
     }
 }

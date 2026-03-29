@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using SocialMedia.Application.DTOs.PostDtos;
 using SocialMedia.Application.Interfaces.Repositories;
 using SocialMedia.Domain.Entities;
@@ -12,12 +12,11 @@ namespace SocialMedia.Application.Interfaces.Services
 {
     public interface IPostService
     {
-        Task CreatePostAsync(CreatePostDto dto );
-       Task<IEnumerable<PostDto>> GetAllPostsAsync();
-
-       Task<PostDto?> GetPostByIdAsync(Guid id);
-
-      Task UpdatePostAsync(UpdatePostDto dto);
+        Task CreatePostAsync(CreatePostDto dto);
+        Task<IEnumerable<PostDto>> GetAllPostsAsync();
+        Task<(IEnumerable<PostDto> Posts, bool HasMore)> GetPagedPostsAsync(int page, int pageSize);
+        Task<PostDto?> GetPostByIdAsync(Guid id);
+        Task UpdatePostAsync(UpdatePostDto dto);
         Task<IEnumerable<PostDto>> GetPostsByUserIdAsync(Guid userId);
         Task DeletePostAsync(Guid id);
     }

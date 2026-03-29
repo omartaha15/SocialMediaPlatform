@@ -97,33 +97,21 @@
                     <div class="reaction-stats @(!hasStats ? "hidden" : "")" id="summary-@post.Id">
                         @if (hasReactions)
                         {
-                            <!-- Top 3 emojis stacked -->
-                            <div class="emoji-stack">
-                                @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value).Take(3))
-                                {
-                                    <span class="stack-emoji">@(emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍")</span>
-                                }
+                            <div class="emoji-stack-group" title="View all reactions" onclick="showReactorsModal('@post.Id')" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                <div class="emoji-stack">
+                                    @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value).Take(3))
+                                    {
+                                        <span class="stack-emoji">@(emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍")</span>
+                                    }
+                                </div>
+                                <span class="stats-label" style="flex: 0 1 auto; color: #b0b3b8; font-size: 14px;">@post.ReactionCount</span>
                             </div>
-                            <span class="stats-label" style="flex: 0 1 auto;">@post.ReactionCount</span>
                         }
                         
-                        <div class="ms-auto" style="font-size: 13px; color: #b0b3b8; cursor: pointer; @(!hasComments ? "display:none;" : "")" id="comment-summary-@post.Id" onclick="toggleComments('@post.Id')">
-                            <span id="comment-count-@post.Id">@post.CommentCount</span> comments
+                        <div class="ms-auto" id="comment-summary-@post.Id" onclick="toggleComments('@post.Id')" style="font-size: 13px; color: #b0b3b8; cursor: pointer; @(!hasComments ? "display:none;" : "display:flex; align-items:center; gap:4px;")">
+                            <span id="comment-count-@post.Id">@post.CommentCount</span> 
+                            <span>comments</span>
                         </div>
-
-                        @if (hasReactions)
-                        {
-                            <!-- Per-type bubbles -->
-                            <div class="bubble-row">
-                                @foreach (var kv in post.ReactionCounts.OrderByDescending(x => x.Value))
-                                {
-                                    var e = emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍";
-                                    <span class="react-bubble @(kv.Key.ToString() == reactionStr ? "mine" : "")">
-                                        @e <b>@kv.Value</b>
-                                    </span>
-                                }
-                            </div>
-                        }
                     </div>
 
                     <!-- ACTION BAR -->
@@ -187,6 +175,14 @@
                                 @Initials(currentUserName)
                             </div>
                             <div class="comment-input-wrap">
+                                <div class="emoji-picker-container me-2">
+                                    <button type="button" class="emoji-trigger-btn" onclick="toggleEmojiPicker(this, 'comment-input-@post.Id')">
+                                        <i class="fas fa-smile"></i>
+                                    </button>
+                                    <div class="emoji-dropdown">
+                                        <!-- Loaded by JS -->
+                                    </div>
+                                </div>
                                 <input type="text"
                                        class="comment-input"
                                        id="comment-input-@post.Id"

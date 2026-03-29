@@ -429,6 +429,24 @@
     </div>
 </div>
 
+<!-- Modal for who reacted -->
+<div class="modal fade" id="reactorsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:#242526; border:1px solid #393a3b; border-radius:12px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-light fw-bold">Reactions</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2" id="reactorsList">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<partial name="_PostStylesPartial" />
+
+
 <!-- PROFILE IMAGE MODAL -->
 <div class="modal fade" id="profileImageModal" tabindex="-1">
     <div class="modal-dialog modal-sm modal-dialog-centered">
@@ -472,6 +490,38 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <partial name="_PostScriptsPartial" />
+
+    <script>
+        async function showReactorsModal(postId) {
+            const list = document.getElementById("reactorsList");
+            if (!list) return;
+            list.innerHTML = `<div class="text-center py-3 text-secondary"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</div>`;
+            const modal = new bootstrap.Modal(document.getElementById("reactorsModal"));
+            modal.show();
+
+            try {
+                const response = await fetch(`/Reaction/GetReactors?postId=${postId}`);
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    list.innerHTML = `<div class="text-center py-3 text-secondary">No reactions yet.</div>`;
+                    return;
+                }
+
+                list.innerHTML = data.map(r => `
+                    <div class="reactor-item">
+                        <div class="reactor-avatar-wrap">
+                            <img src="${r.avatarUrl || '/images/user.jpg'}" class="reactor-avatar" onerror="this.src='/images/user.jpg';" />
+                            <span class="reactor-emoji">${emojiMap[r.reactionType] || '👍'}</span>
+                        </div>
+                        <a href="/Profile/Index/${r.userId}" class="reactor-name text-decoration-none">${r.userName}</a>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<div class="text-center py-3 text-danger">Failed to load reactions.</div>`;
+            }
+        }
+    </script>
 
     <script>
 

@@ -55,7 +55,8 @@ public class HomeController : Controller
                     UserAvatarUrl = commit.AuthorAvatarUrl,
                     CreatedAt = commit.CommittedAt,
                     IsGitHubUpdate = true,
-                    GitHubUrl = commit.HtmlUrl
+                    GitHubUrl = commit.HtmlUrl,
+                    ImageUrl = "/images/githubImage.jpeg"
                 });
             }
         }

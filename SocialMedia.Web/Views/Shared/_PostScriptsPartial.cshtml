@@ -236,11 +236,17 @@
         wrap.id = 'comment-' + c.id;
         wrap.innerHTML = `
             <div class="comment-avatar">
-                <img src="${c.authorAvatarUrl || '/images/user.jpg'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" />
+                <a href="/Profile/Index/${c.authorId}" style="display: block; width: 100%; height: 100%;">
+                    <img src="${c.authorAvatarUrl || '/images/user.jpg'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" />
+                </a>
             </div>
             <div class="comment-content-wrap">
                 <div class="comment-bubble">
-                    <div class="c-name">${escapeHtml(c.authorName)}</div>
+                    <div class="c-name">
+                        <a href="/Profile/Index/${c.authorId}" style="text-decoration: none; color: inherit; font-weight: 600;">
+                            ${escapeHtml(c.authorName)}
+                        </a>
+                    </div>
                     <p class="c-text">${escapeHtml(c.content)}</p>
                 </div>
                 <div class="comment-meta">

@@ -49,11 +49,11 @@ namespace SocialMedia.Application.Services
             user.Gender = dto.Gender;
             user.ProfilePictureUrl = imagePath;
             var result = await _userManager.CreateAsync(user, dto.Password);
-            if(result.Succeeded)
-            {
-                await _signInManager.SignInAsync(user, isPersistent: false);
-            }
-            else
+            if(!result.Succeeded)
+            //{
+            //    await _signInManager.SignInAsync(user, isPersistent: false);
+            //}
+            //else
             {
                 throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
             }

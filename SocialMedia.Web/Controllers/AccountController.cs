@@ -60,7 +60,7 @@ namespace SocialMedia.Web.Controllers
                 var result = await _userService.RegisterAsync(dto);
 
                 if (result.Succeeded)
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Login", "Account");
             }
             catch (Exception ex)
             {

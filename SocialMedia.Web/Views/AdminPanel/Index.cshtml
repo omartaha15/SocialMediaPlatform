@@ -1,4 +1,4 @@
-﻿@model SocialMedia.Application.DTOs.AdminDTOs.DashboardAnalyticsDto
+@model SocialMedia.Application.DTOs.AdminDTOs.DashboardAnalyticsDto
 
 @{
     ViewData["Title"] = "Admin Dashboard";
@@ -91,15 +91,20 @@
                 }]
             };
 
+            const rootStyle = getComputedStyle(document.documentElement);
+            const textColorPrimary = rootStyle.getPropertyValue('--text-primary').trim();
+            const textColorSecondary = rootStyle.getPropertyValue('--text-secondary').trim();
+            const gridColor = rootStyle.getPropertyValue('--card-border').trim();
+
             const config = {
                 type: 'bar',
                 data: data,
                 options: {
                     responsive: true,
-                    plugins: { legend: { labels: { color: '#e4e6eb' } } },
+                    plugins: { legend: { labels: { color: textColorPrimary } } },
                     scales: {
-                        y: { beginAtZero: true, ticks: { color: '#b0b3b8' }, grid: { color: '#393a3b' } },
-                        x: { ticks: { color: '#b0b3b8' }, grid: { display: false } }
+                        y: { beginAtZero: true, ticks: { color: textColorSecondary }, grid: { color: gridColor } },
+                        x: { ticks: { color: textColorSecondary }, grid: { display: false } }
                     }
                 }
             };

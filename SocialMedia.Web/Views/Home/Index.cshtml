@@ -67,7 +67,7 @@
         </div>
         
         <!-- LOADING MORE INDICATOR -->
-        <div id="feed-loading" style="display: none; text-align: center; padding: 20px; color: #b0b3b8;">
+        <div id="feed-loading" style="display: none; text-align: center; padding: 20px; color: var(--text-secondary);">
             <i class="fas fa-spinner fa-spin fa-2x"></i>
         </div>
     </main>
@@ -75,10 +75,10 @@
     <!-- Modal for who reacted -->
     <div class="modal fade" id="reactorsModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background:#242526; border:1px solid #393a3b; border-radius:12px;">
+            <div class="modal-content" style="background:var(--modal-bg); border:1px solid var(--card-border); border-radius:12px;">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title text-light fw-bold">Reactions</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title fw-bold" style="color:var(--text-primary);">Reactions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body pt-2" id="reactorsList">
                     <!-- Loaded dynamically -->
@@ -112,9 +112,6 @@
 <partial name="_PostStylesPartial" />
 
 <style>
-    body {
-        background-color: #18191a;
-    }
     .feed-layout {
         display: grid;
         grid-template-columns: 240px 1fr 240px;
@@ -134,8 +131,8 @@
         top: 80px;
     }
     .sidebar-card {
-        background: #242526;
-        border: 1px solid #3a3b3c;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: 12px;
         padding: 18px 14px;
         margin-bottom: 14px;
@@ -145,39 +142,39 @@
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         margin: 0 auto 10px;
-        box-shadow: 0 4px 14px rgba(0,0,0,.4);
+        box-shadow: var(--shadow-md);
     }
-    .sb-name { text-align: center; font-weight: 700; color: #e4e6eb; font-size: 15px; }
-    .sb-sub  { text-align: center; font-size: 12px; color: #b0b3b8; margin-top: 2px; }
-    .sb-divider { border-color: #3a3b3c; margin: 14px 0; }
-    .sb-section-title { font-size: 12px; font-weight: 700; color: #b0b3b8; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+    .sb-name { text-align: center; font-weight: 700; color: var(--text-primary); font-size: 15px; }
+    .sb-sub  { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .sb-divider { border-color: var(--card-border); margin: 14px 0; }
+    .sb-section-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
     .sb-link {
         display: flex; align-items: center; gap: 10px;
         padding: 9px 10px; border-radius: 8px;
-        color: #e4e6eb; text-decoration: none; font-size: 14px; font-weight: 500;
+        color: var(--text-primary); text-decoration: none; font-size: 14px; font-weight: 500;
         transition: background .15s, color .15s;
         margin-bottom: 2px;
     }
-    .sb-link:hover { background: #3a3b3c; color: #2d88ff; }
-    .sb-link i { width: 18px; text-align: center; color: #2d88ff; }
+    .sb-link:hover { background: var(--post-action-hover-bg); color: var(--accent); }
+    .sb-link i { width: 18px; text-align: center; color: var(--accent); }
 
     /* Ad / Birthday widgets */
     .ad-card { display: flex; gap: 10px; align-items: center; }
     .ad-img-placeholder {
         width: 52px; height: 52px; border-radius: 8px;
-        background: #3a3b3c; display: flex; align-items: center; justify-content: center;
-        color: #b0b3b8; font-size: 20px; flex-shrink: 0;
+        background: var(--modal-input-bg); display: flex; align-items: center; justify-content: center;
+        color: var(--text-secondary); font-size: 20px; flex-shrink: 0;
     }
-    .ad-name { font-size: 13px; font-weight: 600; color: #e4e6eb; }
-    .ad-desc { font-size: 12px; color: #b0b3b8; margin-top: 2px; }
-    .birthday-item { font-size: 13px; color: #e4e6eb; display: flex; align-items: center; }
+    .ad-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .ad-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .birthday-item { font-size: 13px; color: var(--text-primary); display: flex; align-items: center; }
 
     .feed-header {
         display: flex; justify-content: space-between; align-items: center;
         margin-bottom: 12px; padding: 0 2px;
     }
-    .feed-title { margin: 0; color: #e4e6eb; font-size: 15px; font-weight: 700; }
-    .feed-sort  { font-size: 12px; color: #6e7073; }
+    .feed-title { margin: 0; color: var(--text-primary); font-size: 15px; font-weight: 700; }
+    .feed-sort  { font-size: 12px; color: var(--text-muted); }
 
     /* Reactors modal */
     .reactor-item {
@@ -187,9 +184,9 @@
         gap: 12px;
     }
     .reactor-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-    .reactor-name { color: #e4e6eb; font-weight: 600; text-decoration: none; }
+    .reactor-name { color: var(--text-primary); font-weight: 600; text-decoration: none; }
     .reactor-name:hover { text-decoration: underline; }
-    .reactor-emoji { font-size: 18px; position: absolute; bottom: 0; right: 0; background: #242526; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+    .reactor-emoji { font-size: 18px; position: absolute; bottom: 0; right: 0; background: var(--card-bg); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
 </style>
 
 @section Scripts {

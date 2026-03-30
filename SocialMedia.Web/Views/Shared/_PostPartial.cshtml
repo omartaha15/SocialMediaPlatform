@@ -54,7 +54,7 @@
                                 </a>
                                 @if (Model.IsGitHubUpdate)
                                 {
-                                    <span class="badge rounded-pill bg-dark border border-secondary" style="font-size: 0.65rem; color: #b0b3b8; padding: 3px 8px; margin-top: -3px;">
+                                    <span class="badge rounded-pill" style="font-size: 0.65rem; background:var(--navbar-circle-btn); color: var(--text-secondary); padding: 3px 8px; margin-top: -3px;">
                                         <i class="fab fa-github me-1"></i> GitHub Update
                                     </span>
                                 }
@@ -91,7 +91,7 @@
                         @if (Model.IsGitHubUpdate && !string.IsNullOrEmpty(Model.GitHubUrl))
                         {
                             <div class="mt-2 mb-3 px-3">
-                                <a href="@Model.GitHubUrl" target="_blank" class="btn btn-dark btn-sm rounded-pill fw-bold border border-secondary" style="background:#3a3b3c; transition: all 0.2s;">
+                                <a href="@Model.GitHubUrl" target="_blank" class="btn btn-sm rounded-pill fw-bold" style="background:var(--modal-input-bg); color:var(--text-primary); border:1px solid var(--card-border); transition: all 0.2s;">
                                     <i class="fas fa-external-link-alt me-1"></i> View on GitHub
                                 </a>
                             </div>
@@ -122,11 +122,11 @@
                                             <span class="stack-emoji">@(emojiMap.ContainsKey(kv.Key.ToString()) ? emojiMap[kv.Key.ToString()] : "👍")</span>
                                         }
                                     </div>
-                                    <span class="stats-label" style="flex: 0 1 auto; color: #b0b3b8; font-size: 14px;">@post.ReactionCount</span>
+                                    <span class="stats-label" style="flex: 0 1 auto; color: var(--text-secondary); font-size: 14px;">@post.ReactionCount</span>
                                 </div>
                             }
                             
-                            <div class="ms-auto" id="comment-summary-@post.Id" onclick="toggleComments('@post.Id')" style="font-size: 13px; color: #b0b3b8; cursor: pointer; @(!hasComments ? "display:none;" : "display:flex; align-items:center; gap:4px;")">
+                            <div class="ms-auto" id="comment-summary-@post.Id" onclick="toggleComments('@post.Id')" style="font-size: 13px; color: var(--text-secondary); cursor: pointer; @(!hasComments ? "display:none;" : "display:flex; align-items:center; gap:4px;")">
                                 <span id="comment-count-@post.Id">@post.CommentCount</span> 
                                 <span>comments</span>
                             </div>

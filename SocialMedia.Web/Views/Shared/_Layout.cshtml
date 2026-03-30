@@ -2,11 +2,22 @@
 @using Microsoft.AspNetCore.Identity
 @using SocialMedia.Domain.Entities
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Zuvo</title>
+    <!-- Apply theme ASAP to prevent flash of wrong theme -->
+    <script>
+        (function() {
+            var saved = localStorage.getItem('zuvo-theme');
+            if (saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -17,25 +28,25 @@
     <link rel="stylesheet" href="~/SocialMedia.Web.styles.css" asp-append-version="true" />
     <style>
         body {
-            background-color: #18191a;
-            color: #e4e6eb;
+            background: var(--gradient-bg);
+            color: var(--text-primary);
             font-family: inherit;
         }
         .navbar-fb {
-            background-color: #242526 !important;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-            border-bottom: 1px solid #393a3b;
+            background-color: var(--navbar-bg) !important;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--navbar-border);
         }
         .navbar-fb .nav-link { 
-            color: #b0b3b8 !important; 
+            color: var(--navbar-link) !important; 
             font-weight: 600; 
             padding: 0.5rem 1rem; 
             margin: 0 0.2rem; 
             transition: all 0.2s ease-in-out;
         }
         .navbar-fb .nav-link:hover, .navbar-fb .nav-link.active { 
-            color: #e4e6eb !important; 
-            background-color: #3a3b3c; 
+            color: var(--navbar-link-hover) !important; 
+            background-color: var(--navbar-circle-btn); 
             border-radius: 8px; 
         }
         .navbar-fb .nav-icon-link {
@@ -44,18 +55,18 @@
             justify-content: center;
             border-radius: 8px;
             padding: 0.5rem 2.5rem;
-            color: #b0b3b8 !important;
+            color: var(--navbar-link) !important;
             font-size: 1.4rem;
             text-decoration: none;
             transition: all 0.2s;
         }
         .navbar-fb .nav-icon-link:hover, .navbar-fb .nav-icon-link.active {
-            color: #2d88ff !important;
-            background-color: #3a3b3c;
+            color: var(--accent) !important;
+            background-color: var(--navbar-circle-btn);
         }
         .navbar-fb .nav-circle-btn {
-            background-color: #3a3b3c;
-            color: #e4e6eb !important;
+            background-color: var(--navbar-circle-btn);
+            color: var(--navbar-circle-icon) !important;
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -66,69 +77,70 @@
             transition: all 0.2s;
         }
         .navbar-fb .nav-circle-btn:hover {
-            background-color: #4e4f50;
+            background-color: var(--navbar-circle-btn-hover);
         }
-        .navbar-fb .navbar-brand { color: #e4e6eb !important; font-weight: 800; font-size: 1.8rem; letter-spacing: -0.8px; margin-right: 0; }
-        .navbar-fb .navbar-brand i { color: #2d88ff; }
+        .navbar-fb .navbar-brand { color: var(--text-primary) !important; font-weight: 800; font-size: 1.8rem; letter-spacing: -0.8px; margin-right: 0; }
+        .navbar-fb .navbar-brand i { color: var(--accent); }
 
         .fb-card {
-            background: #242526;
+            background: var(--card-bg);
             border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            border: 1px solid #393a3b;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--card-border);
         }
         .btn-fb-primary {
-            background-color: #2d88ff;
+            background-color: var(--accent);
             color: white !important;
             border: none;
             font-weight: 600;
             border-radius: 6px;
             transition: background-color 0.2s;
         }
-        .btn-fb-primary:hover { background-color: #1475eb; }
+        .btn-fb-primary:hover { background-color: var(--accent-hover); }
         .btn-fb-secondary {
-            background-color: #3a3b3c;
-            color: #e4e6eb !important;
+            background-color: var(--navbar-circle-btn);
+            color: var(--text-primary) !important;
             border: none;
             font-weight: 600;
             border-radius: 6px;
             transition: background-color 0.2s;
         }
-        .btn-fb-secondary:hover { background-color: #4e4f50; }
-        .text-fb-muted { color: #b0b3b8 !important; }
-        .text-fb-primary { color: #e4e6eb !important; }
-        .border, .border-bottom { border-color: #393a3b !important; }
-        .list-group-item { background-color: transparent !important; border-color: #393a3b !important; color: inherit; }
+        .btn-fb-secondary:hover { background-color: var(--navbar-circle-btn-hover); }
+        .text-fb-muted { color: var(--text-muted) !important; }
+        .text-fb-primary { color: var(--text-primary) !important; }
+        .border, .border-bottom { border-color: var(--dropdown-border) !important; }
+        .list-group-item { background-color: transparent !important; border-color: var(--list-group-border) !important; color: inherit; }
         
         /* Search bar styles */
         .search-nav-wrapper { position: relative; width: 260px; }
         .search-inner { position: relative; }
-        .search-inner i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #b0b3b8; pointer-events: none; font-size: 0.9rem; }
+        .search-inner i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; font-size: 0.9rem; }
         .search-nav-input {
-            background-color: #3a3b3c !important;
+            background-color: var(--search-input-bg) !important;
             border: none;
             border-radius: 50px;
             padding: 0.5rem 1rem 0.5rem 2.5rem;
-            color: #e4e6eb !important;
+            color: var(--text-primary) !important;
             width: 100%;
+            transition: background 0.2s;
         }
         .search-nav-input:focus {
             box-shadow: none;
             outline: none;
-            background-color: #4e4f50 !important;
+            background-color: var(--search-input-hover) !important;
         }
-        .search-nav-input::placeholder { color: #b0b3b8; }
+        .search-nav-input::placeholder { color: var(--text-muted); }
         
         .dropdown-menu-dark-fb {
-            background-color: #242526;
-            border: 1px solid #393a3b;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            background-color: var(--dropdown-bg);
+            border: 1px solid var(--dropdown-border);
+            box-shadow: var(--shadow-lg);
             border-radius: 8px;
         }
-        .dropdown-menu-dark-fb .dropdown-item { color: #e4e6eb; font-weight: 600; }
-        .dropdown-menu-dark-fb .dropdown-item:hover { background-color: #3a3b3c; color: #e4e6eb; border-radius: 4px; }
-        .dropdown-menu-dark-fb .dropdown-divider { border-color: #393a3b; }
-        .hover-bg-dark:hover { background-color: #3a3b3c !important; }
+        .dropdown-menu-dark-fb .dropdown-item { color: var(--text-primary); font-weight: 600; }
+        .dropdown-menu-dark-fb .dropdown-item:hover { background-color: var(--dropdown-item-hover); color: var(--text-primary); border-radius: 4px; }
+        .dropdown-menu-dark-fb .dropdown-divider { border-color: var(--dropdown-divider); }
+        .hover-bg-dark:hover { background-color: var(--dropdown-item-hover) !important; }
 
         @@media (max-width: 991px) {
             .navbar-fb .nav-icon-link {
@@ -138,7 +150,7 @@
                 margin-bottom: 0.25rem;
             }
             .navbar-fb .nav-icon-link:hover {
-                background-color: #3a3b3c;
+                background-color: var(--navbar-circle-btn-hover);
             }
             .navbar-nav .dropdown-menu {
                 position: static;
@@ -169,7 +181,7 @@
                                 <i class="fas fa-search"></i>
                                 <input id="navbarSearchInput" class="form-control search-nav-input" type="text" placeholder="Search Zuvo..." autocomplete="off" />
                             </div>
-                            <div id="navbarSearchDropdown" class="search-nav-dropdown d-none position-absolute w-100 mt-1 bg-dark border border-secondary rounded shadow p-2" style="z-index: 1000; background-color: #242526 !important; border-color: #393a3b !important;">
+                            <div id="navbarSearchDropdown" class="search-nav-dropdown d-none position-absolute w-100 mt-1 rounded shadow p-2" style="z-index: 1000; background-color: var(--dropdown-bg) !important; border: 1px solid var(--dropdown-border) !important;">
                                 <div id="navbarSearchState" class="text-muted small mb-2 px-2">Type at least 2 characters</div>
                                 <div id="navbarSearchResults" class="search-nav-results"></div>
                                 <a id="navbarSearchAllLink" class="d-none text-center d-block mt-2 small text-primary text-decoration-none" asp-controller="Search" asp-action="Index">View all results</a>
@@ -219,16 +231,16 @@
                                     <i class="fas fa-bell fs-5"></i>
                                     <span id="notif-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
                                 </a>
-                                <div class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 p-0" aria-labelledby="navbarNotificationsDropdown" style="width: 360px;">
-                                    <div class="px-3 py-2 border-bottom border-secondary d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Notifications</span>
+                                <div class="dropdown-menu dropdown-menu-end mt-2 p-0 shadow-lg" aria-labelledby="navbarNotificationsDropdown" style="width: 360px; background-color: var(--dropdown-bg); border: 1px solid var(--dropdown-border);">
+                                    <div class="px-3 py-2 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--dropdown-divider);">
+                                        <span class="fw-bold" style="color: var(--text-primary);">Notifications</span>
                                         <button id="notif-mark-all-btn" type="button" class="btn btn-link p-0 text-decoration-none small" style="color:#2d88ff;">Mark all as read</button>
                                     </div>
                                     <div id="notif-list-desktop" style="max-height: 360px; overflow-y: auto;">
                                         <div class="px-3 py-3 text-muted small">Loading...</div>
                                     </div>
-                                    <div class="px-3 py-2 border-top border-secondary text-center">
-                                        <button id="notif-load-more-btn" type="button" class="btn btn-sm btn-outline-light w-100">Load more</button>
+                                    <div class="px-3 py-2 text-center" style="border-top: 1px solid var(--dropdown-divider);">
+                                        <button id="notif-load-more-btn" type="button" class="btn btn-sm w-100" style="background-color: var(--navbar-circle-btn); color: var(--text-primary);">Load more</button>
                                     </div>
                                 </div>
                             </li>
@@ -247,17 +259,17 @@
                                 <a class="nav-link p-0 d-flex align-items-center text-decoration-none" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="outline: none;">
                                     <img src="@profilePic" class="rounded-circle" style="width:40px; height:40px; object-fit:cover; border: 1px solid #393a3b;" title="Profile" />
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark-fb mt-2 border-0 shadow-lg p-2 position-absolute" aria-labelledby="navbarProfileDropdown" style="width: 320px;">
+                                <ul class="dropdown-menu dropdown-menu-end mt-2 border-0 shadow-lg p-2 position-absolute" aria-labelledby="navbarProfileDropdown" style="width: 320px; background-color: var(--dropdown-bg);">
                                     <li class="mb-2">
-                                        <a asp-controller="Profile" asp-action="Index" class="dropdown-item d-flex align-items-center p-2 rounded shadow-sm hover-bg-dark text-decoration-none" style="border: 1px solid rgba(255,255,255,0.1);">
+                                        <a asp-controller="Profile" asp-action="Index" class="dropdown-item d-flex align-items-center p-2 rounded shadow-sm text-decoration-none" style="border: 1px solid var(--dropdown-border); color: var(--text-primary);">
                                             <img src="@profilePic" class="rounded-circle me-3" style="width: 48px; height: 48px; object-fit: cover;" />
                                             <div>
-                                                <div class="fw-bold text-light" style="font-size: 1.05rem;">@displayUserName</div>
-                                                <div class="small" style="color: #b0b3b8;">See your profile</div>
+                                                <div class="fw-bold" style="font-size: 1.05rem; color: var(--text-primary);">@displayUserName</div>
+                                                <div class="small" style="color: var(--text-secondary);">See your profile</div>
                                             </div>
                                         </a>
                                     </li>
-                                    <li><hr class="dropdown-divider mx-2"></li>
+                                    <li><hr class="dropdown-divider mx-2" style="border-top-color: var(--dropdown-divider);"></li>
                                     @if (User.IsInRole("Admin"))
                                     {
                                         <li>
@@ -270,22 +282,35 @@
                                     }
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center py-2 px-2 m-1 rounded" asp-controller="Friendship" asp-action="Suggestions" style="width: auto;">
-                                            <div class="nav-circle-btn me-3" style="width: 36px; height: 36px; background-color: #3a3b3c;"><i class="fas fa-compass fs-6 text-light"></i></div>
+                                            <div class="nav-circle-btn me-3" style="width: 36px; height: 36px; background-color: var(--navbar-circle-btn);"><i class="fas fa-compass fs-6" style="color:var(--navbar-circle-icon);"></i></div>
                                             <span class="fw-semibold">Discover People</span>
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center py-2 px-2 m-1 rounded" asp-controller="Home" asp-action="Privacy" style="width: auto;">
-                                            <div class="nav-circle-btn me-3" style="width: 36px; height: 36px; background-color: #3a3b3c;"><i class="fas fa-shield-alt fs-6 text-light"></i></div>
+                                            <div class="nav-circle-btn me-3" style="width: 36px; height: 36px; background-color: var(--navbar-circle-btn);"><i class="fas fa-shield-alt fs-6" style="color:var(--navbar-circle-icon);"></i></div>
                                             <span class="fw-semibold">Privacy</span>
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider mx-2"></li>
                                     <li>
+                                        <div class="theme-toggle-wrap m-1">
+                                            <span class="theme-toggle-label">
+                                                <div class="theme-toggle-icon-wrap"><i id="themeToggleIcon" class="fas fa-sun"></i></div>
+                                                <span id="themeToggleText">Dark Mode</span>
+                                            </span>
+                                            <label class="theme-switch" title="Toggle dark mode">
+                                                <input type="checkbox" id="themeToggleCheckbox" />
+                                                <span class="theme-slider"></span>
+                                            </label>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider mx-2" style="border-top-color: var(--dropdown-divider);"></li>
+                                    <li>
                                         <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="dropdown-item d-flex align-items-center py-2 px-2 m-1 rounded bg-transparent" style="width: auto; border:none; outline:none; text-align: left;">
-                                                <div class="nav-circle-btn me-3" style="width: 36px; height: 36px; background-color: #3a3b3c;"><i class="fas fa-sign-out-alt fs-6 text-light"></i></div>
+                                            <button type="submit" class="dropdown-item d-flex align-items-center py-2 px-2 m-1 rounded bg-transparent" style="width: auto; border:none; outline:none; text-align: left; color: var(--text-primary);">
+                                                <div class="nav-circle-btn me-3" style="width: 36px; height: 36px; background-color: var(--navbar-circle-btn);"><i class="fas fa-sign-out-alt fs-6" style="color:var(--navbar-circle-icon);"></i></div>
                                                 <span class="fw-semibold">Logout</span>
                                             </button>
                                         </form>
@@ -344,7 +369,7 @@
                     {
                         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 mt-2 mt-lg-0 d-flex flex-row align-items-center gap-2">
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login">
+                                <a class="nav-link text-decoration-none" asp-area="" asp-controller="Account" asp-action="Login" style="color: var(--text-primary); font-weight: 500;">
                                     <i class="fas fa-sign-in-alt me-1"></i> Login
                                 </a>
                             </li>
@@ -361,7 +386,7 @@
     </header>
     @if (User.Identity != null && User.Identity.IsAuthenticated)
     {
-        <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="mobileNotificationsOffcanvas" aria-labelledby="mobileNotificationsOffcanvasLabel">
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileNotificationsOffcanvas" aria-labelledby="mobileNotificationsOffcanvasLabel" style="background: var(--offcanvas-bg); color: var(--text-primary);">
             <div class="offcanvas-header border-bottom border-secondary">
                 <h5 class="offcanvas-title" id="mobileNotificationsOffcanvasLabel">Notifications</h5>
                 <div class="d-flex align-items-center gap-3">
@@ -472,24 +497,24 @@
         <!-- Global Edit Post Modal -->
         <div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content card-dark border-0" style="background: #242526; border: 1px solid #3a3b3c;">
+                <div class="modal-content border-0" style="background: var(--modal-bg); border: 1px solid var(--card-border) !important;">
                     <form id="editPostModalForm" asp-controller="Post" asp-action="EditPost" method="post" enctype="multipart/form-data">
-                        <div class="modal-header border-bottom border-secondary">
-                            <h5 class="modal-title fw-bold text-light" id="editPostModalLabel">Edit Post</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <div class="modal-header" style="border-bottom: 1px solid var(--dropdown-divider);">
+                            <h5 class="modal-title fw-bold" id="editPostModalLabel" style="color:var(--text-primary);">Edit Post</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-3">
                             <input type="hidden" name="Id" id="editPostId" />
-                            <textarea name="Content" id="editPostContent" class="form-control" rows="4" style="background:#3a3b3c; border:1px solid #4a4b4c; color:#e4e6eb; resize:none;" required></textarea>
+                            <textarea name="Content" id="editPostContent" class="form-control" rows="4" style="background:var(--modal-input-bg); border:1px solid var(--modal-input-border); color:var(--text-primary); resize:none;" required></textarea>
                             
                             <div class="mt-3">
-                                <label class="form-label text-muted small mb-1">Update Image (optional)</label>
-                                <input type="file" name="image" id="editPostImage" class="form-control" style="background:#3a3b3c; border:1px solid #4a4b4c; color:#e4e6eb;" accept="image/*" />
+                                <label class="form-label small mb-1" style="color:var(--text-muted);">Update Image (optional)</label>
+                                <input type="file" name="image" id="editPostImage" class="form-control" style="background:var(--modal-input-bg); border:1px solid var(--modal-input-border); color:var(--text-primary);" accept="image/*" />
                             </div>
                         </div>
-                        <div class="modal-footer border-top border-secondary border-0">
-                            <button type="button" class="btn text-light" data-bs-dismiss="modal" style="background: #3a3b3c;">Cancel</button>
-                            <button type="submit" class="btn text-light fw-bold" style="background: #2d88ff;">Save Changes</button>
+                        <div class="modal-footer border-0" style="border-top: 1px solid var(--dropdown-divider) !important;">
+                            <button type="button" class="btn fw-semibold" data-bs-dismiss="modal" style="background: var(--navbar-circle-btn); color: var(--text-primary);">Cancel</button>
+                            <button type="submit" class="btn text-white fw-bold" style="background: var(--accent);">Save Changes</button>
                         </div>
                     </form>
                 </div>
@@ -499,18 +524,18 @@
         <!-- Global Delete Confirmation Modal -->
         <div class="modal fade" id="deletePostModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-sm">
-                <div class="modal-content card-dark border-0" style="background: #242526; border: 1px solid #3a3b3c;">
+                <div class="modal-content border-0" style="background: var(--modal-bg); border: 1px solid var(--card-border) !important;">
                     <form id="deletePostModalForm" asp-controller="Post" asp-action="DeletePost" method="post">
-                        <div class="modal-header border-bottom border-secondary">
-                            <h6 class="modal-title fw-bold text-light">Delete Post?</h6>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <div class="modal-header" style="border-bottom: 1px solid var(--dropdown-divider);">
+                            <h6 class="modal-title fw-bold" style="color:var(--text-primary);">Delete Post?</h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body text-muted small">
+                        <div class="modal-body small" style="color:var(--text-secondary);">
                             Are you sure you want to delete this post? This action cannot be undone.
                             <input type="hidden" name="postId" id="deletePostId" />
                         </div>
                         <div class="modal-footer border-0 pb-3 justify-content-center">
-                            <button type="button" class="btn text-light btn-sm px-3" data-bs-dismiss="modal" style="background: #3a3b3c;">Cancel</button>
+                            <button type="button" class="btn btn-sm px-3 fw-semibold" data-bs-dismiss="modal" style="background: var(--navbar-circle-btn); color: var(--text-primary);">Cancel</button>
                             <button type="submit" class="btn btn-danger btn-sm px-3">Delete</button>
                         </div>
                     </form>
@@ -670,11 +695,11 @@
                 }
 
                 const html = notificationItems.map(n => `
-                    <button type="button" class="w-100 text-start px-3 py-2 border-0 border-bottom border-secondary notification-item ${n.isRead ? 'bg-transparent text-light' : 'bg-dark text-white'}" data-notification-id="${n.id}" data-action-url="${escapeHtml(n.actionUrl ?? '')}" style="transition: background-color 0.2s;">
+                    <button type="button" class="w-100 text-start px-3 py-2 border-0 notification-item" data-notification-id="${n.id}" data-action-url="${escapeHtml(n.actionUrl ?? '')}" style="transition: background-color 0.2s; background-color: ${n.isRead ? 'transparent' : 'var(--modal-input-bg)'}; border-bottom: 1px solid var(--dropdown-divider) !important;">
                         <div class="d-flex align-items-start gap-2">
                             <div class="mt-1"><i class="fas ${notificationIcon(n.type)} text-primary"></i></div>
                             <div class="flex-grow-1">
-                                <div class="small fw-semibold" style="color: #e4e6eb;">${escapeHtml(n.content)}</div>
+                                <div class="small fw-semibold" style="color: var(--text-primary);">${escapeHtml(n.content)}</div>
                                 <div class="small text-muted">${relativeTime(n.createdAt)}</div>
                             </div>
                             ${n.isRead ? '' : '<span class="badge bg-primary rounded-pill" style="font-size:0.55rem;">new</span>'}
@@ -922,5 +947,38 @@
             });
         </script>
     }
+    <!-- ===== Theme Toggle Script ===== -->
+    <script>
+        (function () {
+            var checkbox = document.getElementById('themeToggleCheckbox');
+            var icon = document.getElementById('themeToggleIcon');
+            var text = document.getElementById('themeToggleText');
+            var html = document.documentElement;
+
+            function applyTheme(theme) {
+                html.setAttribute('data-theme', theme);
+                if (checkbox) checkbox.checked = (theme === 'dark');
+                if (icon) {
+                    icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+                }
+                if (text) {
+                    text.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+                }
+            }
+
+            // Sync on load
+            var saved = localStorage.getItem('zuvo-theme') || 'light';
+            applyTheme(saved);
+
+            // Toggle handler
+            if (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    var newTheme = checkbox.checked ? 'dark' : 'light';
+                    localStorage.setItem('zuvo-theme', newTheme);
+                    applyTheme(newTheme);
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

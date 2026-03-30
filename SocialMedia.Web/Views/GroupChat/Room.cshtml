@@ -231,14 +231,14 @@
 
     .add-member-input {
         appearance: none;
-        background-color: var(--bg-card, #242526);
+        background-color: var(--card-bg);
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23b0b3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
         background-repeat: no-repeat;
         background-position: right 0.75rem center;
         background-size: 12px 10px;
-        border: 1px solid var(--border-color, #3a3b3c);
+        border: 1px solid var(--card-border);
         border-radius: var(--radius-md, 0.375rem);
-        color: #e4e6eb; 
+        color: var(--text-primary); 
         padding: 0.5rem 2rem 0.5rem 0.75rem;
         font-size: 0.85rem;
         font-weight: 500;
@@ -251,8 +251,8 @@
 
         
         .add-member-input option {
-            background-color: #242526;
-            color: #e4e6eb;
+            background-color: var(--card-bg);
+            color: var(--text-primary);
         }
 
     .add-member-input:disabled {

@@ -34,131 +34,100 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark fixed-top navbar-fb px-2 px-md-3 py-1">
-            <div class="container-fluid d-flex justify-content-between align-items-center h-100 px-4" style="max-width: 1440px;">
+        <nav class="navbar navbar-expand-lg fixed-top navbar-lumina px-3 py-0">
+            <div class="container-fluid d-flex justify-content-between align-items-center h-100" style="max-width: 1400px;">
                 
-                <!-- Left: Brand and Search -->
-                <div class="d-flex align-items-center gap-4">
-                    <a class="navbar-brand text-decoration-none d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
-                        <span class="material-symbols-outlined" style="font-size: 26px; color: var(--primary); font-variation-settings: 'FILL' 1;">bolt</span>
-                        <span style="color: var(--on-surface); font-size: 1.45rem; font-family: var(--font-headline); font-weight: 800; letter-spacing: -0.04em;">Zuvo</span>
-                    </a>
-
-                    @if (User.Identity != null && User.Identity.IsAuthenticated)
-                    {
-                        <div class="search-nav-wrapper d-none d-md-flex align-items-center px-4 py-2 rounded-pill gap-3" style="background-color: var(--surface-container-low); width: 280px;">
-                            <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">search</span>
-                            <input id="navbarSearchInput" class="bg-transparent border-0 focus-none w-100 p-0" style="font-size: 0.85rem; color: var(--on-surface);" type="text" placeholder="Search Zuvo..." autocomplete="off" />
+                <!-- Brand Section -->
+                <div class="navbar-brand-wrapper">
+                    <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
+                        <div class="brand-icon-box">
+                            <span class="material-symbols-outlined fill-1">bolt</span>
                         </div>
-                    }
+                        <span class="brand-text">Zuvo</span>
+                    </a>
                 </div>
 
-                <!-- Navigation Tabs -->
-                <div class="collapse navbar-collapse justify-content-center d-none d-lg-block" id="mainNavbar">
-                    <div class="zuvo-nav-links">
-                        <a class="zuvo-nav-link active" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        <a class="zuvo-nav-link" asp-area="" asp-controller="Profile" asp-action="Index">Profile</a>
-                        <a class="zuvo-nav-link" asp-area="" asp-controller="Friendship" asp-action="Index">Friends</a>
+                <!-- Centered Navigation -->
+                <div class="navbar-nav-center d-none d-lg-flex">
+                    <div class="nav-tabs-pill">
+                        <a class="nav-pill-item active" asp-controller="Home" asp-action="Index" title="Home">
+                            <span class="material-symbols-outlined">home</span>
+                            <span class="nav-pill-text">Feed</span>
+                        </a>
+                        <a class="nav-pill-item" asp-controller="Friendship" asp-action="Index" title="Friends">
+                            <span class="material-symbols-outlined">group</span>
+                            <span class="nav-pill-text">Network</span>
+                        </a>
+                        <a class="nav-pill-item" asp-controller="Profile" asp-action="Index" title="Profile">
+                            <span class="material-symbols-outlined">account_circle</span>
+                            <span class="nav-pill-text">Profile</span>
+                        </a>
                     </div>
                 </div>
 
-                <!-- Right: Profile / Auth -->
-                <div class="d-flex align-items-center gap-2">
+                <!-- Right Actions -->
+                <div class="navbar-actions-wrapper d-flex align-items-center gap-2">
                     @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
                         var userManager = Context.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
                         var user = await userManager.GetUserAsync(User);
                         var profilePic = user?.ProfilePictureUrl ?? "/images/user.jpg";
-                        var displayUserName = user?.UserName ?? User.Identity.Name;
 
-                        <!-- Notification Bell -->
-                        <a asp-controller="Notifications" asp-action="Index" class="zuvo-icon-btn position-relative d-flex align-items-center justify-content-center rounded-circle" style="width: 40px; height: 40px; background: var(--surface-container-low); text-decoration: none;">
-                            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--on-surface-variant);">notifications</span>
-                            <span id="notif-badge-desktop" class="zuvo-badge" style="display: none;">0</span>
-                        </a>
+                        <!-- Premium Search (Collapsible) -->
+                        <div class="nav-search-group d-none d-md-flex align-items-center">
+                            <span class="material-symbols-outlined search-icon">search</span>
+                            <input type="text" class="nav-search-input" placeholder="Search..." />
+                        </div>
 
-                        <!-- Messages -->
-                        <a asp-controller="Messaging" asp-action="Index" class="zuvo-icon-btn position-relative d-flex align-items-center justify-content-center rounded-circle" style="width: 40px; height: 40px; background: var(--surface-container-low); text-decoration: none;">
-                            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--on-surface-variant);">mail</span>
-                            <span id="msg-badge-desktop" class="zuvo-badge" style="display: none;">0</span>
-                        </a>
+                        <!-- Action Icons -->
+                        <div class="d-flex align-items-center gap-1 ms-2">
+                            <button class="nav-action-btn" title="Notifications">
+                                <span class="material-symbols-outlined">notifications</span>
+                                <span class="nav-dot bg-danger"></span>
+                            </button>
+                            <button class="nav-action-btn" title="Messages">
+                                <span class="material-symbols-outlined">chat_bubble</span>
+                            </button>
+                        </div>
 
-                        <!-- Profile Dropdown -->
-                        <div class="dropdown ms-1">
-                            <a class="d-flex align-items-center text-decoration-none" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="@profilePic" class="zuvo-nav-avatar" onerror="this.src='/images/user.jpg';" title="@displayUserName" />
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end mt-3 border-0 p-3 rounded-4" style="width: 300px; background: var(--dropdown-bg); box-shadow: var(--shadow-lg);">
-                                <!-- User Info -->
-                                <li class="mb-2">
-                                    <a asp-controller="Profile" asp-action="Index" class="d-flex align-items-center gap-3 p-2 rounded-3 text-decoration-none transition-all" style="color: var(--text-primary);" onmouseover="this.style.background='var(--dropdown-item-hover)'" onmouseout="this.style.background='transparent'">
-                                        <img src="@profilePic" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover; border: 2px solid var(--surface-container-low);" onerror="this.src='/images/user.jpg';" />
-                                        <div>
-                                            <div class="fw-bold" style="font-size: 0.92rem;">@displayUserName</div>
-                                            <div style="font-size: 0.75rem; color: var(--text-muted);">See your profile</div>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider" style="border-color: var(--dropdown-divider);"></li>
-
-                                @if (User.IsInRole("Admin"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" asp-controller="AdminPanel" asp-action="Index">
-                                            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--error);">admin_panel_settings</span>
-                                            <span class="fw-semibold" style="color: var(--error);">Admin Dashboard</span>
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider" style="border-color: var(--dropdown-divider);"></li>
-                                }
-
-                                <li>
-                                    <a class="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" asp-controller="Friendship" asp-action="Suggestions">
-                                        <span class="material-symbols-outlined" style="font-size: 20px;">explore</span> Discover People
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" href="#">
-                                        <span class="material-symbols-outlined" style="font-size: 20px;">settings</span> Settings
-                                    </a>
-                                </li>
-
-                                <!-- Theme Toggle -->
-                                <li><hr class="dropdown-divider" style="border-color: var(--dropdown-divider);"></li>
-                                <li>
-                                    <div class="theme-toggle-wrap" onclick="document.getElementById('themeToggleCheckbox').click()">
-                                        <span class="theme-toggle-label">
-                                            <div class="theme-toggle-icon-wrap"><span class="material-symbols-outlined" style="font-size: 18px;">dark_mode</span></div>
-                                            <span id="themeToggleText">Dark Mode</span>
-                                        </span>
-                                        <label class="theme-switch" title="Toggle dark mode" onclick="event.stopPropagation()">
-                                            <input type="checkbox" id="themeToggleCheckbox" />
-                                            <span class="theme-slider"></span>
-                                        </label>
+                        <!-- User Profile -->
+                        <div class="dropdown ms-2">
+                            <button class="nav-profile-trigger" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="@profilePic" alt="Profile" onerror="this.src='/images/user.jpg';" />
+                                <span class="material-symbols-outlined expand-icon">expand_more</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end lumina-dropdown mt-2" aria-labelledby="profileDropdown">
+                                <div class="dropdown-header-lumina">
+                                    <div class="user-info">
+                                        <div class="user-name">@User.Identity.Name</div>
+                                        <div class="user-handle">@@@User.Identity.Name.ToLower()</div>
                                     </div>
-                                </li>
-
-                                <!-- Logout -->
-                                <li><hr class="dropdown-divider" style="border-color: var(--dropdown-divider);"></li>
-                                <li>
-                                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2 text-danger" style="border: none; background: transparent;">
-                                            <span class="material-symbols-outlined" style="font-size: 20px;">logout</span> Logout
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" asp-controller="Profile" asp-action="Index">
+                                    <span class="material-symbols-outlined">person</span> View Profile
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <span class="material-symbols-outlined">settings</span> Account Settings
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <span class="material-symbols-outlined">logout</span> Sign Out
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     }
                     else
                     {
-                        <div class="d-flex gap-2">
-                            <a class="btn btn-sm px-4 rounded-pill fw-bold" asp-area="Identity" asp-page="/Account/Login" style="color: var(--primary);">Log in</a>
-                            <a class="btn btn-fb-primary btn-sm px-4" asp-area="Identity" asp-page="/Account/Register">Get Started</a>
-                        </div>
+                        <a class="btn btn-lumina-text px-3" asp-area="Identity" asp-page="/Account/Login">Sign In</a>
+                        <a class="btn btn-lumina-primary px-4 rounded-pill" asp-area="Identity" asp-page="/Account/Register">Join Now</a>
                     }
                 </div>
+            </div>
+        </nav>
+    </header>
             </div>
         </nav>
     </header>

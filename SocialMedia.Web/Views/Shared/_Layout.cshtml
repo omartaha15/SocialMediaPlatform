@@ -729,16 +729,12 @@
     <script>
         (function () {
             var checkbox = document.getElementById('themeToggleCheckbox');
-            var icon = document.getElementById('themeToggleIcon');
             var text = document.getElementById('themeToggleText');
             var html = document.documentElement;
 
             function applyTheme(theme) {
                 html.setAttribute('data-theme', theme);
                 if (checkbox) checkbox.checked = (theme === 'dark');
-                if (icon) {
-                    icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-                }
                 if (text) {
                     text.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
                 }

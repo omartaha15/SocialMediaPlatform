@@ -14,41 +14,68 @@
 }
 
 <!-- ═══════════════════════  LAYOUT  ═══════════════════════ -->
-<div class="container-fluid py-4" style="max-width: 1140px;">
+<div class="container py-4" style="max-width: 1440px;">
     <div class="row g-4">
         
-        <!-- LEFT SIDEBAR -->
-        <aside class="col-lg-3 d-none d-lg-block">
+        <!-- LEFT SIDEBAR: Navigation & Profile -->
+        <aside class="col-xl-3 d-none d-xl-block">
             <div class="position-sticky" style="top: 85px;">
                 <!-- Profile Card -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card fb-card mb-4 overflow-hidden transition-all hover-shadow">
                     <div class="card-body text-center p-4">
                         <div class="position-relative d-inline-block mb-3">
-                            <img src="@currentUserPic" class="rounded-circle border border-3 border-white shadow-sm" style="width: 84px; height: 84px; object-fit: cover;" onerror="this.src='/images/user.jpg';" />
-                            <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-white border-2 rounded-circle"></span>
+                            <div class="p-1 rounded-circle bg-gradient-to-tr from-primary to-secondary">
+                                <img src="@currentUserPic" class="rounded-circle border border-4 border-white shadow-sm" style="width: 96px; height: 96px; object-fit: cover;" onerror="this.src='/images/user.jpg';" />
+                            </div>
+                            <span class="position-absolute bottom-0 end-0 w-4 h-4 bg-success border border-white border-2 rounded-circle"></span>
                         </div>
-                        <h6 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1.05rem;">@currentUserName</h6>
-                        <p class="text-muted small mb-0">Your profile</p>
-                    </div>
-                    <div class="card-footer bg-transparent border-top-0 p-0">
-                        <div class="list-group list-group-flush rounded-bottom-4 pb-2 px-2">
-                            <a asp-controller="Profile" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-2 mb-1 rounded-3 text-muted fw-medium saas-nav-link">
-                                <i class="fas fa-user text-primary bg-primary bg-opacity-10 p-2 rounded-3 me-3" style="width: 32px; text-align: center;"></i> <span style="color: var(--text-primary);">My Profile</span>
-                            </a>
-                            <a asp-controller="Friendship" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-2 mb-1 rounded-3 text-muted fw-medium saas-nav-link">
-                                <i class="fas fa-user-friends text-info bg-info bg-opacity-10 p-2 rounded-3 me-3" style="width: 32px; text-align: center;"></i> <span style="color: var(--text-primary);">Friends</span>
-                            </a>
-                            <a asp-controller="Friendship" asp-action="Suggestions" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-2 rounded-3 text-muted fw-medium saas-nav-link">
-                                <i class="fas fa-compass text-warning bg-warning bg-opacity-10 p-2 rounded-3 me-3" style="width: 32px; text-align: center;"></i> <span style="color: var(--text-primary);">Discover</span>
-                            </a>
+                        <h5 class="fw-bold mb-1" style="color: var(--text-primary);">@currentUserName</h5>
+                        <p class="text-muted small px-3">Product Designer focused on building sustainable digital ecosystems at Zuvo.</p>
+                        
+                        <div class="mt-4 pt-4 border-top d-flex justify-content-around">
+                            <div class="text-center">
+                                <span class="d-block fw-bold text-primary fs-5">1.2k</span>
+                                <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.05em;">Followers</span>
+                            </div>
+                            <div class="border-start"></div>
+                            <div class="text-center">
+                                <span class="d-block fw-bold text-primary fs-5">482</span>
+                                <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.05em;">Following</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Navigation Menu -->
+                <div class="card fb-card p-2 mb-4 bg-opacity-50">
+                    <div class="list-group list-group-flush gap-1">
+                        <a asp-controller="Profile" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-3 rounded-4 bg-white shadow-sm text-primary">
+                            <span class="material-symbols-outlined me-3">person</span>
+                            <span class="fw-semibold">My Profile</span>
+                        </a>
+                        <a asp-controller="Friendship" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-3 rounded-4 text-muted hover-bg-white transition-all">
+                            <span class="material-symbols-outlined me-3">group</span>
+                            <span class="fw-medium">Friends</span>
+                        </a>
+                        <a asp-controller="Friendship" asp-action="Suggestions" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-3 rounded-4 text-muted hover-bg-white transition-all">
+                            <span class="material-symbols-outlined me-3">explore</span>
+                            <span class="fw-medium">Discover</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-3 rounded-4 text-muted hover-bg-white transition-all">
+                            <span class="material-symbols-outlined me-3">settings</span>
+                            <span class="fw-medium">Settings</span>
+                        </a>
+                    </div>
+                </div>
+
+                <button class="btn btn-fb-primary w-100 py-3 fw-bold shadow-lg" style="box-shadow: 0 10px 20px rgba(74, 63, 226, 0.2);">
+                    Create Post
+                </button>
             </div>
         </aside>
 
-        <!-- MAIN FEED -->
-        <main class="col-lg-6 col-md-12">
+        <!-- MIDDLE COLUMN: Main Feed -->
+        <main class="col-lg-12 col-xl-6">
             <!-- COMPOSE CARD -->
             <div class="mb-4">
                 <partial name="_ComposePostPartial" />
@@ -56,20 +83,20 @@
 
             <!-- FEED HEADER -->
             <div class="d-flex justify-content-between align-items-center mb-4 px-2">
-                <h6 class="fw-bold mb-0" style="color: var(--text-primary);"><i class="fas fa-stream me-2 text-primary"></i>Your Feed</h6>
+                <h6 class="fw-bold mb-0 text-uppercase tracking-wider" style="color: var(--text-muted); font-size: 0.75rem;">Recent Feed</h6>
                 <div class="dropdown">
-                    <button class="btn btn-sm border-0 rounded-pill px-3 shadow-sm text-muted fw-medium dropdown-toggle" style="background-color: var(--card-bg); color: var(--text-primary);" type="button" data-bs-toggle="dropdown">
-                        Most recent
+                    <button class="btn btn-sm border-0 rounded-pill px-3 shadow-sm text-muted fw-bold" style="background-color: var(--bg-card); font-size: 0.75rem;" type="button" data-bs-toggle="dropdown">
+                        SORT BY: MOST RECENT <i class="fas fa-chevron-down ms-1" style="font-size: 0.6rem;"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3" style="background-color: var(--dropdown-bg);">
-                        <li><a class="dropdown-item small fw-medium" href="#" style="color: var(--text-primary);">Most recent</a></li>
-                        <li><a class="dropdown-item small fw-medium" href="#" style="color: var(--text-primary);">Top posts</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2">
+                        <li><a class="dropdown-item rounded-3 small fw-semibold" href="#">Most recent</a></li>
+                        <li><a class="dropdown-item rounded-3 small fw-semibold" href="#">Top posts</a></li>
                     </ul>
                 </div>
             </div>
 
-            <!-- POSTS -->
-            <div id="feed-posts-container" class="d-flex flex-column gap-3">
+            <!-- FEED POSTS CONTAINER -->
+            <div id="feed-posts-container" class="d-flex flex-column gap-4">
                 @if (Model != null && Model.Any())
                 {
                     @foreach (var post in Model)
@@ -79,57 +106,91 @@
                 }
                 else
                 {
-                    <div class="card border-0 shadow-sm rounded-4 text-center py-5">
+                    <div class="card fb-card text-center py-5">
                         <div class="card-body py-4">
-                            <div class="mb-3">
-                                <i class="fas fa-stream fa-3x text-muted opacity-25"></i>
+                            <div class="mb-3 text-muted opacity-25">
+                                <span class="material-symbols-outlined" style="font-size: 64px;">dynamic_feed</span>
                             </div>
-                            <h6 class="fw-bold mb-2" style="color: var(--text-primary);">Nothing here yet</h6>
-                            <p class="text-muted small mb-0">Be the first to share something with your network.</p>
+                            <h5 class="fw-bold mb-2">Your feed is empty</h5>
+                            <p class="text-muted small mb-0">Follow people or share something to get started.</p>
                         </div>
                     </div>
                 }
             </div>
             
-            <!-- LOADING MORE INDICATOR -->
-            <div id="feed-loading" class="text-center py-4" style="display: none;">
-                <div class="spinner-border text-primary shadow-sm" style="width: 2rem; height: 2rem;" role="status">
+            <!-- LOADING INDICATOR -->
+            <div id="feed-loading" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
         </main>
 
-        <!-- RIGHT SIDEBAR -->
+        <!-- RIGHT SIDEBAR: Contextual Info -->
         <aside class="col-lg-3 d-none d-xl-block">
             <div class="position-sticky" style="top: 85px;">
                 
-                <!-- Sponsored Widget -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-transparent border-0 pt-4 pb-2">
-                        <h6 class="text-muted text-uppercase fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">Sponsored</h6>
+                <!-- Sponsored Card -->
+                <div class="card fb-card mb-4 p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="text-uppercase fw-bold mb-0 text-muted" style="font-size: 0.65rem; letter-spacing: 0.1em;">Sponsored</h6>
+                        <span class="material-symbols-outlined text-muted" style="font-size: 16px;">info</span>
                     </div>
-                    <div class="card-body pt-0 pb-3">
-                        <div class="d-flex align-items-center p-2 rounded-3 saas-ad-card transition-all cursor-pointer">
-                            <div class="bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px; flex-shrink: 0;">
-                                <i class="fas fa-bolt fs-5"></i>
-                            </div>
+                    <div class="rounded-4 overflow-hidden mb-3 bg-light">
+                        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format&fit=crop&q=60" class="w-100 object-fit-cover" style="height: 140px;" />
+                    </div>
+                    <h6 class="fw-bold mb-2" style="font-size: 0.9rem;">Scale with Zuvo Analytics</h6>
+                    <p class="text-muted mb-3" style="font-size: 0.75rem; line-height: 1.5;">Real-time social intelligence at your fingertips. Try for 14 days free.</p>
+                    <button class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-bold border-2" style="font-size: 0.75rem;">Learn More</button>
+                </div>
+
+                <!-- Birthdays Card -->
+                <div class="card fb-card mb-4 p-4">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">cake</span>
+                        </div>
+                        <h6 class="fw-bold mb-0" style="font-size: 0.9rem;">Upcoming Birthdays</h6>
+                    </div>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;" />
                             <div>
-                                <h6 class="fw-bold mb-1" style="font-size: 0.85rem; color: var(--text-primary);">Zuvo Premium</h6>
-                                <p class="text-muted mb-0 lh-sm" style="font-size: 0.75rem;">Unlock exclusive features & ad-free experience.</p>
+                                <h6 class="fw-semibold mb-0" style="font-size: 0.8rem;">Marcus Chen</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.7rem;">Birthday today!</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;" />
+                            <div>
+                                <h6 class="fw-semibold mb-0" style="font-size: 0.8rem;">Sarah Jenkins</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.7rem;">Tomorrow</p>
                             </div>
                         </div>
                     </div>
+                    <button class="btn btn-light btn-sm w-100 rounded-4 fw-bold mt-4 py-2" style="font-size: 0.75rem; background-color: var(--bg-input);">View All Birthdays</button>
                 </div>
 
-                <!-- Birthdays Widget -->
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-header bg-transparent border-0 pt-4 pb-2">
-                        <h6 class="text-muted text-uppercase fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">Birthdays</h6>
-                    </div>
-                    <div class="card-body pt-2 pb-4">
-                        <div class="d-flex align-items-center px-2">
-                            <i class="fas fa-birthday-cake text-warning fs-4 me-3"></i>
-                            <span class="text-muted small fw-medium">No birthdays today</span>
+                <!-- Active Contacts Card -->
+                <div class="card fb-card p-4">
+                    <h6 class="fw-bold mb-4" style="font-size: 0.9rem;">Active Contacts</h6>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="position-relative">
+                                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;" />
+                                    <span class="position-absolute bottom-0 end-0 w-2 h-2 bg-success border border-white border-1 rounded-circle"></span>
+                                </div>
+                                <span class="fw-medium" style="font-size: 0.8rem;">Alex Rivera</span>
+                            </div>
+                            <span class="w-2 h-2 bg-primary rounded-circle animate-pulse" style="box-shadow: 0 0 8px var(--accent);"></span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="position-relative">
+                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;" />
+                                <span class="position-absolute bottom-0 end-0 w-2 h-2 bg-success border border-white border-1 rounded-circle"></span>
+                            </div>
+                            <span class="fw-medium" style="font-size: 0.8rem;">Jordan Smith</span>
                         </div>
                     </div>
                 </div>

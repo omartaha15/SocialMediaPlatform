@@ -1,74 +1,74 @@
 /* ===== Google Font ===== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 /* ===== CSS Variables — Light Mode (Default) ===== */
 :root {
     /* Backgrounds */
-    --bg-primary: #f0f2f5;
+    --bg-primary: #f5f7f9;
     --bg-secondary: #ffffff;
-    --bg-card: rgba(255, 255, 255, 0.95);
-    --bg-glass: rgba(0, 0, 0, 0.04);
-    --bg-input: rgba(0, 0, 0, 0.04);
+    --bg-card: #ffffff;
+    --bg-glass: rgba(255, 255, 255, 0.6);
+    --bg-input: #eef1f3;
     /* Borders */
-    --border-color: rgba(0, 0, 0, 0.12);
-    --border-focus: #1877f2;
+    --border-color: #e5e9eb;
+    --border-focus: #4a3fe2;
     /* Text */
-    --text-primary: #1c1e21;
-    --text-secondary: #606770;
-    --text-muted: #8a8d91;
+    --text-primary: #2c2f31;
+    --text-secondary: #595c5e;
+    --text-muted: #9a9d9f;
     /* Accent */
-    --accent: #1877f2;
-    --accent-hover: #1565c0;
-    --accent-glow: rgba(24, 119, 242, 0.25);
-    --gradient-primary: linear-gradient(135deg, #1877f2, #8b5cf6);
-    --gradient-bg: linear-gradient(160deg, #f0f2f5 0%, #e4e6ea 50%, #f0f2f5 100%);
+    --accent: #4a3fe2;
+    --accent-hover: #3d2fd6;
+    --accent-glow: rgba(74, 63, 226, 0.15);
+    --gradient-primary: linear-gradient(135deg, #4a3fe2, #9795ff);
+    --gradient-bg: #f5f7f9;
     /* Status */
-    --danger: #ef4444;
+    --danger: #b41340;
     --success: #22c55e;
     --warning: #f59e0b;
     /* Shape */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
-    --radius-xl: 20px;
+    --radius-xl: 24px;
     /* Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 8px 24px rgba(44, 47, 49, 0.06);
+    --shadow-lg: 0 16px 48px rgba(44, 47, 49, 0.08);
     --shadow-glow: 0 0 20px var(--accent-glow);
     --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     /* Navbar specific */
-    --navbar-bg: rgba(255, 255, 255, 0.96);
-    --navbar-border: rgba(0, 0, 0, 0.1);
-    --navbar-link: #606770;
-    --navbar-link-hover: #1c1e21;
-    --navbar-circle-btn: #e4e6ea;
-    --navbar-circle-btn-hover: #d8dadf;
-    --navbar-circle-icon: #1c1e21;
-    --search-input-bg: #e4e6ea;
-    --search-input-hover: #d8dadf;
+    --navbar-bg: rgba(245, 247, 249, 0.7);
+    --navbar-border: transparent;
+    --navbar-link: #595c5e;
+    --navbar-link-hover: #2c2f31;
+    --navbar-circle-btn: #ffffff;
+    --navbar-circle-btn-hover: #ffffff;
+    --navbar-circle-icon: #2c2f31;
+    --search-input-bg: #eef1f3;
+    --search-input-hover: #ffffff;
     --card-bg: #ffffff;
-    --card-border: rgba(0, 0, 0, 0.1);
-    --dropdown-bg: #ffffff;
-    --dropdown-border: rgba(0, 0, 0, 0.1);
-    --dropdown-item-hover: #f0f2f5;
-    --dropdown-divider: rgba(0, 0, 0, 0.1);
-    --modal-bg: #ffffff;
-    --modal-input-bg: #f0f2f5;
-    --modal-input-border: rgba(0, 0, 0, 0.12);
-    --list-group-border: rgba(0, 0, 0, 0.1);
+    --card-border: transparent;
+    --dropdown-bg: rgba(255, 255, 255, 0.9);
+    --dropdown-border: #eef1f3;
+    --dropdown-item-hover: #f5f7f9;
+    --dropdown-divider: #eef1f3;
+    --modal-bg: rgba(255, 255, 255, 0.9);
+    --modal-input-bg: #eef1f3;
+    --modal-input-border: #e5e9eb;
+    --list-group-border: transparent;
     --compose-bg: #ffffff;
-    --compose-textarea-bg: #f0f2f5;
-    --compose-border: rgba(0, 0, 0, 0.1);
-    --post-name-color: #1c1e21;
-    --post-content-color: #1c1e21;
-    --post-action-color: #606770;
-    --post-action-hover-bg: #f0f2f5;
-    --post-action-hover-color: #1c1e21;
+    --compose-textarea-bg: #eef1f3;
+    --compose-border: transparent;
+    --post-name-color: #2c2f31;
+    --post-content-color: #2c2f31;
+    --post-action-color: #595c5e;
+    --post-action-hover-bg: #eef1f3;
+    --post-action-hover-color: #2c2f31;
     --offcanvas-bg: #ffffff;
-    --scrollbar-track: #f0f2f5;
-    --scrollbar-thumb: #bec3c9;
-    --scrollbar-thumb-hover: #8a8d91;
+    --scrollbar-track: #f5f7f9;
+    --scrollbar-thumb: #d9dde0;
+    --scrollbar-thumb-hover: #9a9d9f;
 }
 
 /* ===== CSS Variables — Dark Mode ===== */
@@ -138,16 +138,26 @@
 *, *::before, *::after {
     box-sizing: border-box;
 }
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: -0.02em;
+}
 .feed-wrap {
     max-width: 600px;
     margin: auto;
 }
 
 .post-card {
-    border: 1px solid #ddd;
-    padding: 12px;
-    margin-bottom: 15px;
-    border-radius: 8px;
+    background: var(--bg-card);
+    border: none;
+    padding: 24px;
+    margin-bottom: 24px;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s;
+}
+.post-card:hover {
+    box-shadow: var(--shadow-md);
 }
 
 .post-head {
@@ -213,11 +223,12 @@
 }
 
 .compose-card {
-    background: #fff;
-    border: 0.5px solid #ddd;
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin-bottom: 2rem;
+    background: var(--bg-card);
+    border: none;
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
 }
 .post-image img {
     width: 100%;
@@ -234,15 +245,15 @@
 }
 
 .compose-avatar {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    background: #E6F1FB;
-    color: #185FA5;
+    background: var(--bg-input);
+    color: var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
 }
 
@@ -255,19 +266,20 @@
     width: 100%;
     min-height: 80px;
     resize: none;
-    background: #f8f8f6;
-    border: 0.5px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 15px;
+    background: var(--bg-input);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    font-size: 16px;
     line-height: 1.6;
     font-family: inherit;
     outline: none;
-    transition: border-color 0.15s;
+    transition: background-color 0.15s, box-shadow 0.15s;
 }
 
     .compose-card textarea:focus {
-        border-color: #aaa;
+        background: var(--bg-secondary);
+        box-shadow: inset 0 0 0 1px var(--accent);
     }
 
 .compose-footer {
@@ -285,19 +297,20 @@
 }
 
 .post-btn {
-    background: #1a1a1a;
+    background: var(--gradient-primary);
     color: #fff;
     border: none;
-    border-radius: 8px;
-    padding: 8px 20px;
-    font-size: 14px;
-    font-weight: 500;
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: transform 0.15s, box-shadow 0.15s;
 }
 
     .post-btn:hover {
-        opacity: 0.82;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-glow);
     }
 
 .feed-section-label {
@@ -330,17 +343,17 @@
 }
 
 .post-avatar {
-    width: 36px;
-    height: 36px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    background: #f2f2f0;
-    border: 0.5px solid #e8e8e8;
+    background: var(--bg-input);
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
-    color: #666;
+    color: var(--text-secondary);
     flex-shrink: 0;
 }
 

@@ -8,41 +8,73 @@
 }
 
 <!-- COMPOSE CARD -->
-<div class="card-dark compose-card mb-3">
-    <div class="compose-top">
-        <div class="mini-avatar">
-            <img src="@currentUserPicLocal" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" />
-        </div>
-        <div class="compose-field-wrap" onclick="expandCompose()">
-            <span class="compose-placeholder">What's on your mind, @currentUserNameLocal.Split(' ')[0]?</span>
-        </div>
-    </div>
-    <div class="compose-form-wrap" id="compose-form-wrap" style="display:none;">
-        <form asp-controller="Post" asp-action="CreatePost" method="post" enctype="multipart/form-data">
-            <textarea id="compose-textarea" name="Content" placeholder="What's on your mind?" required></textarea>
-            <div class="compose-actions-row">
-                <label class="attach-label" for="compose-image">
-                    <i class="fas fa-image"></i> Photo
-                    <input type="file" id="compose-image" name="Image" accept="image/*" style="display:none;" onchange="document.getElementById('img-name').textContent = this.files[0]?.name || '';" />
-                </label>
-                <div class="emoji-picker-container ms-2">
-                    <button type="button" class="btn text-warning emoji-trigger-btn" onclick="toggleEmojiPicker(this, 'compose-textarea')">
-                        <i class="fas fa-smile"></i>
-                    </button>
-                    <div class="emoji-dropdown">
-                        <!-- Loaded by JS -->
-                    </div>
-                </div>
-                <div id="img-name" class="img-name text-muted small ms-2"></div>
-                <button type="submit" class="post-btn ms-auto text-light fw-bold">
-                    <i class="fas fa-paper-plane me-1"></i> Post
-                </button>
+<div class="card border-0 shadow-sm rounded-4 mb-4" style="background-color: var(--card-bg);">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center mb-3">
+            <div class="flex-shrink-0">
+                <img src="@currentUserPicLocal" class="rounded-circle border border-2 border-white shadow-sm" style="width: 48px; height: 48px; object-fit:cover;" onerror="this.src='/images/user.jpg';" />
             </div>
-        </form>
-    </div>
-    <div class="compose-shortcuts mt-3 pt-3 border-top d-flex gap-3 justify-content-center" style="border-color: var(--card-border) !important;">
-        <button type="button" class="btn flex-grow-1" onclick="expandCompose()" style="background:var(--modal-input-bg); color:var(--text-primary);"><i class="fas fa-video text-danger me-2"></i> Live Video</button>
-        <button type="button" class="btn flex-grow-1" onclick="expandCompose()" style="background:var(--modal-input-bg); color:var(--text-primary);"><i class="fas fa-image text-success me-2"></i> Photo</button>
-        <button type="button" class="btn flex-grow-1 d-none d-sm-block" onclick="expandCompose()" style="background:var(--modal-input-bg); color:var(--text-primary);"><i class="fas fa-smile text-warning me-2"></i> Feeling</button>
+            <div class="flex-grow-1 ms-3">
+                <div class="compose-field-wrap cursor-pointer" onclick="expandCompose()" style="background-color: var(--bg-input); border-radius: 50px; padding: 12px 20px; transition: background-color 0.2s;">
+                    <span class="text-muted fw-medium">What's on your mind, @currentUserNameLocal.Split(' ')[0]?</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="compose-form-wrap" id="compose-form-wrap" style="display:none;">
+            <form asp-controller="Post" asp-action="CreatePost" method="post" enctype="multipart/form-data">
+                <textarea id="compose-textarea" name="Content" class="form-control border-0 bg-transparent px-0 shadow-none mb-3" rows="3" style="resize: none; color: var(--text-primary);" placeholder="What's on your mind?" required></textarea>
+                
+                <div class="d-flex align-items-center justify-content-between pt-3 border-top" style="border-color: var(--card-border) !important;">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="btn btn-sm btn-light rounded-pill px-3 d-flex align-items-center text-muted fw-medium saas-nav-link m-0" for="compose-image" style="background-color: var(--bg-input);">
+                            <i class="fas fa-image text-success me-2"></i> Photo
+                            <input type="file" id="compose-image" name="Image" accept="image/*" style="display:none;" onchange="document.getElementById('img-name').textContent = this.files[0]?.name || '';" />
+                        </label>
+                        
+                        <div class="position-relative">
+                            <button type="button" class="btn btn-sm btn-light rounded-circle text-warning fw-medium saas-nav-link d-flex align-items-center justify-content-center" style="background-color: var(--bg-input); width: 34px; height: 34px;" onclick="toggleEmojiPicker(this, 'compose-textarea')">
+                                <i class="fas fa-smile"></i>
+                            </button>
+                            <div class="emoji-dropdown">
+                                <!-- Loaded by JS -->
+                            </div>
+                        </div>
+                        <div id="img-name" class="small text-muted mb-0"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                        Post
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-between pt-3 border-top mt-1" id="compose-shortcuts" style="border-color: var(--card-border) !important;">
+            <button type="button" class="btn btn-sm flex-grow-1 border-0 rounded-3 py-2 fw-medium saas-nav-link" onclick="expandCompose()" style="color: var(--text-secondary);">
+                <i class="fas fa-video text-danger me-2"></i> Live Video
+            </button>
+            <button type="button" class="btn btn-sm flex-grow-1 border-0 rounded-3 py-2 fw-medium saas-nav-link" onclick="expandCompose()" style="color: var(--text-secondary);">
+                <i class="fas fa-image text-success me-2"></i> Photo
+            </button>
+            <button type="button" class="btn btn-sm flex-grow-1 border-0 rounded-3 py-2 fw-medium saas-nav-link d-none d-sm-block" onclick="expandCompose()" style="color: var(--text-secondary);">
+                <i class="fas fa-smile text-warning me-2"></i> Feeling
+            </button>
+        </div>
     </div>
 </div>
+
+<style>
+    .compose-field-wrap:hover {
+        background-color: var(--modal-input-bg) !important;
+    }
+</style>
+
+<script>
+    function expandCompose() {
+        document.getElementById('compose-form-wrap').style.display = 'block';
+        document.querySelector('.compose-field-wrap').style.display = 'none';
+        document.getElementById('compose-shortcuts').style.display = 'none';
+        setTimeout(() => document.getElementById('compose-textarea').focus(), 50);
+    }
+</script>

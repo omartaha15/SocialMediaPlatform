@@ -14,179 +14,196 @@
 }
 
 <!-- ═══════════════════════  LAYOUT  ═══════════════════════ -->
-<div class="feed-layout px-3">
-
-    <!-- LEFT SIDEBAR -->
-    <aside class="sidebar-left d-none d-lg-flex">
-        <div class="sidebar-card">
-            <div class="sb-avatar"><img src="@currentUserPic" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='/images/user.jpg';" /></div>
-            <div class="sb-name">@currentUserName</div>
-            <div class="sb-sub">Your profile</div>
-            <hr class="sb-divider" />
-            <a class="sb-link" asp-controller="Profile" asp-action="Index">
-                <i class="fas fa-user"></i> My Profile
-            </a>
-            <a class="sb-link" asp-controller="Friendship" asp-action="Index">
-                <i class="fas fa-user-friends"></i> Friends
-            </a>
-            <a class="sb-link" asp-controller="Friendship" asp-action="Suggestions">
-                <i class="fas fa-compass"></i> Discover
-            </a>
-        </div>
-    </aside>
-
-    <!-- MAIN FEED -->
-    <main class="feed-main">
-
-        <!-- COMPOSE CARD -->
-        <partial name="_ComposePostPartial" />
-
-        <!-- FEED HEADER -->
-        <div class="feed-header">
-            <h6 class="feed-title"><i class="fas fa-stream me-2 text-primary"></i>Your Feed</h6>
-            <span class="feed-sort">Most recent</span>
-        </div>
-
-        <!-- POSTS -->
-        <div id="feed-posts-container">
-            @if (Model != null && Model.Any())
-            {
-                @foreach (var post in Model)
-                {
-                    <partial name="_PostPartial" model="post" />
-                }
-            }
-            else
-            {
-                <div class="empty-state">
-                    <div class="empty-icon"><i class="fas fa-stream"></i></div>
-                    <h5>Nothing here yet</h5>
-                    <p>Be the first to share something with your network.</p>
-                </div>
-            }
-        </div>
+<div class="container-fluid py-4" style="max-width: 1140px;">
+    <div class="row g-4">
         
-        <!-- LOADING MORE INDICATOR -->
-        <div id="feed-loading" style="display: none; text-align: center; padding: 20px; color: var(--text-secondary);">
-            <i class="fas fa-spinner fa-spin fa-2x"></i>
-        </div>
-    </main>
+        <!-- LEFT SIDEBAR -->
+        <aside class="col-lg-3 d-none d-lg-block">
+            <div class="position-sticky" style="top: 85px;">
+                <!-- Profile Card -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body text-center p-4">
+                        <div class="position-relative d-inline-block mb-3">
+                            <img src="@currentUserPic" class="rounded-circle border border-3 border-white shadow-sm" style="width: 84px; height: 84px; object-fit: cover;" onerror="this.src='/images/user.jpg';" />
+                            <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-white border-2 rounded-circle"></span>
+                        </div>
+                        <h6 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1.05rem;">@currentUserName</h6>
+                        <p class="text-muted small mb-0">Your profile</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 p-0">
+                        <div class="list-group list-group-flush rounded-bottom-4 pb-2 px-2">
+                            <a asp-controller="Profile" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-2 mb-1 rounded-3 text-muted fw-medium saas-nav-link">
+                                <i class="fas fa-user text-primary bg-primary bg-opacity-10 p-2 rounded-3 me-3" style="width: 32px; text-align: center;"></i> <span style="color: var(--text-primary);">My Profile</span>
+                            </a>
+                            <a asp-controller="Friendship" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-2 mb-1 rounded-3 text-muted fw-medium saas-nav-link">
+                                <i class="fas fa-user-friends text-info bg-info bg-opacity-10 p-2 rounded-3 me-3" style="width: 32px; text-align: center;"></i> <span style="color: var(--text-primary);">Friends</span>
+                            </a>
+                            <a asp-controller="Friendship" asp-action="Suggestions" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-2 rounded-3 text-muted fw-medium saas-nav-link">
+                                <i class="fas fa-compass text-warning bg-warning bg-opacity-10 p-2 rounded-3 me-3" style="width: 32px; text-align: center;"></i> <span style="color: var(--text-primary);">Discover</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-    <!-- Modal for who reacted -->
-    <div class="modal fade" id="reactorsModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background:var(--modal-bg); border:1px solid var(--card-border); border-radius:12px;">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold" style="color:var(--text-primary);">Reactions</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <!-- MAIN FEED -->
+        <main class="col-lg-6 col-md-12">
+            <!-- COMPOSE CARD -->
+            <div class="mb-4">
+                <partial name="_ComposePostPartial" />
+            </div>
+
+            <!-- FEED HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+                <h6 class="fw-bold mb-0" style="color: var(--text-primary);"><i class="fas fa-stream me-2 text-primary"></i>Your Feed</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm border-0 rounded-pill px-3 shadow-sm text-muted fw-medium dropdown-toggle" style="background-color: var(--card-bg); color: var(--text-primary);" type="button" data-bs-toggle="dropdown">
+                        Most recent
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3" style="background-color: var(--dropdown-bg);">
+                        <li><a class="dropdown-item small fw-medium" href="#" style="color: var(--text-primary);">Most recent</a></li>
+                        <li><a class="dropdown-item small fw-medium" href="#" style="color: var(--text-primary);">Top posts</a></li>
+                    </ul>
                 </div>
-                <div class="modal-body pt-2" id="reactorsList">
-                    <!-- Loaded dynamically -->
+            </div>
+
+            <!-- POSTS -->
+            <div id="feed-posts-container" class="d-flex flex-column gap-3">
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var post in Model)
+                    {
+                        <partial name="_PostPartial" model="post" />
+                    }
+                }
+                else
+                {
+                    <div class="card border-0 shadow-sm rounded-4 text-center py-5">
+                        <div class="card-body py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-stream fa-3x text-muted opacity-25"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2" style="color: var(--text-primary);">Nothing here yet</h6>
+                            <p class="text-muted small mb-0">Be the first to share something with your network.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <!-- LOADING MORE INDICATOR -->
+            <div id="feed-loading" class="text-center py-4" style="display: none;">
+                <div class="spinner-border text-primary shadow-sm" style="width: 2rem; height: 2rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="col-lg-3 d-none d-xl-block">
+            <div class="position-sticky" style="top: 85px;">
+                
+                <!-- Sponsored Widget -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-2">
+                        <h6 class="text-muted text-uppercase fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">Sponsored</h6>
+                    </div>
+                    <div class="card-body pt-0 pb-3">
+                        <div class="d-flex align-items-center p-2 rounded-3 saas-ad-card transition-all cursor-pointer">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px; flex-shrink: 0;">
+                                <i class="fas fa-bolt fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1" style="font-size: 0.85rem; color: var(--text-primary);">Zuvo Premium</h6>
+                                <p class="text-muted mb-0 lh-sm" style="font-size: 0.75rem;">Unlock exclusive features & ad-free experience.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Birthdays Widget -->
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-2">
+                        <h6 class="text-muted text-uppercase fw-bold mb-0" style="font-size: 0.7rem; letter-spacing: 1px;">Birthdays</h6>
+                    </div>
+                    <div class="card-body pt-2 pb-4">
+                        <div class="d-flex align-items-center px-2">
+                            <i class="fas fa-birthday-cake text-warning fs-4 me-3"></i>
+                            <span class="text-muted small fw-medium">No birthdays today</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<!-- Modal for who reacted -->
+<div class="modal fade" id="reactorsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4" style="background:var(--modal-bg);">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold" style="color:var(--text-primary);">Reactions</h6>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3" id="reactorsList">
+                <!-- Loaded dynamically -->
             </div>
         </div>
     </div>
-
-    <!-- RIGHT SIDEBAR -->
-    <aside class="sidebar-right d-none d-xl-block">
-        <div class="sidebar-card">
-            <div class="sb-section-title">Sponsored</div>
-            <div class="ad-card">
-                <div class="ad-img-placeholder"><i class="fas fa-ad"></i></div>
-                <div class="ad-info">
-                    <div class="ad-name">Zuvo Premium</div>
-                    <div class="ad-desc">Unlock exclusive features &amp; ad-free experience.</div>
-                </div>
-            </div>
-            <hr class="sb-divider mt-3" />
-            <div class="sb-section-title">Birthdays</div>
-            <div class="birthday-item">
-                <i class="fas fa-birthday-cake text-warning me-2"></i>
-                <span>No birthdays today</span>
-            </div>
-        </div>
-    </aside>
-
 </div>
 
 <partial name="_PostStylesPartial" />
 
 <style>
-    .feed-layout {
-        display: grid;
-        grid-template-columns: 240px 1fr 240px;
-        gap: 16px;
-        max-width: 1140px;
-        margin: 0 auto;
-        align-items: start;
-        padding-top: 20px;
+    /* SaaS Enhancements */
+    .saas-nav-link {
+        transition: all 0.2s ease;
+        background-color: transparent;
     }
-    @@media (max-width: 1199px) { .feed-layout { grid-template-columns: 240px 1fr; } }
-    @@media (max-width: 991px)  { .feed-layout { grid-template-columns: 1fr; } }
+    .saas-nav-link:hover {
+        background-color: var(--bg-input) !important;
+        transform: translateX(4px);
+    }
     
-    .sidebar-left, .sidebar-right {
-        display: flex;
-        flex-direction: column;
-        position: sticky;
-        top: 80px;
+    .saas-ad-card {
+        transition: transform 0.2s ease, background-color 0.2s ease;
     }
-    .sidebar-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 12px;
-        padding: 18px 14px;
-        margin-bottom: 14px;
+    .saas-ad-card:hover {
+        background-color: var(--bg-input);
+        transform: translateY(-2px);
     }
-    .sb-avatar {
-        width: 64px; height: 64px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        margin: 0 auto 10px;
-        box-shadow: var(--shadow-md);
+    
+    .cursor-pointer {
+        cursor: pointer;
     }
-    .sb-name { text-align: center; font-weight: 700; color: var(--text-primary); font-size: 15px; }
-    .sb-sub  { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-    .sb-divider { border-color: var(--card-border); margin: 14px 0; }
-    .sb-section-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
-    .sb-link {
-        display: flex; align-items: center; gap: 10px;
-        padding: 9px 10px; border-radius: 8px;
-        color: var(--text-primary); text-decoration: none; font-size: 14px; font-weight: 500;
-        transition: background .15s, color .15s;
-        margin-bottom: 2px;
-    }
-    .sb-link:hover { background: var(--post-action-hover-bg); color: var(--accent); }
-    .sb-link i { width: 18px; text-align: center; color: var(--accent); }
-
-    /* Ad / Birthday widgets */
-    .ad-card { display: flex; gap: 10px; align-items: center; }
-    .ad-img-placeholder {
-        width: 52px; height: 52px; border-radius: 8px;
-        background: var(--modal-input-bg); display: flex; align-items: center; justify-content: center;
-        color: var(--text-secondary); font-size: 20px; flex-shrink: 0;
-    }
-    .ad-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-    .ad-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-    .birthday-item { font-size: 13px; color: var(--text-primary); display: flex; align-items: center; }
-
-    .feed-header {
-        display: flex; justify-content: space-between; align-items: center;
-        margin-bottom: 12px; padding: 0 2px;
-    }
-    .feed-title { margin: 0; color: var(--text-primary); font-size: 15px; font-weight: 700; }
-    .feed-sort  { font-size: 12px; color: var(--text-muted); }
-
+    
     /* Reactors modal */
     .reactor-item {
         display: flex;
         align-items: center;
-        padding: 8px 0;
+        padding: 10px 12px;
+        border-radius: 8px;
         gap: 12px;
+        transition: background-color 0.2s ease;
     }
-    .reactor-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-    .reactor-name { color: var(--text-primary); font-weight: 600; text-decoration: none; }
-    .reactor-name:hover { text-decoration: underline; }
-    .reactor-emoji { font-size: 18px; position: absolute; bottom: 0; right: 0; background: var(--card-bg); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+    .reactor-item:hover {
+        background-color: var(--modal-input-bg);
+    }
+    .reactor-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .reactor-name { color: var(--text-primary); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+    .reactor-emoji { font-size: 16px; position: absolute; bottom: -2px; right: -2px; background: var(--modal-bg); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    
+    /* Global Card Override for this page to look more SaaS */
+    .card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border) !important;
+    }
+    .list-group-item {
+        background-color: transparent;
+    }
 </style>
 
 @section Scripts {
@@ -230,7 +247,7 @@
 
         async function showReactorsModal(postId) {
             const list = document.getElementById("reactorsList");
-            list.innerHTML = `<div class="text-center py-3 text-secondary"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</div>`;
+            list.innerHTML = `<div class="text-center py-4 text-secondary"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading...</div>`;
             const modal = new bootstrap.Modal(document.getElementById("reactorsModal"));
             modal.show();
 
@@ -239,21 +256,21 @@
                 const data = await response.json();
                 
                 if (!data || data.length === 0) {
-                    list.innerHTML = `<div class="text-center py-3 text-secondary">No reactions yet.</div>`;
+                    list.innerHTML = `<div class="text-center py-4 text-secondary small">No reactions yet.</div>`;
                     return;
                 }
 
                 list.innerHTML = data.map(r => `
                     <div class="reactor-item">
                         <div style="position: relative;">
-                            <img src="${r.avatarUrl}" class="reactor-avatar" onerror="this.src='/images/user.jpg';" />
+                            <img src="${r.avatarUrl}" class="reactor-avatar border border-2 border-white" onerror="this.src='/images/user.jpg';" />
                             <span class="reactor-emoji">${emojiMap[r.reactionType] || '👍'}</span>
                         </div>
-                        <a href="/Profile/Index/${r.userId}" class="reactor-name text-decoration-none">${r.userName}</a>
+                        <a href="/Profile/Index/${r.userId}" class="reactor-name text-decoration-none stretched-link">${r.userName}</a>
                     </div>
                 `).join('');
             } catch (err) {
-                list.innerHTML = `<div class="text-center py-3 text-danger">Failed to load reactions.</div>`;
+                list.innerHTML = `<div class="text-center py-4 text-danger small">Failed to load reactions.</div>`;
             }
         }
     </script>

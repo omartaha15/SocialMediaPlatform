@@ -20,146 +20,217 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SocialMedia.Web.styles.css" asp-append-version="true" />
     <style>
+        /* ── Zuvo Lumina — Global ── */
         body {
-            background: var(--gradient-bg);
+            background: var(--bg-primary);
             color: var(--text-primary);
-            font-family: inherit;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
+
+        /* ── Glassmorphic Navbar ── */
         .navbar-fb {
-            background-color: var(--navbar-bg) !important;
-            box-shadow: var(--shadow-sm);
-            border-bottom: 1px solid var(--navbar-border);
+            background: rgba(255, 255, 255, 0.80) !important;
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+            border-bottom: none !important;
         }
-        .navbar-fb .nav-link { 
-            color: var(--navbar-link) !important; 
-            font-weight: 600; 
-            padding: 0.5rem 1rem; 
-            margin: 0 0.2rem; 
-            transition: all 0.2s ease-in-out;
+        [data-theme="dark"] .navbar-fb {
+            background: rgba(11, 15, 16, 0.80) !important;
         }
-        .navbar-fb .nav-link:hover, .navbar-fb .nav-link.active { 
-            color: var(--navbar-link-hover) !important; 
-            background-color: var(--navbar-circle-btn); 
-            border-radius: 8px; 
+
+        /* Brand */
+        .navbar-fb .navbar-brand {
+            color: var(--text-primary) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            letter-spacing: -0.04em;
+            margin-right: 0;
         }
-        .navbar-fb .nav-icon-link {
+        .navbar-fb .navbar-brand i { display: none; }
+
+        /* ── Text Nav Links (Stitch style) ── */
+        .navbar-fb .zuvo-nav-links {
             display: flex;
             align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            padding: 0.5rem 2.5rem;
-            color: var(--navbar-link) !important;
-            font-size: 1.4rem;
+            gap: 2rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            letter-spacing: -0.02em;
+        }
+        .navbar-fb .zuvo-nav-link {
+            color: rgba(44, 47, 49, 0.5) !important;
+            font-weight: 600;
+            font-size: 0.9rem;
             text-decoration: none;
-            transition: all 0.2s;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
         }
-        .navbar-fb .nav-icon-link:hover, .navbar-fb .nav-icon-link.active {
+        .navbar-fb .zuvo-nav-link:hover,
+        .navbar-fb .zuvo-nav-link.active {
             color: var(--accent) !important;
-            background-color: var(--navbar-circle-btn);
+            border-bottom-color: var(--accent);
         }
-        .navbar-fb .nav-circle-btn {
-            background-color: var(--navbar-circle-btn);
-            color: var(--navbar-circle-icon) !important;
-            width: 40px;
-            height: 40px;
+        [data-theme="dark"] .navbar-fb .zuvo-nav-link {
+            color: rgba(228, 230, 235, 0.5) !important;
+        }
+        [data-theme="dark"] .navbar-fb .zuvo-nav-link:hover,
+        [data-theme="dark"] .navbar-fb .zuvo-nav-link.active {
+            color: #9795ff !important;
+            border-bottom-color: #9795ff;
+        }
+
+        /* ── Trailing Icon Buttons ── */
+        .navbar-fb .zuvo-icon-btn {
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: transform 0.15s, color 0.15s;
+            background: none;
+            border: none;
+            padding: 6px;
+        }
+        .navbar-fb .zuvo-icon-btn:hover {
+            color: var(--text-primary);
+        }
+        .navbar-fb .zuvo-icon-btn:active {
+            transform: scale(0.95);
+        }
+        .navbar-fb .zuvo-icon-btn .zuvo-badge {
+            position: absolute;
+            top: -2px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0 !important;
-            transition: all 0.2s;
+        }
+
+        /* Legacy icon links for mobile + compat */
+        .navbar-fb .nav-icon-link {
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; padding: 0.5rem 2.5rem;
+            color: var(--text-secondary) !important; font-size: 1.3rem;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .navbar-fb .nav-icon-link:hover, .navbar-fb .nav-icon-link.active {
+            color: var(--accent) !important;
+            background-color: var(--bg-input);
+        }
+        .navbar-fb .nav-circle-btn {
+            background-color: transparent;
+            color: var(--text-secondary) !important;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 !important; transition: all 0.2s;
         }
         .navbar-fb .nav-circle-btn:hover {
-            background-color: var(--navbar-circle-btn-hover);
+            background-color: var(--bg-input);
+            color: var(--text-primary) !important;
         }
-        .navbar-fb .navbar-brand { color: var(--text-primary) !important; font-weight: 800; font-size: 1.8rem; letter-spacing: -0.8px; margin-right: 0; }
-        .navbar-fb .navbar-brand i { color: var(--accent); }
 
-        .fb-card {
-            background: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--card-border);
-        }
-        .btn-fb-primary {
-            background-color: var(--accent);
-            color: white !important;
-            border: none;
-            font-weight: 600;
-            border-radius: 6px;
-            transition: background-color 0.2s;
-        }
-        .btn-fb-primary:hover { background-color: var(--accent-hover); }
-        .btn-fb-secondary {
-            background-color: var(--navbar-circle-btn);
-            color: var(--text-primary) !important;
-            border: none;
-            font-weight: 600;
-            border-radius: 6px;
-            transition: background-color 0.2s;
-        }
-        .btn-fb-secondary:hover { background-color: var(--navbar-circle-btn-hover); }
-        .text-fb-muted { color: var(--text-muted) !important; }
-        .text-fb-primary { color: var(--text-primary) !important; }
-        .border, .border-bottom { border-color: var(--dropdown-border) !important; }
-        .list-group-item { background-color: transparent !important; border-color: var(--list-group-border) !important; color: inherit; }
-        
-        /* Search bar styles */
-        .search-nav-wrapper { position: relative; width: 260px; }
+        /* ── Search Input ── */
+        .search-nav-wrapper { position: relative; width: 280px; }
         .search-inner { position: relative; }
-        .search-inner i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; font-size: 0.9rem; }
+        .search-inner i {
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); pointer-events: none; font-size: 0.85rem;
+        }
         .search-nav-input {
-            background-color: var(--search-input-bg) !important;
-            border: none;
-            border-radius: 50px;
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            background-color: var(--bg-input) !important;
+            border: none; border-radius: 50px;
+            padding: 0.55rem 1.2rem 0.55rem 2.6rem;
             color: var(--text-primary) !important;
-            width: 100%;
-            transition: background 0.2s;
+            width: 100%; font-size: 0.88rem;
+            transition: background 0.2s, box-shadow 0.2s;
         }
         .search-nav-input:focus {
-            box-shadow: none;
-            outline: none;
-            background-color: var(--search-input-hover) !important;
+            box-shadow: none; outline: none;
+            background-color: var(--bg-secondary) !important;
+            box-shadow: inset 0 0 0 1px rgba(74,63,226,0.2);
         }
         .search-nav-input::placeholder { color: var(--text-muted); }
-        
+
+        /* ── Avatar in Navbar ── */
+        .navbar-fb .zuvo-nav-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--bg-input);
+            transition: transform 0.15s, border-color 0.2s;
+            cursor: pointer;
+        }
+        .navbar-fb .zuvo-nav-avatar:hover {
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        /* ── Cards — No-Line Rule ── */
+        .fb-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: none;
+        }
+        .btn-fb-primary {
+            background: var(--gradient-primary);
+            color: white !important; border: none;
+            font-weight: 700; border-radius: 50px;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-fb-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .btn-fb-secondary {
+            background-color: var(--bg-input);
+            color: var(--text-primary) !important;
+            border: none; font-weight: 600;
+            border-radius: 12px; transition: background-color 0.2s;
+        }
+        .btn-fb-secondary:hover { background-color: var(--bg-input); }
+        .text-fb-muted { color: var(--text-muted) !important; }
+        .text-fb-primary { color: var(--text-primary) !important; }
+        .list-group-item { background-color: transparent !important; border-color: transparent !important; color: inherit; }
+
+        /* ── Dropdowns ── */
         .dropdown-menu-dark-fb {
             background-color: var(--dropdown-bg);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--dropdown-border);
-            box-shadow: var(--shadow-lg);
-            border-radius: 8px;
+            box-shadow: var(--shadow-lg); border-radius: 16px;
         }
         .dropdown-menu-dark-fb .dropdown-item { color: var(--text-primary); font-weight: 600; }
-        .dropdown-menu-dark-fb .dropdown-item:hover { background-color: var(--dropdown-item-hover); color: var(--text-primary); border-radius: 4px; }
+        .dropdown-menu-dark-fb .dropdown-item:hover { background-color: var(--dropdown-item-hover); border-radius: 8px; }
         .dropdown-menu-dark-fb .dropdown-divider { border-color: var(--dropdown-divider); }
         .hover-bg-dark:hover { background-color: var(--dropdown-item-hover) !important; }
 
         @@media (max-width: 991px) {
             .navbar-fb .nav-icon-link {
-                justify-content: flex-start;
-                padding: 0.75rem 1rem;
-                border-radius: 8px;
-                margin-bottom: 0.25rem;
+                justify-content: flex-start; padding: 0.75rem 1rem;
+                border-radius: 12px; margin-bottom: 0.25rem;
             }
-            .navbar-fb .nav-icon-link:hover {
-                background-color: var(--navbar-circle-btn-hover);
-            }
+            .navbar-fb .nav-icon-link:hover { background-color: var(--bg-input); }
             .navbar-nav .dropdown-menu {
-                position: static;
-                width: 100%;
-                background-color: transparent;
-                border: none;
-                box-shadow: none;
-                padding-left: 1rem;
+                position: static; width: 100%;
+                background-color: transparent; border: none;
+                box-shadow: none; padding-left: 1rem;
             }
+            .zuvo-nav-links { display: none !important; }
         }
     </style>
 </head>
@@ -207,48 +278,39 @@
 
                         <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-row flex-wrap align-items-center mt-3 mt-lg-0" style="gap: 10px;">
 
-                            <!-- Desktop Icons -->
-                            <li class="nav-item d-none d-lg-block">
-                                <a class="nav-circle-btn text-decoration-none" asp-area="" asp-controller="Home" asp-action="Index" title="Home">
-                                    <i class="fas fa-home fs-5"></i>
-                                </a>
+                            <!-- Desktop: Text Nav Links (Stitch style) -->
+                            <li class="nav-item d-none d-lg-flex me-4">
+                                <div class="zuvo-nav-links">
+                                    <a class="zuvo-nav-link active" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                                    <a class="zuvo-nav-link" asp-area="" asp-controller="Profile" asp-action="Index">Profile</a>
+                                    <a class="zuvo-nav-link" asp-area="" asp-controller="Friendship" asp-action="Index">Friends</a>
+                                </div>
                             </li>
 
-                            <li class="nav-item d-none d-lg-block">
-                                <a class="nav-circle-btn text-decoration-none" asp-area="" asp-controller="Friendship" asp-action="Index" title="Friends">
-                                    <i class="fas fa-user-friends fs-5"></i>
-                                </a>
-                            </li>
-
-                            <li class="nav-item d-none d-lg-block">
-                                <a class="nav-circle-btn text-decoration-none" asp-area="" asp-controller="GroupChat" asp-action="Index" title="Groups">
-                                    <i class="fas fa-users fs-5"></i>
-                                </a>
-                            </li>
-
+                            <!-- Desktop: Trailing Icons -->
                             <li class="nav-item dropdown position-relative d-none d-lg-block">
-                                <a class="nav-circle-btn text-decoration-none" href="#" id="navbarNotificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
-                                    <i class="fas fa-bell fs-5"></i>
-                                    <span id="notif-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
+                                <a class="zuvo-icon-btn text-decoration-none" href="#" id="navbarNotificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                    <i class="fas fa-bell"></i>
+                                    <span id="notif-badge-desktop" class="zuvo-badge" style="display:none;">0</span>
                                 </a>
-                                <div class="dropdown-menu dropdown-menu-end mt-2 p-0 shadow-lg" aria-labelledby="navbarNotificationsDropdown" style="width: 360px; background-color: var(--dropdown-bg); border: 1px solid var(--dropdown-border);">
+                                <div class="dropdown-menu dropdown-menu-end mt-2 p-0 shadow-lg" aria-labelledby="navbarNotificationsDropdown" style="width: 360px; background-color: var(--dropdown-bg); border: 1px solid var(--dropdown-border); border-radius: 16px; overflow: hidden;">
                                     <div class="px-3 py-2 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--dropdown-divider);">
                                         <span class="fw-bold" style="color: var(--text-primary);">Notifications</span>
-                                        <button id="notif-mark-all-btn" type="button" class="btn btn-link p-0 text-decoration-none small" style="color:#2d88ff;">Mark all as read</button>
+                                        <button id="notif-mark-all-btn" type="button" class="btn btn-link p-0 text-decoration-none small" style="color: var(--accent);">Mark all as read</button>
                                     </div>
                                     <div id="notif-list-desktop" style="max-height: 360px; overflow-y: auto;">
                                         <div class="px-3 py-3 text-muted small">Loading...</div>
                                     </div>
                                     <div class="px-3 py-2 text-center" style="border-top: 1px solid var(--dropdown-divider);">
-                                        <button id="notif-load-more-btn" type="button" class="btn btn-sm w-100" style="background-color: var(--navbar-circle-btn); color: var(--text-primary);">Load more</button>
+                                        <button id="notif-load-more-btn" type="button" class="btn btn-sm w-100" style="background-color: var(--bg-input); color: var(--text-primary); border-radius: 12px;">Load more</button>
                                     </div>
                                 </div>
                             </li>
 
                             <li class="nav-item position-relative d-none d-lg-block">
-                                <a class="nav-circle-btn text-decoration-none" asp-controller="Messaging" asp-action="Index" title="Messages">
-                                    <i class="fas fa-envelope fs-5"></i>
-                                    <span id="msg-badge-desktop" class="badge bg-danger rounded-circle position-absolute" style="top: -2px; right: -5px; font-size: 0.65rem; display:none;">0</span>
+                                <a class="zuvo-icon-btn text-decoration-none" asp-controller="Messaging" asp-action="Index" title="Messages">
+                                    <i class="fas fa-envelope"></i>
+                                    <span id="msg-badge-desktop" class="zuvo-badge" style="display:none;">0</span>
                                 </a>
                             </li>
 
@@ -257,7 +319,7 @@
                                     @Html.AntiForgeryToken()
                                 </form>
                                 <a class="nav-link p-0 d-flex align-items-center text-decoration-none" href="#" id="navbarProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="outline: none;">
-                                    <img src="@profilePic" class="rounded-circle" style="width:40px; height:40px; object-fit:cover; border: 1px solid #393a3b;" title="Profile" />
+                                    <img src="@profilePic" class="zuvo-nav-avatar" title="Profile" />
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end mt-2 border-0 shadow-lg p-2 position-absolute" aria-labelledby="navbarProfileDropdown" style="width: 320px; background-color: var(--dropdown-bg);">
                                     <li class="mb-2">

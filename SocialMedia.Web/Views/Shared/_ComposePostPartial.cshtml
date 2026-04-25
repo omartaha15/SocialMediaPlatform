@@ -1,51 +1,84 @@
+@model SocialMedia.Application.DTOs.PostDtos.CreatePostDto
 @using Microsoft.AspNetCore.Identity
 @using SocialMedia.Domain.Entities
 @inject UserManager<ApplicationUser> UserManager
 @{
-    var userLocal = await UserManager.GetUserAsync(User);
-    var currentUserNameLocal = userLocal?.UserName ?? "User";
-    var currentUserPicLocal = string.IsNullOrEmpty(userLocal?.ProfilePictureUrl) ? "/images/user.jpg" : userLocal.ProfilePictureUrl;
+    var user = await UserManager.GetUserAsync(User);
+    var userPic = string.IsNullOrEmpty(user?.ProfilePictureUrl) ? "/images/user.jpg" : user.ProfilePictureUrl;
+    var userName = user?.UserName ?? "User";
 }
 
-<!-- COMPOSE CARD -->
-<div class="card fb-card p-4 mb-4 shadow-sm border-0">
-    <div class="d-flex gap-3">
-        <div class="flex-shrink-0">
-            <img src="@currentUserPicLocal" class="rounded-circle shadow-sm" style="width: 52px; height: 52px; object-fit: cover;" onerror="this.src='/images/user.jpg';" />
-        </div>
-        <div class="flex-grow-1">
-            <div class="compose-form-wrap" id="compose-form-wrap">
-                <form asp-controller="Post" asp-action="CreatePost" method="post" enctype="multipart/form-data">
-                    <textarea id="compose-textarea" name="Content" class="form-control border-0 bg-light rounded-4 px-3 py-3 shadow-none mb-3" rows="3" style="resize: none; color: var(--text-primary); font-size: 0.95rem; background-color: var(--bg-input) !important;" placeholder="What's on your mind, @currentUserNameLocal.Split(' ')[0]?" required></textarea>
-                    
-                    <div class="d-flex align-items-center justify-content-between pt-3 border-top" style="border-color: rgba(0,0,0,0.05) !important;">
-                        <div class="d-flex align-items-center gap-1">
-                            <button type="button" class="btn btn-light d-flex align-items-center gap-2 px-3 py-2 rounded-pill hover-bg-light transition-all border-0 bg-transparent text-muted fw-semibold" style="font-size: 0.8rem;">
-                                <span class="material-symbols-outlined text-danger" style="font-variation-settings: 'FILL' 1;">videocam</span>
-                                Live Video
-                            </button>
+<div class="card fb-card p-0 border-0 overflow-hidden">
+    <form id="createPostForm" asp-controller="Home" asp-action="CreatePost" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
 
-                            <label class="btn btn-light d-flex align-items-center gap-2 px-3 py-2 rounded-pill hover-bg-light transition-all border-0 bg-transparent text-muted fw-semibold m-0" for="compose-image" style="font-size: 0.8rem;">
-                                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">image</span>
-                                Photo
-                                <input type="file" id="compose-image" name="Image" accept="image/*" style="display:none;" onchange="document.getElementById('img-name').textContent = this.files[0]?.name || '';" />
-                            </label>
-                            
-                            <button type="button" class="btn btn-light d-flex align-items-center gap-2 px-3 py-2 rounded-pill hover-bg-light transition-all border-0 bg-transparent text-muted fw-semibold" style="font-size: 0.8rem;">
-                                <span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">mood</span>
-                                Feeling
-                            </button>
-                        </div>
-                        
-                        <div class="d-flex align-items-center gap-2">
-                             <div id="img-name" class="small text-muted mb-0"></div>
-                             <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" style="font-size: 0.85rem;">
-                                Post
-                            </button>
-                        </div>
-                    </div>
-                </form>
+        <!-- Top Section: Avatar + Textarea -->
+        <div class="d-flex gap-3 p-4 pb-0">
+            <a asp-controller="Profile" asp-action="Index" class="flex-shrink-0">
+                <img src="@userPic" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover; border: 2px solid var(--surface-container-low);" onerror="this.src='/images/user.jpg';" />
+            </a>
+            <div class="flex-grow-1">
+                <textarea name="Content"
+                          class="compose-textarea w-100 border-0 p-3 rounded-4"
+                          style="font-size: 0.92rem; min-height: 56px; resize: none; background-color: var(--surface-container-low); color: var(--on-surface); outline: none; font-family: var(--font-body); line-height: 1.55; transition: min-height 0.3s ease;"
+                          placeholder="What's on your mind, @userName?"
+                          onfocus="this.style.minHeight='100px'"
+                          onblur="if(!this.value) this.style.minHeight='56px'"></textarea>
             </div>
         </div>
-    </div>
+
+        <!-- Image Preview -->
+        <div id="imagePreviewWrap" class="px-4 pt-3" style="display: none;">
+            <div class="position-relative d-inline-block rounded-4 overflow-hidden" style="max-width: 100%;">
+                <img id="imagePreview" src="" class="img-fluid rounded-4" style="max-height: 200px; object-fit: cover;" />
+                <button type="button" class="btn position-absolute top-0 end-0 m-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: rgba(0,0,0,0.5); border: none; color: white; font-size: 14px; backdrop-filter: blur(4px);" onclick="clearImagePreview()">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden File Input -->
+        <input type="file" name="ImageFile" id="postImageInput" class="d-none" accept="image/*" />
+
+        <!-- Bottom Action Bar -->
+        <div class="mx-4 mt-3 mb-4 pt-3 d-flex justify-content-between align-items-center" style="border-top: 1px solid var(--surface-container-low);">
+            <div class="d-flex gap-1">
+                <button type="button" class="btn border-0 rounded-3 px-3 py-2 d-flex align-items-center gap-2 fw-semibold transition-all" style="font-size: 0.82rem; color: var(--on-surface-variant); background: transparent;" onmouseover="this.style.background='var(--surface-container-low)'" onmouseout="this.style.background='transparent'">
+                    <span class="material-symbols-outlined" style="font-size: 20px; color: #ef4444; font-variation-settings: 'FILL' 1;">videocam</span>
+                    Live Video
+                </button>
+                <button type="button" class="btn border-0 rounded-3 px-3 py-2 d-flex align-items-center gap-2 fw-semibold transition-all" style="font-size: 0.82rem; color: var(--on-surface-variant); background: transparent;" onclick="document.getElementById('postImageInput').click()" onmouseover="this.style.background='var(--surface-container-low)'" onmouseout="this.style.background='transparent'">
+                    <span class="material-symbols-outlined" style="font-size: 20px; color: var(--primary); font-variation-settings: 'FILL' 1;">image</span>
+                    Photo
+                </button>
+                <button type="button" class="btn border-0 rounded-3 px-3 py-2 d-flex align-items-center gap-2 fw-semibold transition-all" style="font-size: 0.82rem; color: var(--on-surface-variant); background: transparent;" onmouseover="this.style.background='var(--surface-container-low)'" onmouseout="this.style.background='transparent'">
+                    <span class="material-symbols-outlined" style="font-size: 20px; color: var(--tertiary); font-variation-settings: 'FILL' 1;">mood</span>
+                    Feeling
+                </button>
+            </div>
+
+            <button type="submit" class="btn btn-fb-primary px-4 py-2" style="font-size: 0.82rem;">
+                Post
+            </button>
+        </div>
+    </form>
 </div>
+
+<script>
+    document.getElementById('postImageInput')?.addEventListener('change', function () {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreviewWrap').style.display = 'block';
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    function clearImagePreview() {
+        document.getElementById('postImageInput').value = '';
+        document.getElementById('imagePreviewWrap').style.display = 'none';
+        document.getElementById('imagePreview').src = '';
+    }
+</script>

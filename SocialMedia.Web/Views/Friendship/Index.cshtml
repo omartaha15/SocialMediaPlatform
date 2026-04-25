@@ -1,371 +1,235 @@
 @using SocialMedia.Domain.Entities
 @model IEnumerable<ApplicationUser>
-
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
 @{
-    ViewData["Title"] = "Friends";
+    ViewData["Title"] = "Friends | Zuvo";
     var receivedRequests = ViewBag.PendingRequests as IEnumerable<ApplicationUser> ?? new List<ApplicationUser>();
     var sentRequests = ViewBag.SentRequests as IEnumerable<ApplicationUser> ?? new List<ApplicationUser>();
     var friendsCount = ViewBag.FriendsCount ?? 0;
+    var user = await UserManager.GetUserAsync(User);
+    var currentUserPic = string.IsNullOrEmpty(user?.ProfilePictureUrl) ? "/images/user.jpg" : user.ProfilePictureUrl;
 }
 
-<style>
-    .friends-page-header {
-        background: var(--card-bg);
-        border-radius: 16px;
-        border: 1px solid var(--card-border);
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-    }
-    .friends-page-header h3 {
-        font-size: 1.6rem;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-    }
-    .friends-tab-nav {
-        background: var(--card-bg);
-        border-radius: 12px;
-        padding: 6px;
-        border: 1px solid var(--card-border);
-        margin-bottom: 1.5rem;
-    }
-    .friends-tab-nav .nav-link {
-        color: var(--text-secondary);
-        font-weight: 700;
-        border-radius: 8px;
-        padding: 0.65rem 1.5rem;
-        transition: all 0.25s ease;
-        border: none;
-        font-size: 0.92rem;
-    }
-    .friends-tab-nav .nav-link:hover {
-        color: var(--text-primary);
-        background: var(--navbar-circle-btn-hover);
-    }
-    .friends-tab-nav .nav-link.active {
-        background: #2d88ff !important;
-        color: #fff !important;
-        box-shadow: 0 2px 8px rgba(45, 136, 255, 0.3);
-    }
-    .friends-tab-nav .nav-link .badge {
-        font-size: 0.7rem;
-        padding: 0.25em 0.55em;
-        vertical-align: middle;
-    }
+<div class="container py-4" style="max-width: 1440px;">
+    <div class="row g-4">
+        
+        <!-- Left Column: Navigation & Profile -->
+        <aside class="col-xl-3 d-none d-xl-flex flex-column gap-4">
+            <div class="position-sticky" style="top: 85px;">
+                <!-- Profile Card (Zuvo Style) -->
+                <div class="card fb-card p-6 mb-4 overflow-hidden">
+                    <div class="flex flex-col items-center text-center p-4">
+                        <div class="position-relative mb-4 d-inline-block">
+                            <div class="rounded-circle p-1 bg-gradient-primary" style="width: 96px; height: 96px;">
+                                <img src="@currentUserPic" class="w-100 h-100 object-fit-cover rounded-circle border border-4 border-white shadow-sm" onerror="this.src='/images/user.jpg';" />
+                            </div>
+                        </div>
+                        <h2 class="h5 fw-bold text-on-surface mb-1">@user?.UserName</h2>
+                        <p class="text-muted small px-2">@user?.Email</p>
+                    </div>
+                </div>
 
-    .friend-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        overflow: hidden;
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-    .friend-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-        border-color: rgba(45, 136, 255, 0.3);
-    }
-    .friend-card-cover {
-        position: relative;
-        height: 100px;
-        background: linear-gradient(135deg, #2d88ff 0%, #6c5dd3 50%, #ff6b6b 100%);
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-    }
-    .friend-card-avatar {
-        width: 90px;
-        height: 90px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid var(--card-bg);
-        position: relative;
-        top: 45px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        transition: transform 0.2s ease;
-    }
-    .friend-card:hover .friend-card-avatar {
-        transform: scale(1.05);
-    }
-    .friend-card-body {
-        padding: 3.2rem 1.2rem 1.2rem 1.2rem;
-        text-align: center;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    .friend-card-name {
-        font-weight: 700;
-        font-size: 1.05rem;
-        color: var(--text-primary);
-        margin-bottom: 0.2rem;
-        text-decoration: none;
-    }
-    .friend-card-name:hover {
-        color: #2d88ff;
-    }
-    .friend-card-actions {
-        margin-top: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding-top: 0.75rem;
-    }
-    .btn-msg {
-        background: #2d88ff;
-        color: #fff !important;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.88rem;
-        padding: 0.5rem;
-        transition: all 0.2s;
-    }
-    .btn-msg:hover {
-        background: #1a73e8;
-        box-shadow: 0 2px 8px rgba(45,136,255,0.3);
-    }
-    .btn-remove {
-        background: var(--navbar-circle-btn);
-        color: var(--text-primary) !important;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.88rem;
-        padding: 0.5rem;
-        transition: all 0.2s;
-    }
-    .btn-remove:hover {
-        background: var(--navbar-circle-btn-hover);
-    }
-    .btn-confirm {
-        background: #2d88ff;
-        color: #fff !important;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.88rem;
-        padding: 0.5rem;
-        transition: all 0.2s;
-    }
-    .btn-confirm:hover {
-        background: #1a73e8;
-        box-shadow: 0 2px 8px rgba(45,136,255,0.3);
-    }
-    .btn-cancel-req {
-        background: rgba(255, 107, 107, 0.15);
-        color: #ff6b6b !important;
-        border: 1px solid rgba(255,107,107,0.2);
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.88rem;
-        padding: 0.5rem;
-        transition: all 0.2s;
-    }
-    .btn-cancel-req:hover {
-        background: rgba(255, 107, 107, 0.25);
-        border-color: rgba(255,107,107,0.4);
-    }
+                <!-- Navigation Menu -->
+                <div class="card fb-card p-2 mb-4 bg-surface-container-low bg-opacity-50">
+                    <div class="list-group list-group-flush gap-2">
+                        <a asp-controller="Home" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 text-muted hover-bg-white transition-all rounded-4 border-0">
+                            <span class="material-symbols-outlined">home</span>
+                            <span class="fw-medium">Home Feed</span>
+                        </a>
+                        <a asp-controller="Friendship" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 bg-white text-primary shadow-sm rounded-4 border-0">
+                            <span class="material-symbols-outlined">group</span>
+                            <span class="fw-semibold">Friends</span>
+                        </a>
+                        <a asp-controller="Friendship" asp-action="Suggestions" class="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 text-muted hover-bg-white transition-all rounded-4 border-0">
+                            <span class="material-symbols-outlined">explore</span>
+                            <span class="fw-medium">Discover</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-    .empty-state-card {
-        background: var(--card-bg);
-        border: 1px dashed var(--card-border);
-        border-radius: 16px;
-        padding: 3.5rem 2rem;
-    }
-    .empty-state-card i {
-        font-size: 4rem;
-        background: linear-gradient(135deg, #2d88ff, #6c5dd3);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 1.5rem;
-    }
-</style>
-
-<div class="container mt-4 mb-5" style="max-width: 1000px;">
-    <!-- Header -->
-    <div class="friends-page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div>
-            <h3 class="text-fb-primary mb-1"><i class="fas fa-user-friends me-2" style="color: #2d88ff;"></i>Friends</h3>
-            <p class="text-fb-muted mb-0 small">Manage your connections and friend requests</p>
-        </div>
-        <a asp-controller="Friendship" asp-action="Suggestions" class="btn btn-msg px-4">
-            <i class="fas fa-compass me-1"></i> Discover People
-        </a>
-    </div>
-
-    <!-- Tabs Navigation -->
-    <ul class="nav nav-pills friends-tab-nav gap-1" id="friendshipTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="friends-tab" data-bs-toggle="pill" data-bs-target="#friends" type="button" role="tab">
-                <i class="fas fa-user-friends me-1"></i> Friends <span class="badge bg-light text-dark ms-1">@friendsCount</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="requests-tab" data-bs-toggle="pill" data-bs-target="#requests" type="button" role="tab">
-                <i class="fas fa-bell me-1"></i> Requests
-                @if (receivedRequests.Any())
-                {
-                    <span class="badge bg-danger ms-1">@receivedRequests.Count()</span>
-                }
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="pending-tab" data-bs-toggle="pill" data-bs-target="#pending" type="button" role="tab">
-                <i class="fas fa-paper-plane me-1"></i> Sent
-                @if (sentRequests.Any())
-                {
-                    <span class="badge bg-secondary ms-1">@sentRequests.Count()</span>
-                }
-            </button>
-        </li>
-    </ul>
-
-    <div class="tab-content" id="friendshipTabsContent">
-        <!-- Friends Tab -->
-        <div class="tab-pane fade show active" id="friends" role="tabpanel">
-            @if (!Model.Any())
-            {
-                <div class="empty-state-card text-center">
-                    <i class="fas fa-user-friends d-block"></i>
-                    <h5 class="fw-bold mb-2 text-fb-primary">No friends yet</h5>
-                    <p class="text-fb-muted mb-3">Start exploring and discover people you may know.</p>
-                    <a asp-controller="Friendship" asp-action="Suggestions" class="btn btn-msg px-4">
-                        <i class="fas fa-compass me-1"></i> Discover People
+        <!-- Middle Column: Friends Management -->
+        <main class="col-lg-12 col-xl-9">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-5 px-2">
+                <div>
+                    <h1 class="h3 fw-bold text-on-surface mb-1">Friends</h1>
+                    <p class="text-muted small mb-0">Manage your connections and pending requests</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-controller="Friendship" asp-action="Suggestions" class="btn btn-fb-primary btn-sm px-4">
+                        Discover People
                     </a>
                 </div>
-            }
-            else
-            {
-                <div class="row g-3">
-                    @foreach (var friend in Model)
-                    {
-                        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-                            <div class="friend-card">
-                                <div class="friend-card-cover">
-                                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@friend.Id" class="text-decoration-none">
-                                        <img src="@friend.ProfilePictureUrl" alt="@friend.UserName" class="friend-card-avatar" />
-                                    </a>
-                                </div>
-                                <div class="friend-card-body">
-                                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@friend.Id" class="friend-card-name text-decoration-none">
-                                        @friend.UserName
-                                    </a>
-                                    <div class="friend-card-actions">
-                                        <a class="btn btn-msg btn-sm w-100"
-                                           asp-controller="Messaging"
-                                           asp-action="Chat"
-                                           asp-route-otherUserId="@friend.Id"
-                                           asp-route-otherUserName="@friend.UserName"
-                                           asp-route-otherUserProfilePicture="@friend.ProfilePictureUrl">
-                                            <i class="fas fa-comment-dots me-1"></i> Message
-                                        </a>
-                                        <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="w-100">
-                                            <input type="hidden" name="friendId" value="@friend.Id" />
-                                            <button type="submit" class="btn btn-remove btn-sm w-100" title="Remove Friend">
-                                                <i class="fas fa-user-minus me-1"></i> Remove
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
+            </div>
 
-        <!-- Received Requests Tab -->
-        <div class="tab-pane fade" id="requests" role="tabpanel">
-            @if (!receivedRequests.Any())
-            {
-                <div class="empty-state-card text-center">
-                    <i class="fas fa-check-circle d-block"></i>
-                    <h5 class="fw-bold mb-2 text-fb-primary">All caught up!</h5>
-                    <p class="text-fb-muted mb-0">No pending friend requests right now.</p>
-                </div>
-            }
-            else
-            {
-                <div class="row g-3">
-                    @foreach (var sender in receivedRequests)
-                    {
-                        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-                            <div class="friend-card">
-                                <div class="friend-card-cover">
-                                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@sender.Id" class="text-decoration-none">
-                                        <img src="@sender.ProfilePictureUrl" alt="@sender.UserName" class="friend-card-avatar" />
-                                    </a>
-                                </div>
-                                <div class="friend-card-body">
-                                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@sender.Id" class="friend-card-name text-decoration-none">
-                                        @sender.UserName
-                                    </a>
-                                    <div class="friend-card-actions">
-                                        <form asp-controller="Friendship" asp-action="AcceptRequest" method="post" class="w-100">
-                                            <input type="hidden" name="senderId" value="@sender.Id" />
-                                            <button type="submit" class="btn btn-confirm btn-sm w-100">
-                                                <i class="fas fa-check me-1"></i> Confirm
-                                            </button>
-                                        </form>
-                                        <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="w-100">
-                                            <input type="hidden" name="friendId" value="@sender.Id" />
-                                            <button type="submit" class="btn btn-remove btn-sm w-100">
-                                                <i class="fas fa-times me-1"></i> Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
+            <!-- Tabs Navigation (SaaS Style) -->
+            <ul class="nav nav-pills gap-3 mb-5 px-2 border-0" id="friendshipTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="btn btn-light rounded-pill px-4 py-2 fw-bold active transition-all" id="friends-tab" data-bs-toggle="pill" data-bs-target="#friends" type="button" role="tab" style="font-size: 0.85rem;">
+                        My Friends (@friendsCount)
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-light rounded-pill px-4 py-2 fw-bold transition-all position-relative" id="requests-tab" data-bs-toggle="pill" data-bs-target="#requests" type="button" role="tab" style="font-size: 0.85rem;">
+                        Received Requests
+                        @if (receivedRequests.Any())
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-danger" style="width: 18px; height: 18px; font-size: 10px; padding: 0; display: flex; align-items: center; justify-content: center;">@receivedRequests.Count()</span>
+                        }
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-light rounded-pill px-4 py-2 fw-bold transition-all" id="pending-tab" data-bs-toggle="pill" data-bs-target="#pending" type="button" role="tab" style="font-size: 0.85rem;">
+                        Sent Requests (@sentRequests.Count())
+                    </button>
+                </li>
+            </ul>
 
-        <!-- Pending (Sent) Requests Tab -->
-        <div class="tab-pane fade" id="pending" role="tabpanel">
-            @if (!sentRequests.Any())
-            {
-                <div class="empty-state-card text-center">
-                    <i class="fas fa-paper-plane d-block"></i>
-                    <h5 class="fw-bold mb-2 text-fb-primary">No sent requests</h5>
-                    <p class="text-fb-muted mb-0">You haven't sent any friend requests yet.</p>
-                </div>
-            }
-            else
-            {
-                <div class="row g-3">
-                    @foreach (var receiver in sentRequests)
-                    {
-                        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-                            <div class="friend-card">
-                                <div class="friend-card-cover">
-                                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@receiver.Id" class="text-decoration-none">
-                                        <img src="@receiver.ProfilePictureUrl" alt="@receiver.UserName" class="friend-card-avatar" />
-                                    </a>
-                                </div>
-                                <div class="friend-card-body">
-                                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@receiver.Id" class="friend-card-name text-decoration-none">
-                                        @receiver.UserName
-                                    </a>
-                                    <small class="text-fb-muted d-block mb-1"><i class="fas fa-clock me-1"></i>Pending</small>
-                                    <div class="friend-card-actions">
-                                        <form asp-controller="Friendship" asp-action="RemoveFriend" method="post" class="w-100">
-                                            <input type="hidden" name="friendId" value="@receiver.Id" />
-                                            <button type="submit" class="btn btn-cancel-req btn-sm w-100">
-                                                <i class="fas fa-times me-1"></i> Cancel Request
-                                            </button>
-                                        </form>
+            <div class="tab-content" id="friendshipTabsContent">
+                <!-- Friends Tab -->
+                <div class="tab-pane fade show active" id="friends" role="tabpanel">
+                    <div class="row g-4">
+                        @if (!Model.Any())
+                        {
+                            <div class="col-12">
+                                <div class="card fb-card text-center py-5 border-dashed">
+                                    <div class="card-body">
+                                        <span class="material-symbols-outlined text-muted opacity-25 mb-3" style="font-size: 64px;">group_off</span>
+                                        <h5 class="fw-bold">No friends yet</h5>
+                                        <p class="text-muted small">Start exploring to find people you know.</p>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    }
+                        }
+                        else
+                        {
+                            @foreach (var friend in Model)
+                            {
+                                <div class="col-md-6 col-lg-4 col-xl-3">
+                                    <div class="card fb-card overflow-hidden hover-shadow transition-all border-0">
+                                        <div class="bg-gradient-primary" style="height: 60px;"></div>
+                                        <div class="card-body text-center pt-0">
+                                            <div class="mt-n5 position-relative">
+                                                <img src="@friend.ProfilePictureUrl" class="rounded-circle border border-4 border-white shadow-sm" style="width: 80px; height: 80px; object-fit: cover; margin-top: -40px;" onerror="this.src='/images/user.jpg';" />
+                                            </div>
+                                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@friend.Id" class="h6 fw-bold text-on-surface d-block mt-3 mb-1 text-decoration-none hover-text-primary">@friend.UserName</a>
+                                            <p class="text-muted small mb-4">Zuvo Member</p>
+                                            
+                                            <div class="d-grid gap-2">
+                                                <a asp-controller="Messaging" asp-action="Chat" asp-route-otherUserId="@friend.Id" class="btn btn-light btn-sm fw-bold rounded-3">Message</a>
+                                                <form asp-controller="Friendship" asp-action="RemoveFriend" method="post">
+                                                    <input type="hidden" name="friendId" value="@friend.Id" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm fw-bold rounded-3 w-100 opacity-75">Unfriend</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
                 </div>
-            }
-        </div>
+
+                <!-- Received Requests Tab -->
+                <div class="tab-pane fade" id="requests" role="tabpanel">
+                    <div class="row g-4">
+                        @if (!receivedRequests.Any())
+                        {
+                            <div class="col-12">
+                                <div class="card fb-card text-center py-5 border-dashed">
+                                    <div class="card-body">
+                                        <span class="material-symbols-outlined text-muted opacity-25 mb-3" style="font-size: 64px;">check_circle</span>
+                                        <h5 class="fw-bold">No pending requests</h5>
+                                        <p class="text-muted small">You're all caught up!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var sender in receivedRequests)
+                            {
+                                <div class="col-md-6 col-lg-4 col-xl-3">
+                                    <div class="card fb-card overflow-hidden border-0">
+                                        <div class="card-body text-center">
+                                            <img src="@sender.ProfilePictureUrl" class="rounded-circle shadow-sm mb-3" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.src='/images/user.jpg';" />
+                                            <h6 class="fw-bold mb-1">@sender.UserName</h6>
+                                            <p class="text-muted small mb-4">Wants to be friends</p>
+                                            <div class="d-grid gap-2">
+                                                <form asp-controller="Friendship" asp-action="AcceptRequest" method="post">
+                                                    <input type="hidden" name="senderId" value="@sender.Id" />
+                                                    <button type="submit" class="btn btn-primary btn-sm fw-bold rounded-3 w-100">Accept</button>
+                                                </form>
+                                                <form asp-controller="Friendship" asp-action="RemoveFriend" method="post">
+                                                    <input type="hidden" name="friendId" value="@sender.Id" />
+                                                    <button type="submit" class="btn btn-light btn-sm fw-bold rounded-3 w-100">Decline</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Sent Requests Tab -->
+                <div class="tab-pane fade" id="pending" role="tabpanel">
+                    <div class="row g-4">
+                        @if (!sentRequests.Any())
+                        {
+                            <div class="col-12">
+                                <div class="card fb-card text-center py-5 border-dashed">
+                                    <div class="card-body">
+                                        <span class="material-symbols-outlined text-muted opacity-25 mb-3" style="font-size: 64px;">send</span>
+                                        <h5 class="fw-bold">No sent requests</h5>
+                                        <p class="text-muted small">Send some requests to grow your network.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var receiver in sentRequests)
+                            {
+                                <div class="col-md-6 col-lg-4 col-xl-3">
+                                    <div class="card fb-card overflow-hidden border-0">
+                                        <div class="card-body text-center">
+                                            <img src="@receiver.ProfilePictureUrl" class="rounded-circle shadow-sm mb-3" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.src='/images/user.jpg';" />
+                                            <h6 class="fw-bold mb-1">@receiver.UserName</h6>
+                                            <p class="text-muted small mb-4">Request Sent</p>
+                                            <form asp-controller="Friendship" asp-action="RemoveFriend" method="post">
+                                                <input type="hidden" name="friendId" value="@receiver.Id" />
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm fw-bold rounded-3 w-100">Cancel Request</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 </div>
+
+<style>
+    .nav-pills .nav-item .btn.active {
+        background-color: var(--primary) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(74, 63, 226, 0.2);
+    }
+    .border-dashed {
+        border: 2px dashed var(--surface-container-high) !important;
+    }
+    .mt-n5 {
+        margin-top: -3rem !important;
+    }
+    .hover-text-primary:hover {
+        color: var(--primary) !important;
+    }
+</style>

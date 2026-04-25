@@ -1,101 +1,195 @@
 @model IEnumerable<SocialMedia.Application.DTOs.PostDtos.PostDto>
-
 @using Microsoft.AspNetCore.Identity
-@using System.Security.Claims
-@using SocialMedia.Domain.Enums
 @using SocialMedia.Domain.Entities
-@inject UserManager<ApplicationUser> _userManager
+@inject UserManager<ApplicationUser> UserManager
 @{
-    ViewData["Title"] = "Home";
-    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    var currentUser = currentUserId != null ? await _userManager.FindByIdAsync(currentUserId) : null;
-    var currentUserName = currentUser?.UserName ?? "You";
-    var currentUserPic  = currentUser?.ProfilePictureUrl ?? "/images/user.jpg";
+    ViewData["Title"] = "Zuvo | Social Intelligence";
+    var user = await UserManager.GetUserAsync(User);
+    var currentUserName = user?.UserName ?? "User";
+    var currentUserPic = string.IsNullOrEmpty(user?.ProfilePictureUrl) ? "/images/user.jpg" : user.ProfilePictureUrl;
 }
 
-<!-- ═══════════════════════  LAYOUT  ═══════════════════════ -->
+<style>
+    /* Homepage-specific polish */
+    .zuvo-profile-card { overflow: hidden; }
+    .zuvo-profile-card .profile-avatar-ring {
+        width: 96px; height: 96px;
+        padding: 3px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .zuvo-profile-card .profile-avatar-ring img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid white;
+    }
+    .zuvo-stat { text-align: center; }
+    .zuvo-stat .stat-value {
+        display: block;
+        font-size: 1.15rem;
+        font-weight: 800;
+        font-family: var(--font-headline);
+        color: var(--primary);
+    }
+    .zuvo-stat .stat-label {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+    .zuvo-sidebar-nav .nav-item {
+        display: flex; align-items: center; gap: 14px;
+        padding: 0.7rem 1rem;
+        border-radius: var(--radius-lg);
+        color: var(--on-surface-variant);
+        font-weight: 500; font-size: 0.88rem;
+        transition: var(--transition);
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .zuvo-sidebar-nav .nav-item:hover {
+        background: rgba(255,255,255,0.6);
+        color: var(--on-surface);
+    }
+    .zuvo-sidebar-nav .nav-item.active {
+        background: white;
+        color: var(--primary);
+        box-shadow: var(--shadow-sm);
+        font-weight: 600;
+    }
+    .zuvo-sidebar-nav .nav-item .material-symbols-outlined {
+        font-size: 22px;
+    }
+    .zuvo-widget-title {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--text-muted);
+        font-weight: 700;
+    }
+    .zuvo-contact-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0.15rem 0;
+    }
+    .zuvo-contact-item .contact-avatar {
+        position: relative;
+    }
+    .zuvo-contact-item .contact-avatar img {
+        width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+    }
+    .zuvo-contact-item .contact-avatar .online-dot {
+        position: absolute; bottom: 0; right: 0;
+        width: 10px; height: 10px;
+        background: var(--success);
+        border: 2px solid white;
+        border-radius: 50%;
+    }
+    .zuvo-contact-item .contact-name {
+        font-size: 0.88rem; font-weight: 500; color: var(--on-surface);
+    }
+    .zuvo-pulse-dot {
+        width: 8px; height: 8px;
+        background: var(--primary);
+        border-radius: 50%;
+        animation: pulse 2s ease infinite;
+        box-shadow: 0 0 8px rgba(74, 63, 226, 0.6);
+    }
+    .zuvo-birthday-item {
+        display: flex; align-items: center; gap: 12px;
+    }
+    .zuvo-birthday-item img {
+        width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+    }
+    .zuvo-birthday-item .bday-name { font-size: 0.88rem; font-weight: 600; }
+    .zuvo-birthday-item .bday-date { font-size: 0.72rem; color: var(--text-muted); }
+
+    .zuvo-sponsored-card .sponsored-img {
+        width: 100%; aspect-ratio: 16/9; object-fit: cover;
+        border-radius: var(--radius-lg);
+    }
+
+    .feed-section-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-weight: 700;
+        color: var(--text-muted);
+    }
+</style>
+
+<!-- Main Content Layout -->
 <div class="container py-4" style="max-width: 1440px;">
-    <div class="row g-4">
-        
-        <!-- LEFT SIDEBAR: Navigation & Profile -->
+    <div class="row g-4 align-items-start">
+
+        <!-- ═══ LEFT COLUMN ═══ -->
         <aside class="col-xl-3 d-none d-xl-block">
             <div class="position-sticky" style="top: 85px;">
+
                 <!-- Profile Card -->
-                <div class="card fb-card mb-4 overflow-hidden transition-all hover-shadow">
-                    <div class="card-body text-center p-4">
+                <div class="card fb-card zuvo-profile-card p-0 mb-4">
+                    <div class="text-center px-4 pt-5 pb-4">
                         <div class="position-relative d-inline-block mb-3">
-                            <div class="p-1 rounded-circle bg-gradient-to-tr from-primary to-secondary">
-                                <img src="@currentUserPic" class="rounded-circle border border-4 border-white shadow-sm" style="width: 96px; height: 96px; object-fit: cover;" onerror="this.src='/images/user.jpg';" />
+                            <div class="profile-avatar-ring">
+                                <img src="@currentUserPic" alt="@currentUserName" onerror="this.src='/images/user.jpg';" />
                             </div>
-                            <span class="position-absolute bottom-0 end-0 w-4 h-4 bg-success border border-white border-2 rounded-circle"></span>
+                            <div class="position-absolute" style="bottom: 4px; right: 4px; width: 16px; height: 16px; background: var(--success); border: 3px solid white; border-radius: 50%;"></div>
                         </div>
-                        <h5 class="fw-bold mb-1" style="color: var(--text-primary);">@currentUserName</h5>
-                        <p class="text-muted small px-3">Product Designer focused on building sustainable digital ecosystems at Zuvo.</p>
-                        
-                        <div class="mt-4 pt-4 border-top d-flex justify-content-around">
-                            <div class="text-center">
-                                <span class="d-block fw-bold text-primary fs-5">1.2k</span>
-                                <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.05em;">Followers</span>
-                            </div>
-                            <div class="border-start"></div>
-                            <div class="text-center">
-                                <span class="d-block fw-bold text-primary fs-5">482</span>
-                                <span class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.05em;">Following</span>
-                            </div>
+                        <h2 class="h5 fw-bold mb-1" style="color: var(--on-surface);">@currentUserName</h2>
+                        <p class="text-muted small mb-0 px-3" style="line-height: 1.55;">Product Designer focused on building sustainable digital ecosystems at Zuvo.</p>
+                    </div>
+                    <div class="d-flex border-top" style="border-color: var(--surface-container-low) !important;">
+                        <div class="zuvo-stat flex-fill py-3 border-end" style="border-color: var(--surface-container-low) !important;">
+                            <span class="stat-value">1.2k</span>
+                            <span class="stat-label">Followers</span>
+                        </div>
+                        <div class="zuvo-stat flex-fill py-3">
+                            <span class="stat-value">482</span>
+                            <span class="stat-label">Following</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Navigation Menu -->
-                <div class="card fb-card p-2 mb-4 bg-opacity-50">
-                    <div class="list-group list-group-flush gap-1">
-                        <a asp-controller="Profile" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-3 rounded-4 bg-white shadow-sm text-primary">
-                            <span class="material-symbols-outlined me-3">person</span>
-                            <span class="fw-semibold">My Profile</span>
+                <div class="card fb-card p-3 mb-4" style="background-color: rgba(238, 241, 243, 0.5) !important; backdrop-filter: blur(8px);">
+                    <nav class="zuvo-sidebar-nav d-flex flex-column gap-1">
+                        <a asp-controller="Profile" asp-action="Index" class="nav-item active">
+                            <span class="material-symbols-outlined">person</span>
+                            <span>My Profile</span>
                         </a>
-                        <a asp-controller="Friendship" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-3 rounded-4 text-muted hover-bg-white transition-all">
-                            <span class="material-symbols-outlined me-3">group</span>
-                            <span class="fw-medium">Friends</span>
+                        <a asp-controller="Friendship" asp-action="Index" class="nav-item">
+                            <span class="material-symbols-outlined">group</span>
+                            <span>Friends</span>
                         </a>
-                        <a asp-controller="Friendship" asp-action="Suggestions" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-3 rounded-4 text-muted hover-bg-white transition-all">
-                            <span class="material-symbols-outlined me-3">explore</span>
-                            <span class="fw-medium">Discover</span>
+                        <a asp-controller="Friendship" asp-action="Suggestions" class="nav-item">
+                            <span class="material-symbols-outlined">explore</span>
+                            <span>Discover</span>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center border-0 py-3 rounded-4 text-muted hover-bg-white transition-all">
-                            <span class="material-symbols-outlined me-3">settings</span>
-                            <span class="fw-medium">Settings</span>
+                        <a href="#" class="nav-item">
+                            <span class="material-symbols-outlined">settings</span>
+                            <span>Settings</span>
                         </a>
-                    </div>
+                    </nav>
                 </div>
 
-                <button class="btn btn-fb-primary w-100 py-3 fw-bold shadow-lg" style="box-shadow: 0 10px 20px rgba(74, 63, 226, 0.2);">
+                <!-- Create Post CTA -->
+                <button class="btn btn-fb-primary w-100 py-3" onclick="document.querySelector('.compose-textarea')?.focus()">
                     Create Post
                 </button>
             </div>
         </aside>
 
-        <!-- MIDDLE COLUMN: Main Feed -->
-        <main class="col-lg-12 col-xl-6">
-            <!-- COMPOSE CARD -->
+        <!-- ═══ MIDDLE COLUMN — FEED ═══ -->
+        <main class="col-12 col-md-8 col-xl-6">
+
+            <!-- Compose Post -->
             <div class="mb-4">
                 <partial name="_ComposePostPartial" />
             </div>
 
-            <!-- FEED HEADER -->
-            <div class="d-flex justify-content-between align-items-center mb-4 px-2">
-                <h6 class="fw-bold mb-0 text-uppercase tracking-wider" style="color: var(--text-muted); font-size: 0.75rem;">Recent Feed</h6>
-                <div class="dropdown">
-                    <button class="btn btn-sm border-0 rounded-pill px-3 shadow-sm text-muted fw-bold" style="background-color: var(--bg-card); font-size: 0.75rem;" type="button" data-bs-toggle="dropdown">
-                        SORT BY: MOST RECENT <i class="fas fa-chevron-down ms-1" style="font-size: 0.6rem;"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2">
-                        <li><a class="dropdown-item rounded-3 small fw-semibold" href="#">Most recent</a></li>
-                        <li><a class="dropdown-item rounded-3 small fw-semibold" href="#">Top posts</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- FEED POSTS CONTAINER -->
+            <!-- Feed Items -->
             <div id="feed-posts-container" class="d-flex flex-column gap-4">
                 @if (Model != null && Model.Any())
                 {
@@ -108,89 +202,90 @@
                 {
                     <div class="card fb-card text-center py-5">
                         <div class="card-body py-4">
-                            <div class="mb-3 text-muted opacity-25">
-                                <span class="material-symbols-outlined" style="font-size: 64px;">dynamic_feed</span>
+                            <div class="mb-4" style="color: var(--surface-container-high);">
+                                <span class="material-symbols-outlined" style="font-size: 72px;">dynamic_feed</span>
                             </div>
                             <h5 class="fw-bold mb-2">Your feed is empty</h5>
-                            <p class="text-muted small mb-0">Follow people or share something to get started.</p>
+                            <p class="text-muted small mb-4">Follow people or share something to get started.</p>
+                            <a asp-controller="Friendship" asp-action="Suggestions" class="btn btn-fb-primary btn-sm px-4">Discover People</a>
                         </div>
                     </div>
                 }
             </div>
-            
-            <!-- LOADING INDICATOR -->
+
+            <!-- Loading Indicator -->
             <div id="feed-loading" class="text-center py-5" style="display: none;">
-                <div class="spinner-border text-primary" style="width: 1.5rem; height: 1.5rem;" role="status">
+                <div class="spinner-border" style="width: 1.5rem; height: 1.5rem; color: var(--primary);" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
         </main>
 
-        <!-- RIGHT SIDEBAR: Contextual Info -->
-        <aside class="col-lg-3 d-none d-xl-block">
+        <!-- ═══ RIGHT COLUMN ═══ -->
+        <aside class="col-md-4 col-xl-3 d-none d-md-block">
             <div class="position-sticky" style="top: 85px;">
-                
+
                 <!-- Sponsored Card -->
-                <div class="card fb-card mb-4 p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h6 class="text-uppercase fw-bold mb-0 text-muted" style="font-size: 0.65rem; letter-spacing: 0.1em;">Sponsored</h6>
-                        <span class="material-symbols-outlined text-muted" style="font-size: 16px;">info</span>
+                <div class="card fb-card zuvo-sponsored-card p-5 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="zuvo-widget-title">Sponsored</span>
+                        <span class="material-symbols-outlined" style="font-size: 14px; color: var(--outline-variant);">info</span>
                     </div>
-                    <div class="rounded-4 overflow-hidden mb-3 bg-light">
-                        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format&fit=crop&q=60" class="w-100 object-fit-cover" style="height: 140px;" />
-                    </div>
-                    <h6 class="fw-bold mb-2" style="font-size: 0.9rem;">Scale with Zuvo Analytics</h6>
-                    <p class="text-muted mb-3" style="font-size: 0.75rem; line-height: 1.5;">Real-time social intelligence at your fingertips. Try for 14 days free.</p>
-                    <button class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-bold border-2" style="font-size: 0.75rem;">Learn More</button>
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format&fit=crop&q=60" class="sponsored-img mb-3" alt="Zuvo Analytics" />
+                    <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--on-surface); margin-bottom: 4px;">Scale your business with Zuvo Analytics</h4>
+                    <p class="text-muted mb-3" style="font-size: 0.75rem; line-height: 1.6;">Real-time social intelligence at your fingertips. Get started with a 14-day free trial.</p>
+                    <button class="btn btn-sm w-100 rounded-pill fw-bold" style="font-size: 0.75rem; border: 1.5px solid rgba(74, 63, 226, 0.2); color: var(--primary); background: transparent;">Learn More</button>
                 </div>
 
                 <!-- Birthdays Card -->
-                <div class="card fb-card mb-4 p-4">
+                <div class="card fb-card p-5 mb-4">
                     <div class="d-flex align-items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">cake</span>
+                        <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 40px; height: 40px; background: var(--secondary-container);">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; color: var(--secondary); font-size: 20px;">cake</span>
                         </div>
-                        <h6 class="fw-bold mb-0" style="font-size: 0.9rem;">Upcoming Birthdays</h6>
+                        <h3 style="font-size: 0.88rem; font-weight: 700; color: var(--on-surface); margin: 0;">Upcoming Birthdays</h3>
                     </div>
                     <div class="d-flex flex-column gap-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;" />
+                        <div class="zuvo-birthday-item">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60" alt="Marcus" />
                             <div>
-                                <h6 class="fw-semibold mb-0" style="font-size: 0.8rem;">Marcus Chen</h6>
-                                <p class="text-muted mb-0" style="font-size: 0.7rem;">Birthday today!</p>
+                                <div class="bday-name">Marcus Chen</div>
+                                <div class="bday-date">Birthday today!</div>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;" />
+                        <div class="zuvo-birthday-item">
+                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60" alt="Sarah" />
                             <div>
-                                <h6 class="fw-semibold mb-0" style="font-size: 0.8rem;">Sarah Jenkins</h6>
-                                <p class="text-muted mb-0" style="font-size: 0.7rem;">Tomorrow</p>
+                                <div class="bday-name">Sarah Jenkins</div>
+                                <div class="bday-date">Tomorrow</div>
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-light btn-sm w-100 rounded-4 fw-bold mt-4 py-2" style="font-size: 0.75rem; background-color: var(--bg-input);">View All Birthdays</button>
+                    <button class="btn btn-sm w-100 rounded-3 fw-bold mt-4 py-2" style="font-size: 0.75rem; background: var(--surface-container-low); color: var(--on-surface-variant); border: none;">View All Birthdays</button>
                 </div>
 
-                <!-- Active Contacts Card -->
-                <div class="card fb-card p-4">
-                    <h6 class="fw-bold mb-4" style="font-size: 0.9rem;">Active Contacts</h6>
+                <!-- Active Contacts -->
+                <div class="card fb-card p-5">
+                    <h3 style="font-size: 0.88rem; font-weight: 700; color: var(--on-surface); margin-bottom: 1.25rem;">Active Contacts</h3>
                     <div class="d-flex flex-column gap-3">
-                        <div class="d-flex align-items-center justify-content-between">
+                        <div class="zuvo-contact-item">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="position-relative">
-                                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;" />
-                                    <span class="position-absolute bottom-0 end-0 w-2 h-2 bg-success border border-white border-1 rounded-circle"></span>
+                                <div class="contact-avatar">
+                                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60" alt="Alex" />
+                                    <div class="online-dot"></div>
                                 </div>
-                                <span class="fw-medium" style="font-size: 0.8rem;">Alex Rivera</span>
+                                <span class="contact-name">Alex Rivera</span>
                             </div>
-                            <span class="w-2 h-2 bg-primary rounded-circle animate-pulse" style="box-shadow: 0 0 8px var(--accent);"></span>
+                            <div class="zuvo-pulse-dot"></div>
                         </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="position-relative">
-                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;" />
-                                <span class="position-absolute bottom-0 end-0 w-2 h-2 bg-success border border-white border-1 rounded-circle"></span>
+                        <div class="zuvo-contact-item">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="contact-avatar">
+                                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60" alt="Jordan" />
+                                    <div class="online-dot"></div>
+                                </div>
+                                <span class="contact-name">Jordan Smith</span>
                             </div>
-                            <span class="fw-medium" style="font-size: 0.8rem;">Jordan Smith</span>
                         </div>
                     </div>
                 </div>
@@ -200,140 +295,3 @@
 
     </div>
 </div>
-
-<!-- Modal for who reacted -->
-<div class="modal fade" id="reactorsModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow-lg rounded-4" style="background:var(--modal-bg);">
-            <div class="modal-header border-0 pb-0">
-                <h6 class="modal-title fw-bold" style="color:var(--text-primary);">Reactions</h6>
-                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-3" id="reactorsList">
-                <!-- Loaded dynamically -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<partial name="_PostStylesPartial" />
-
-<style>
-    /* SaaS Enhancements */
-    .saas-nav-link {
-        transition: all 0.2s ease;
-        background-color: transparent;
-    }
-    .saas-nav-link:hover {
-        background-color: var(--bg-input) !important;
-        transform: translateX(4px);
-    }
-    
-    .saas-ad-card {
-        transition: transform 0.2s ease, background-color 0.2s ease;
-    }
-    .saas-ad-card:hover {
-        background-color: var(--bg-input);
-        transform: translateY(-2px);
-    }
-    
-    .cursor-pointer {
-        cursor: pointer;
-    }
-    
-    /* Reactors modal */
-    .reactor-item {
-        display: flex;
-        align-items: center;
-        padding: 10px 12px;
-        border-radius: 8px;
-        gap: 12px;
-        transition: background-color 0.2s ease;
-    }
-    .reactor-item:hover {
-        background-color: var(--modal-input-bg);
-    }
-    .reactor-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .reactor-name { color: var(--text-primary); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
-    .reactor-emoji { font-size: 16px; position: absolute; bottom: -2px; right: -2px; background: var(--modal-bg); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-    
-    /* Global Card Override for this page to look more SaaS */
-    .card {
-        background-color: var(--card-bg);
-        border: 1px solid var(--card-border) !important;
-    }
-    .list-group-item {
-        background-color: transparent;
-    }
-</style>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <partial name="_PostScriptsPartial" />
-    <script>
-        let currentPage = 1;
-        let hasMore = @(ViewBag.HasMorePosts != null ? ViewBag.HasMorePosts.ToString().ToLower() : "false");
-        let isLoading = false;
-
-        window.onscroll = function() {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-                loadMorePosts();
-            }
-        };
-
-        async function loadMorePosts() {
-            if (isLoading || !hasMore) return;
-            isLoading = true;
-            document.getElementById("feed-loading").style.display = "block";
-
-            currentPage++;
-            try {
-                const response = await fetch(`/Home/LoadMorePosts?page=${currentPage}`);
-                const data = await response.json();
-                
-                if (data.html) {
-                    const container = document.getElementById("feed-posts-container");
-                    container.insertAdjacentHTML('beforeend', data.html);
-                    hasMore = data.hasMore;
-                } else {
-                    hasMore = false;
-                }
-            } catch (err) {
-                console.error("Error loading posts:", err);
-            } finally {
-                isLoading = false;
-                document.getElementById("feed-loading").style.display = "none";
-            }
-        }
-
-        async function showReactorsModal(postId) {
-            const list = document.getElementById("reactorsList");
-            list.innerHTML = `<div class="text-center py-4 text-secondary"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Loading...</div>`;
-            const modal = new bootstrap.Modal(document.getElementById("reactorsModal"));
-            modal.show();
-
-            try {
-                const response = await fetch(`/Reaction/GetReactors?postId=${postId}`);
-                const data = await response.json();
-                
-                if (!data || data.length === 0) {
-                    list.innerHTML = `<div class="text-center py-4 text-secondary small">No reactions yet.</div>`;
-                    return;
-                }
-
-                list.innerHTML = data.map(r => `
-                    <div class="reactor-item">
-                        <div style="position: relative;">
-                            <img src="${r.avatarUrl}" class="reactor-avatar border border-2 border-white" onerror="this.src='/images/user.jpg';" />
-                            <span class="reactor-emoji">${emojiMap[r.reactionType] || '👍'}</span>
-                        </div>
-                        <a href="/Profile/Index/${r.userId}" class="reactor-name text-decoration-none stretched-link">${r.userName}</a>
-                    </div>
-                `).join('');
-            } catch (err) {
-                list.innerHTML = `<div class="text-center py-4 text-danger small">Failed to load reactions.</div>`;
-            }
-        }
-    </script>
-}
-

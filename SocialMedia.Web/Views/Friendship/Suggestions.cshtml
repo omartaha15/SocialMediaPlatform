@@ -1,230 +1,149 @@
 @using SocialMedia.Application.DTOs.Pagination
 @using SocialMedia.Application.DTOs.ProfileDTOs
 @model PaginatedList<UserSuggestionDto>
-
+@using Microsoft.AspNetCore.Identity
+@using SocialMedia.Domain.Entities
+@inject UserManager<ApplicationUser> UserManager
 @{
-    ViewData["Title"] = "Discover Friends";
+    ViewData["Title"] = "Discover People | Zuvo";
+    var user = await UserManager.GetUserAsync(User);
+    var currentUserPic = string.IsNullOrEmpty(user?.ProfilePictureUrl) ? "/images/user.jpg" : user.ProfilePictureUrl;
 }
 
-<style>
-    .discover-header {
-        background: var(--card-bg);
-        border-radius: 16px;
-        border: 1px solid var(--card-border);
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-    }
-    .discover-header h3 {
-        font-size: 1.6rem;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-    }
-
-    .suggestion-card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        overflow: hidden;
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-    .suggestion-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-        border-color: rgba(45, 136, 255, 0.3);
-    }
-    .suggestion-card-img-wrap {
-        position: relative;
-        overflow: hidden;
-        height: 180px;
-    }
-    .suggestion-card-img-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.35s ease;
-    }
-    .suggestion-card:hover .suggestion-card-img-wrap img {
-        transform: scale(1.08);
-    }
-    .suggestion-card-img-wrap::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 60px;
-        background: linear-gradient(to top, var(--card-bg), transparent);
-        pointer-events: none;
-    }
-    .suggestion-card-body {
-        padding: 1rem 1.2rem 1.2rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    .suggestion-card-name {
-        font-weight: 700;
-        font-size: 1rem;
-        color: var(--text-primary);
-        text-decoration: none;
-        display: block;
-        margin-bottom: 0.25rem;
-    }
-    .suggestion-card-name:hover {
-        color: #2d88ff;
-    }
-    .mutual-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-size: 0.78rem;
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-    .mutual-badge i { color: #2d88ff; font-size: 0.7rem; }
-
-    .btn-add-friend {
-        background: #2d88ff;
-        color: #fff !important;
-        border: none;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 0.88rem;
-        padding: 0.55rem;
-        transition: all 0.2s;
-        width: 100%;
-    }
-    .btn-add-friend:hover {
-        background: #1a73e8;
-        box-shadow: 0 2px 8px rgba(45,136,255,0.3);
-    }
-
-    .pagination-bar {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 12px;
-        padding: 0.75rem 1.25rem;
-    }
-    .pagination-bar .btn-page {
-        background: var(--navbar-circle-btn);
-        color: var(--text-primary);
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        padding: 0.45rem 1.2rem;
-        transition: all 0.2s;
-    }
-    .pagination-bar .btn-page:hover:not(:disabled) {
-        background: var(--navbar-circle-btn-hover);
-    }
-    .pagination-bar .btn-page:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-    }
-
-    .empty-discover-card {
-        background: var(--card-bg);
-        border: 1px dashed var(--card-border);
-        border-radius: 16px;
-        padding: 3.5rem 2rem;
-    }
-    .empty-discover-card i {
-        font-size: 4rem;
-        background: linear-gradient(135deg, #2d88ff, #6c5dd3);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 1.5rem;
-    }
-</style>
-
-<div class="container mt-4 mb-5" style="max-width: 1000px;">
-    <!-- Header -->
-    <div class="discover-header d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div>
-            <h3 class="text-fb-primary mb-1"><i class="fas fa-compass me-2" style="color: #6c5dd3;"></i>Discover People</h3>
-            <p class="text-fb-muted mb-0 small">People you may know based on mutual connections</p>
-        </div>
-        <a asp-controller="Friendship" asp-action="Index" class="btn btn-fb-secondary px-4 fw-bold" style="border-radius: 8px;">
-            <i class="fas fa-user-friends me-1"></i> My Friends
-        </a>
-    </div>
-
-    @if (!Model.Items.Any())
-    {
-        <div class="empty-discover-card text-center">
-            <i class="fas fa-search-minus d-block"></i>
-            <h5 class="fw-bold mb-2 text-fb-primary">No Suggestions Available</h5>
-            <p class="text-fb-muted mb-0">Check back later — more people are joining every day!</p>
-        </div>
-    }
-    else
-    {
-        <div class="row g-3">
-            @foreach (var suggestion in Model.Items)
-            {
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-                    <div class="suggestion-card">
-                        <a asp-controller="Profile" asp-action="Index" asp-route-id="@suggestion.Id" class="text-decoration-none">
-                            <div class="suggestion-card-img-wrap">
-                                <img src="@suggestion.ProfilePictureUrl" alt="@suggestion.UserName" />
-                            </div>
-                        </a>
-                        <div class="suggestion-card-body">
-                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@suggestion.Id" class="suggestion-card-name">
-                                @suggestion.UserName
-                            </a>
-                            <div style="min-height: 22px;" class="mb-2">
-                                @if (suggestion.MutualFriendsCount > 0)
-                                {
-                                    <span class="mutual-badge"><i class="fas fa-user-check"></i> @suggestion.MutualFriendsCount mutual friends</span>
-                                }
-                                else if (!string.IsNullOrEmpty(suggestion.Location))
-                                {
-                                    <span class="mutual-badge"><i class="fas fa-map-marker-alt"></i> @suggestion.Location</span>
-                                }
-                            </div>
-                            <div class="mt-auto">
-                                <form asp-controller="Friendship" asp-action="SendRequest" method="post" class="w-100">
-                                    <input type="hidden" name="receiverId" value="@suggestion.Id" />
-                                    <button type="submit" class="btn-add-friend">
-                                        <i class="fas fa-user-plus me-1"></i> Add Friend
-                                    </button>
-                                </form>
+<div class="container py-4" style="max-width: 1440px;">
+    <div class="row g-4">
+        
+        <!-- Left Column: Navigation & Profile -->
+        <aside class="col-xl-3 d-none d-xl-flex flex-column gap-4">
+            <div class="position-sticky" style="top: 85px;">
+                <!-- Profile Card -->
+                <div class="card fb-card p-6 mb-4 overflow-hidden">
+                    <div class="flex flex-col items-center text-center p-4">
+                        <div class="position-relative mb-4 d-inline-block">
+                            <div class="rounded-circle p-1 bg-gradient-primary" style="width: 96px; height: 96px;">
+                                <img src="@currentUserPic" class="w-100 h-100 object-fit-cover rounded-circle border border-4 border-white shadow-sm" onerror="this.src='/images/user.jpg';" />
                             </div>
                         </div>
+                        <h2 class="h5 fw-bold text-on-surface mb-1">@user?.UserName</h2>
+                        <p class="text-muted small px-2">@user?.Email</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <div class="card fb-card p-2 mb-4 bg-surface-container-low bg-opacity-50">
+                    <div class="list-group list-group-flush gap-2">
+                        <a asp-controller="Home" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 text-muted hover-bg-white transition-all rounded-4 border-0">
+                            <span class="material-symbols-outlined">home</span>
+                            <span class="fw-medium">Home Feed</span>
+                        </a>
+                        <a asp-controller="Friendship" asp-action="Index" class="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 text-muted hover-bg-white transition-all rounded-4 border-0">
+                            <span class="material-symbols-outlined">group</span>
+                            <span class="fw-medium">Friends</span>
+                        </a>
+                        <a asp-controller="Friendship" asp-action="Suggestions" class="list-group-item list-group-item-action d-flex align-items-center gap-3 p-3 bg-white text-primary shadow-sm rounded-4 border-0">
+                            <span class="material-symbols-outlined">explore</span>
+                            <span class="fw-semibold">Discover</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Middle Column: Suggestions -->
+        <main class="col-lg-12 col-xl-9">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-5 px-2">
+                <div>
+                    <h1 class="h3 fw-bold text-on-surface mb-1">Discover People</h1>
+                    <p class="text-muted small mb-0">Expand your network with people you may know</p>
+                </div>
+            </div>
+
+            @if (!Model.Items.Any())
+            {
+                <div class="card fb-card text-center py-5 border-dashed">
+                    <div class="card-body">
+                        <span class="material-symbols-outlined text-muted opacity-25 mb-3" style="font-size: 64px;">search_off</span>
+                        <h5 class="fw-bold">No suggestions found</h5>
+                        <p class="text-muted small">We'll notify you when we find more people you might know.</p>
                     </div>
                 </div>
             }
-        </div>
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var suggestion in Model.Items)
+                    {
+                        <div class="col-md-6 col-lg-4 col-xl-3">
+                            <div class="card fb-card overflow-hidden hover-shadow transition-all border-0">
+                                <div class="position-relative overflow-hidden" style="height: 140px;">
+                                    <img src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=500&auto=format&fit=crop&q=60" class="w-100 h-100 object-fit-cover" />
+                                    <div class="position-absolute bottom-0 start-0 w-100 p-3 bg-gradient-to-t" style="background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);">
+                                    </div>
+                                </div>
+                                <div class="card-body text-center pt-0">
+                                    <div class="mt-n5 position-relative">
+                                        <img src="@suggestion.ProfilePictureUrl" class="rounded-circle border border-4 border-white shadow-sm" style="width: 80px; height: 80px; object-fit: cover; margin-top: -40px;" onerror="this.src='/images/user.jpg';" />
+                                    </div>
+                                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@suggestion.Id" class="h6 fw-bold text-on-surface d-block mt-3 mb-1 text-decoration-none hover-text-primary">@suggestion.UserName</a>
+                                    
+                                    <div style="min-height: 24px;">
+                                        @if (suggestion.MutualFriendsCount > 0)
+                                        {
+                                            <p class="text-muted small mb-3">@suggestion.MutualFriendsCount mutual friends</p>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted small mb-3">New to Zuvo</p>
+                                        }
+                                    </div>
+                                    
+                                    <div class="d-grid">
+                                        <form asp-controller="Friendship" asp-action="SendRequest" method="post">
+                                            <input type="hidden" name="receiverId" value="@suggestion.Id" />
+                                            <button type="submit" class="btn btn-fb-primary btn-sm w-100 fw-bold">
+                                                Add Friend
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
 
-        <!-- Pagination -->
-        <div class="pagination-bar d-flex justify-content-between align-items-center mt-4">
-            <div class="text-fb-muted fw-bold small">
-                Page <span class="text-fb-primary">@Model.PageIndex</span> of @Model.TotalPages
-            </div>
-            <div class="d-flex gap-2">
-                @if (Model.HasPreviousPage)
-                {
-                    <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex - 1)" class="btn btn-page">&laquo; Previous</a>
-                }
-                else
-                {
-                    <button class="btn btn-page" disabled>&laquo; Previous</button>
-                }
-
-                @if (Model.HasNextPage)
-                {
-                    <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex + 1)" class="btn btn-page">Next &raquo;</a>
-                }
-                else
-                {
-                    <button class="btn btn-page" disabled>Next &raquo;</button>
-                }
-            </div>
-        </div>
-    }
+                <!-- Pagination (Modern) -->
+                <div class="d-flex justify-content-between align-items-center mt-5 px-2">
+                    <p class="text-muted small mb-0 fw-medium">
+                        Page <span class="text-primary fw-bold">@Model.PageIndex</span> of @Model.TotalPages
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex - 1)" 
+                           class="btn btn-light rounded-pill px-4 btn-sm fw-bold @(!Model.HasPreviousPage ? "disabled opacity-50" : "")">
+                            Previous
+                        </a>
+                        <a asp-action="Suggestions" asp-route-pageNumber="@(Model.PageIndex + 1)" 
+                           class="btn btn-light rounded-pill px-4 btn-sm fw-bold @(!Model.HasNextPage ? "disabled opacity-50" : "")">
+                            Next
+                        </a>
+                    </div>
+                </div>
+            }
+        </main>
+    </div>
 </div>
+
+<style>
+    .border-dashed {
+        border: 2px dashed var(--surface-container-high) !important;
+    }
+    .mt-n5 {
+        margin-top: -3rem !important;
+    }
+    .hover-text-primary:hover {
+        color: var(--primary) !important;
+    }
+    .btn.disabled {
+        pointer-events: none;
+    }
+</style>

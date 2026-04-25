@@ -1,88 +1,94 @@
 @model SocialMedia.Web.ViewModels.RegisterViewModel
 
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Register | Zuvo";
 }
 
 <div class="auth-wrapper">
-    <div class="auth-card" style="max-width: 520px;">
-        <div class="auth-header">
-            <div class="auth-icon">
-                <i class="fas fa-user-plus" style="color:white;"></i>
+    <div class="auth-card" style="max-width: 540px;">
+        <!-- Brand -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background: var(--gradient-primary);">
+                <span class="material-symbols-outlined text-white" style="font-size: 28px; font-variation-settings: 'FILL' 1;">person_add</span>
             </div>
-            <h2>Create Your Account</h2>
-            <p>Join Zuvo and start connecting</p>
+            <h2 class="h4 fw-bold mb-1" style="color: var(--on-surface); font-family: var(--font-headline);">Create Your Account</h2>
+            <p class="text-muted small mb-0">Join Zuvo and start connecting</p>
         </div>
 
         <form asp-action="Register" method="post" enctype="multipart/form-data" id="registerForm">
             @if (!ViewData.ModelState.IsValid)
             {
-                <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
+                <div asp-validation-summary="All" class="alert alert-danger rounded-3 py-2 px-3 mb-3" style="font-size: 0.85rem;"></div>
             }
 
-            <div class="row">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="UserName"><i class="fas fa-user me-1"></i> Username</label>
+                    <div class="mb-3">
+                        <label asp-for="UserName" class="form-label">Username</label>
                         <input asp-for="UserName" class="form-control" placeholder="Choose a username" />
                         <span asp-validation-for="UserName" class="text-danger small"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Email"><i class="fas fa-envelope me-1"></i> Email</label>
-                        <input asp-for="Email" class="form-control" placeholder="Your email address" />
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" class="form-control" placeholder="you@example.com" />
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Password"><i class="fas fa-lock me-1"></i> Password</label>
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Password</label>
                         <input asp-for="Password" class="form-control" type="password" placeholder="Create a password" />
                         <span asp-validation-for="Password" class="text-danger small"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="ConfirmPassword"><i class="fas fa-lock me-1"></i> Confirm</label>
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label">Confirm</label>
                         <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Confirm password" />
                         <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="divider"><span>Profile Details</span></div>
+            <!-- Divider -->
+            <div class="d-flex align-items-center gap-3 my-4">
+                <div class="flex-grow-1" style="height: 1px; background: var(--surface-container-low);"></div>
+                <span class="small fw-bold" style="color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.65rem;">Profile Details</span>
+                <div class="flex-grow-1" style="height: 1px; background: var(--surface-container-low);"></div>
+            </div>
 
-            <div class="form-group">
-                <label asp-for="Bio"><i class="fas fa-pen-fancy me-1"></i> Bio</label>
+            <div class="mb-3">
+                <label asp-for="Bio" class="form-label">Bio</label>
                 <textarea asp-for="Bio" class="form-control" placeholder="Tell us about yourself..." rows="3"></textarea>
                 <span asp-validation-for="Bio" class="text-danger small"></span>
             </div>
 
-            <div class="row">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Location"><i class="fas fa-map-marker-alt me-1"></i> Location</label>
+                    <div class="mb-3">
+                        <label asp-for="Location" class="form-label">Location</label>
                         <input asp-for="Location" class="form-control" placeholder="City, Country" />
                         <span asp-validation-for="Location" class="text-danger small"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="DateOfBirth"><i class="fas fa-calendar-alt me-1"></i> Date of Birth</label>
+                    <div class="mb-3">
+                        <label asp-for="DateOfBirth" class="form-label">Date of Birth</label>
                         <input asp-for="DateOfBirth" class="form-control" type="date" />
                         <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Gender"><i class="fas fa-venus-mars me-1"></i> Gender</label>
+                    <div class="mb-3">
+                        <label asp-for="Gender" class="form-label">Gender</label>
                         <select asp-for="Gender" class="form-control form-select" asp-items="Html.GetEnumSelectList<SocialMedia.Domain.Enums.Gender>()">
                             <option value="">Select Gender</option>
                         </select>
@@ -90,21 +96,21 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="ProfileImage"><i class="fas fa-camera me-1"></i> Profile Photo</label>
+                    <div class="mb-3">
+                        <label asp-for="ProfileImage" class="form-label">Profile Photo</label>
                         <input asp-for="ProfileImage" type="file" class="form-control" accept="image/*" />
                         <span asp-validation-for="ProfileImage" class="text-danger small"></span>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" id="registerBtn">
-                <i class="fas fa-user-plus me-2"></i> Create Account
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold" id="registerBtn" style="border-radius: var(--radius-md); font-size: 0.92rem;">
+                Create Account
             </button>
         </form>
 
-        <div class="auth-footer">
-            <p>Already have an account? <a asp-action="Login" asp-controller="Account" class="btn-link">Sign in</a></p>
+        <div class="text-center mt-4 pt-3" style="border-top: 1px solid var(--surface-container-low);">
+            <p class="small mb-0" style="color: var(--text-muted);">Already have an account? <a asp-action="Login" asp-controller="Account" class="fw-bold" style="color: var(--primary);">Sign in</a></p>
         </div>
     </div>
 </div>

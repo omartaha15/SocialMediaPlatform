@@ -8,8 +8,8 @@
         {"Like", "👍"}, {"Love", "❤️"}, {"Haha", "😂"}, {"Wow", "😮"}, {"Sad", "😢"}, {"Angry", "😡"}
     };
     var avatarColors = new[] {
-        "linear-gradient(135deg,#6c63ff,#a78bfa)", "linear-gradient(135deg,#2d88ff,#56ccf2)",
-        "linear-gradient(135deg,#f953c6,#b91d73)", "linear-gradient(135deg,#11998e,#38ef7d)",
+        "linear-gradient(135deg,#4a3fe2,#9795ff)", "linear-gradient(135deg,#6249b2,#d8caff)",
+        "linear-gradient(135deg,#983772,#fd8bca)", "linear-gradient(135deg,#11998e,#38ef7d)",
         "linear-gradient(135deg,#f7971e,#ffd200)", "linear-gradient(135deg,#e74c3c,#f39c12)"
     };
     string AvatarColor(string name) => avatarColors[Math.Abs((name ?? "U").GetHashCode()) % avatarColors.Length];
@@ -17,7 +17,7 @@
         name = name?.Trim() ?? "U";
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return parts.Length >= 2
-            ? $"{parts[0][0]}{parts[^1][0]}".ToUpper() 
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpper()
             : name.Substring(0, Math.Min(2, name.Length)).ToUpper();
     }
     string TimeAgo(DateTime dt) {
@@ -36,50 +36,58 @@
     var avatarUrl = !string.IsNullOrEmpty(post.UserAvatarUrl) ? post.UserAvatarUrl : "/images/user.jpg";
 }
 
-<article class="card fb-card p-4 saas-post-card mb-4 shadow-sm border-0" id="post-@post.Id">
-    <!-- POST HEADER -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
+<article class="card fb-card p-0 border-0 overflow-hidden" id="post-@post.Id">
+
+    <!-- ── POST HEADER ── -->
+    <div class="d-flex align-items-center justify-content-between p-4 pb-0">
         <div class="d-flex align-items-center gap-3">
-            <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="position-relative text-decoration-none">
-                <img src="@avatarUrl" class="rounded-circle shadow-sm" style="width: 44px; height: 44px; object-fit: cover;" onerror="this.src='/images/user.jpg';" />
+            <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="position-relative text-decoration-none flex-shrink-0">
+                <img src="@avatarUrl" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover; border: 2px solid var(--surface-container-low);" onerror="this.src='/images/user.jpg';" />
                 @if (!string.IsNullOrEmpty(post.userId) && SocialMedia.Web.Hubs.ChatHub.IsUserOnline(post.userId))
                 {
-                    <span class="position-absolute bottom-0 end-0 w-3 h-3 bg-success border border-white border-2 rounded-circle"></span>
+                    <span class="position-absolute" style="bottom: 1px; right: 1px; width: 12px; height: 12px; background: #22c55e; border: 2.5px solid white; border-radius: 50%;"></span>
                 }
             </a>
             <div>
-                <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="fw-bold text-decoration-none d-block mb-0" style="font-size: 0.95rem; color: var(--text-primary);">
+                <a asp-controller="Profile" asp-action="Index" asp-route-id="@post.userId" class="fw-bold text-decoration-none d-block" style="font-size: 0.92rem; color: var(--on-surface); line-height: 1.3;">
                     @post.UserName
                 </a>
-                <div class="text-muted small d-flex align-items-center" style="font-size: 0.75rem;">
-                    @TimeAgo(post.CreatedAt) • <span class="material-symbols-outlined ms-1" style="font-size: 14px;">public</span>
+                <div class="d-flex align-items-center gap-1" style="font-size: 0.72rem; color: var(--text-muted);">
+                    <span>@TimeAgo(post.CreatedAt)</span>
+                    <span>·</span>
+                    <span class="material-symbols-outlined" style="font-size: 13px;">public</span>
                 </div>
             </div>
         </div>
 
         <div class="dropdown">
-            <button class="btn btn-light btn-sm rounded-circle text-muted shadow-none border-0 bg-transparent hover-bg-light" type="button" data-bs-toggle="dropdown" style="width: 36px; height: 36px;">
-                <span class="material-symbols-outlined">more_horiz</span>
+            <button class="btn rounded-circle d-flex align-items-center justify-content-center border-0 transition-all" type="button" data-bs-toggle="dropdown" style="width: 36px; height: 36px; background: transparent; color: var(--text-muted);" onmouseover="this.style.background='var(--surface-container-low)'" onmouseout="this.style.background='transparent'">
+                <span class="material-symbols-outlined" style="font-size: 22px;">more_horiz</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2">
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2" style="min-width: 200px;">
                 @if (isOwner)
                 {
                     <li>
-                        <button type="button" class="dropdown-item rounded-3 d-flex align-items-center py-2 text-muted fw-semibold" onclick="openEditPostModal('@post.Id', '@System.Web.HttpUtility.JavaScriptStringEncode(post.Content)')">
-                            <span class="material-symbols-outlined me-2" style="font-size: 20px;">edit</span> Edit Post
+                        <button type="button" class="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2 fw-medium" onclick="openEditPostModal('@post.Id', '@System.Web.HttpUtility.JavaScriptStringEncode(post.Content)')">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">edit</span> Edit Post
                         </button>
                     </li>
                     <li>
-                        <button type="button" class="dropdown-item rounded-3 d-flex align-items-center py-2 text-danger fw-semibold" onclick="openDeletePostModal('@post.Id')">
-                            <span class="material-symbols-outlined me-2" style="font-size: 20px;">delete</span> Delete Post
+                        <button type="button" class="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2 fw-medium text-danger" onclick="openDeletePostModal('@post.Id')">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">delete</span> Delete Post
                         </button>
                     </li>
                 }
                 else
                 {
                     <li>
-                        <button type="button" class="dropdown-item rounded-3 d-flex align-items-center py-2 text-muted fw-semibold">
-                            <span class="material-symbols-outlined me-2" style="font-size: 20px;">report</span> Report Post
+                        <button type="button" class="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2 fw-medium">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">bookmark</span> Save Post
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2 fw-medium text-danger">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">flag</span> Report
                         </button>
                     </li>
                 }
@@ -87,96 +95,103 @@
         </div>
     </div>
 
-    <!-- POST CONTENT -->
-    <div class="post-content-wrap mb-4">
-        <p class="mb-0" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);">
-            @post.Content
-        </p>
+    <!-- ── POST CONTENT ── -->
+    <div class="px-4 pt-3 pb-2">
+        <p class="mb-0" style="font-size: 0.92rem; line-height: 1.65; color: var(--on-surface);">@post.Content</p>
     </div>
 
+    <!-- ── POST IMAGE ── -->
     @if (!string.IsNullOrEmpty(post.ImageUrl))
     {
-        <div class="rounded-4 overflow-hidden mb-4 group cursor-pointer" onclick="window.open('@post.ImageUrl', '_blank')">
-            <img src="@post.ImageUrl" class="img-fluid w-100 transition-transform hover-scale" loading="lazy" alt="Post image" style="max-height: 500px; object-fit: cover;" />
+        <div class="mx-4 mt-2 mb-0 rounded-4 overflow-hidden cursor-pointer" onclick="window.open('@post.ImageUrl', '_blank')">
+            <img src="@post.ImageUrl" class="w-100 hover-scale" loading="lazy" alt="Post image" style="max-height: 500px; object-fit: cover; display: block;" />
         </div>
     }
 
-    <!-- REACTION STATS -->
-    <div class="d-flex align-items-center justify-content-between pt-4 border-top" style="border-color: rgba(0,0,0,0.05) !important;">
-        <div class="d-flex align-items-center gap-2">
-            <div class="d-flex" style="margin-left: 0.25rem;">
-                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center border border-2 border-white" style="width: 24px; height: 24px; z-index: 2; margin-left: -4px;">
-                    <span class="material-symbols-outlined text-white" style="font-size: 12px; font-variation-settings: 'FILL' 1;">thumb_up</span>
+    <!-- ── REACTION SUMMARY ── -->
+    <div class="d-flex align-items-center justify-content-between px-4 py-3">
+        <div class="d-flex align-items-center gap-2 cursor-pointer" onclick="showReactorsModal('@post.Id')">
+            @if (post.ReactionCount > 0)
+            {
+                <div class="d-flex" style="margin-left: 2px;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center border border-2 border-white" style="width: 22px; height: 22px; z-index: 2; background: var(--primary);">
+                        <span class="material-symbols-outlined text-white" style="font-size: 11px; font-variation-settings: 'FILL' 1;">thumb_up</span>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center border border-2 border-white" style="width: 22px; height: 22px; z-index: 1; margin-left: -6px; background: #ef4444;">
+                        <span class="material-symbols-outlined text-white" style="font-size: 11px; font-variation-settings: 'FILL' 1;">favorite</span>
+                    </div>
                 </div>
-                <div class="rounded-circle bg-danger d-flex align-items-center justify-content-center border border-2 border-white" style="width: 24px; height: 24px; z-index: 1; margin-left: -4px;">
-                    <span class="material-symbols-outlined text-white" style="font-size: 12px; font-variation-settings: 'FILL' 1;">favorite</span>
-                </div>
-            </div>
-            <span class="text-muted fw-semibold" style="font-size: 0.8rem; cursor: pointer;" onclick="showReactorsModal('@post.Id')">@post.ReactionCount reactions</span>
+            }
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">@post.ReactionCount reactions</span>
         </div>
-        <div class="d-flex gap-3 text-muted fw-semibold" style="font-size: 0.8rem;">
-            <span class="cursor-pointer hover-underline" onclick="toggleComments('@post.Id')">@post.CommentCount comments</span>
+        <div class="d-flex gap-3" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">
+            <span class="cursor-pointer" onclick="toggleComments('@post.Id')">@post.CommentCount comments</span>
             <span>0 shares</span>
         </div>
     </div>
 
-    <!-- ACTION BAR -->
-    <div class="mt-4 pt-2 border-top d-flex gap-2" style="border-color: rgba(0,0,0,0.05) !important;">
+    <!-- ── ACTION BAR ── -->
+    <div class="mx-4 mb-3 pt-0 d-flex gap-1 border-top" style="border-color: var(--surface-container-low) !important; padding-top: 6px;">
         <div class="flex-grow-1 position-relative">
             <button id="react-btn-@post.Id"
-                    class="btn btn-light w-100 border-0 bg-transparent py-2 rounded-3 text-muted fw-bold d-flex align-items-center justify-content-center gap-2 hover-bg-light transition-all"
-                    style="font-size: 0.85rem;"
-                    onmousedown="openReactions(event,'@post.Id')">
-                <span class="material-symbols-outlined @(hasReaction ? "text-primary" : "")" style="@(hasReaction ? "font-variation-settings: 'FILL' 1;" : "")">favorite</span>
+                    class="btn w-100 border-0 py-2 rounded-3 d-flex align-items-center justify-content-center gap-2 transition-all"
+                    style="font-size: 0.82rem; font-weight: 600; color: @(hasReaction ? "var(--primary)" : "var(--on-surface-variant)"); background: transparent;"
+                    onmousedown="openReactions(event,'@post.Id')"
+                    onmouseover="this.style.background='var(--surface-container-low)'"
+                    onmouseout="this.style.background='transparent'">
+                <span class="material-symbols-outlined" style="font-size: 20px; @(hasReaction ? "font-variation-settings: 'FILL' 1;" : "")">@(hasReaction ? "favorite" : "thumb_up")</span>
                 <span>@(hasReaction ? reactionStr : "Like")</span>
             </button>
-            
+
             <!-- Reactions Picker -->
-            <div id="reactions-@post.Id" class="reactions-popover shadow-lg rounded-pill p-2 position-absolute" style="display:none; bottom: 100%; left: 0; background-color: white; border: 1px solid rgba(0,0,0,0.05); z-index: 100; margin-bottom: 10px;">
+            <div id="reactions-@post.Id" class="reactions-popover shadow-lg rounded-pill p-2 position-absolute" style="display:none; bottom: 100%; left: 0; background-color: var(--bg-card); border: 1px solid var(--surface-container-low); z-index: 100; margin-bottom: 8px;">
                 <div class="d-flex gap-1">
                     @foreach (var kv in emojiMap)
                     {
-                        <button type="button" class="btn btn-sm rounded-circle fs-4 p-1 transition-all" style="width: 42px; height: 42px;" onclick="sendReaction('@post.Id','@kv.Key',this)">@kv.Value</button>
+                        <button type="button" class="btn btn-sm rounded-circle fs-4 p-1 transition-all" style="width: 42px; height: 42px;" onclick="sendReaction('@post.Id','@kv.Key',this)" title="@kv.Key">@kv.Value</button>
                     }
                 </div>
             </div>
         </div>
 
-        <button class="btn btn-light flex-grow-1 border-0 bg-transparent py-2 rounded-3 text-muted fw-bold d-flex align-items-center justify-content-center gap-2 hover-bg-light transition-all" 
-                style="font-size: 0.85rem;"
-                onclick="toggleComments('@post.Id')">
-            <span class="material-symbols-outlined">chat_bubble</span>
+        <button class="btn flex-grow-1 border-0 py-2 rounded-3 d-flex align-items-center justify-content-center gap-2 transition-all"
+                style="font-size: 0.82rem; font-weight: 600; color: var(--on-surface-variant); background: transparent;"
+                onclick="toggleComments('@post.Id')"
+                onmouseover="this.style.background='var(--surface-container-low)'"
+                onmouseout="this.style.background='transparent'">
+            <span class="material-symbols-outlined" style="font-size: 20px;">chat_bubble</span>
             <span>Comment</span>
         </button>
 
-        <button class="btn btn-light flex-grow-1 border-0 bg-transparent py-2 rounded-3 text-muted fw-bold d-flex align-items-center justify-content-center gap-2 hover-bg-light transition-all"
-                style="font-size: 0.85rem;"
-                onclick="alert('Shared!')">
-            <span class="material-symbols-outlined">share</span>
+        <button class="btn flex-grow-1 border-0 py-2 rounded-3 d-flex align-items-center justify-content-center gap-2 transition-all"
+                style="font-size: 0.82rem; font-weight: 600; color: var(--on-surface-variant); background: transparent;"
+                onmouseover="this.style.background='var(--surface-container-low)'"
+                onmouseout="this.style.background='transparent'">
+            <span class="material-symbols-outlined" style="font-size: 20px;">share</span>
             <span>Share</span>
         </button>
     </div>
 
-    <!-- COMMENTS SECTION -->
-    <div class="comments-section bg-transparent pt-4" id="comments-section-@post.Id" style="display:none;">
-        <div class="comments-list border-top pt-3 mb-4" id="comments-list-@post.Id" style="border-color: rgba(0,0,0,0.05) !important;">
+    <!-- ── COMMENTS SECTION ── -->
+    <div class="comments-section px-4 pb-4" id="comments-section-@post.Id" style="display:none;">
+        <div class="comments-list mb-3" id="comments-list-@post.Id">
             <!-- loaded dynamically -->
         </div>
-        
-        <div class="d-flex gap-3 align-items-start">
-            <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" style="width: 36px; height: 36px; font-size: 0.8rem; font-weight: bold; background:@AvatarColor(currentUserName)">
+
+        <div class="d-flex gap-3 align-items-center">
+            <div class="rounded-circle text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 34px; height: 34px; font-size: 0.72rem; font-weight: 700; background:@AvatarColor(currentUserName)">
                 @Initials(currentUserName)
             </div>
             <div class="flex-grow-1 position-relative">
                 <input type="text"
-                       class="form-control border-0 bg-light rounded-pill px-4 py-2"
-                       style="font-size: 0.85rem; background-color: var(--bg-input) !important;"
+                       class="border-0 rounded-pill px-4 py-2 w-100"
+                       style="font-size: 0.82rem; background: var(--surface-container-low); color: var(--on-surface); outline: none;"
                        id="comment-input-@post.Id"
                        placeholder="Write a comment…"
                        onkeydown="handleCommentKey(event, '@post.Id')" />
-                
-                <button class="btn btn-link text-primary position-absolute end-0 top-50 translate-middle-y me-2 p-0 shadow-none border-0" onclick="submitComment('@post.Id')">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">send</span>
+
+                <button class="btn btn-link position-absolute end-0 top-50 translate-middle-y me-2 p-0 shadow-none border-0" style="color: var(--primary);" onclick="submitComment('@post.Id')">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">send</span>
                 </button>
             </div>
         </div>

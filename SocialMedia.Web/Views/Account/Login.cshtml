@@ -1,49 +1,58 @@
 @model SocialMedia.Web.ViewModels.LoginViewModel
 
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Login | Zuvo";
 }
 
 <div class="auth-wrapper">
     <div class="auth-card">
-        <div class="auth-header">
-            <div class="auth-icon">
-                <i class="fas fa-user-lock" style="color:white;"></i>
+        <!-- Brand -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 56px; height: 56px; background: var(--gradient-primary);">
+                <span class="material-symbols-outlined text-white" style="font-size: 28px; font-variation-settings: 'FILL' 1;">lock_open</span>
             </div>
-            <h2>Welcome Back</h2>
-            <p>Sign in to continue to Zuvo</p>
+            <h2 class="h4 fw-bold mb-1" style="color: var(--on-surface); font-family: var(--font-headline);">Welcome Back</h2>
+            <p class="text-muted small mb-0">Sign in to continue to Zuvo</p>
         </div>
 
         <form asp-action="Login" method="post" id="loginForm">
             @if (!ViewData.ModelState.IsValid)
             {
-                <div asp-validation-summary="All" class="alert alert-danger mb-3"></div>
+                <div asp-validation-summary="All" class="alert alert-danger rounded-3 py-2 px-3 mb-3" style="font-size: 0.85rem;"></div>
             }
 
-            <div class="form-group">
-                <label asp-for="Email"><i class="fas fa-envelope me-1"></i> Email</label>
-                <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Email</label>
+                <div class="position-relative">
+                    <span class="material-symbols-outlined position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--text-muted);">mail</span>
+                    <input asp-for="Email" class="form-control" placeholder="you@example.com" style="padding-left: 42px;" />
+                </div>
                 <span asp-validation-for="Email" class="text-danger small"></span>
             </div>
 
-            <div class="form-group">
-                <label asp-for="Password"><i class="fas fa-lock me-1"></i> Password</label>
-                <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password" />
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">Password</label>
+                <div class="position-relative">
+                    <span class="material-symbols-outlined position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--text-muted);">lock</span>
+                    <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password" style="padding-left: 42px;" />
+                </div>
                 <span asp-validation-for="Password" class="text-danger small"></span>
             </div>
 
-            <div class="form-group form-check d-flex align-items-center mt-2">
-                <input asp-for="RememberMe" class="form-check-input me-2" />
-                <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="form-check">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    <label asp-for="RememberMe" class="form-check-label small fw-medium" style="color: var(--text-secondary);">Remember me</label>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" id="loginBtn">
-                <i class="fas fa-sign-in-alt me-2"></i> Sign In
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold" id="loginBtn" style="border-radius: var(--radius-md); font-size: 0.92rem;">
+                Sign In
             </button>
         </form>
 
-        <div class="auth-footer">
-            <p>Don't have an account? <a asp-action="Register" asp-controller="Account" class="btn-link">Create one</a></p>
+        <div class="text-center mt-4 pt-3" style="border-top: 1px solid var(--surface-container-low);">
+            <p class="small mb-0" style="color: var(--text-muted);">Don't have an account? <a asp-action="Register" asp-controller="Account" class="fw-bold" style="color: var(--primary);">Create one</a></p>
         </div>
     </div>
 </div>
